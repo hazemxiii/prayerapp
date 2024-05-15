@@ -1,0 +1,49 @@
+- Wrap() like row but wraps the children when their size is beyond the width
+- SingleChildScrollView() is scrollable 
+- scrollDirection changes the direction of the SingleChildScrollView
+- ListView() is like SingleChildScrollView but takes many children. also has scrollDirection
+- ListView.builder(itemCount, itemBuilder:(context,index){}) lets you build the ListView like a for loop
+- ListView.separated(itemCount, itemBuilder:(context,index){}, separatorBuilder:(context,i){}) adds a separator between ListView items
+- pyshics == ?
+- GridView.builder(gridDelegate: ) creates a grid
+- GridView.count() replaces the builder gridDelegate
+- Card() widget
+- ListTileStyle(onTap:,leading:,title:,subtitle:,trailing:) trailing is the text on the right. leading is on the left
+- IconButton(onPressed:,icon:Icon())
+- Expanded(flex:) expands the width or height of the widget, flex decides how much it will take, used with row and column
+- MaterialButton()
+- floatingActionButton: FloatingActionButton() is a widget added in a scaffold*
+- Switch(value:,onChanged:) differs from SwitchListTile(title:) in that the latter takes the whole width and the title
+- Radio(value:,groupValue:,onChanged:) groupValue is what the choice across all choices is, value is the single value of a radio
+- RadioListTile(title)
+- CheckBox(), CheckBoxListTile()
+- Stack() like Row and Column but widgets are on top of each other
+- Postitioned() controls the position of the element using left, right, etc..
+- TextField(decoration:InputDecoration(), controller:TextEditingController())
+- to use all features of TextFormField(validator:, onSaved:,autovalidateMode:), it must be in a Form(key:)
+- validator and onSaved needs to be activated from the key.currentState
+- AppBar(leading:,elevation:,shadowColor:,titleTextStyle:,actions:,drawer:,endDrawer:) shadowColor is the color of the elevation
+- if there's no AppBar() we can open the drawer by using the scaffold key
+- to use tabbar the scaffold has to be inside DefaultTabController(length:, child: Scaffold())
+- tabbar is in bottom: inside the appBar
+- for the tab bar to take action, the body of the scaffold has to be a TabBarView
+- DefaultTabController can be replaced with TabController
+- BottomNavigationBar(items:[BottomNavigationBarItem]) is the bar that contains different pages at the bottom
+- changing pages using BottomNavigationBar isn't automatically, we have to change it using currentIndex:
+- for the PageView(physics:) to work properly it needs a height so place it in a container
+- PageView.builder(itemCount:,itemBuilder:(context,i)=>{})
+- to navigate from a page to another use Navigator.of(context).push/pushReplacement(MaterialPageRoute(builder:(context)=>Page()))
+- Navigator.of(context).pop() removes the top page
+- Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder:(context)=>Page()),(route)=>false) removes everything and places the page
+- the named version of push functions will work with the key of routes: {"key",(context)=>page()} in MaterialApp()
+- showDialog(context:,builder:(context){return AlertDialog();})
+- scaffoldkey.currentState!.showBottomSheet((context)=>widget())
+- ScaffoldMessenger.of(context).showSnackBar(SnackBar())
+- InkWell() allows you to tap any item
+- PopupMenuButton(itemBuilder:(context)=> [PopupMenuItem()])
+- showSearch(context:,delegate:)
+- SearchDelegate class contains buildActions() --> the widget on the right, buildLeading() --> the left, buildResutls(), buildSuggestions()
+- query in search is what the user wrote
+- we can add a ScrollController for the scroll view --> should be initialised in initState
+- any controller should be disposed after we dispose the page
+# https://www.youtube.com/watch?v=ImDIXWC3DME&list=PL93xoMrxRJIvtIXjAiX15wcyNv-LOWZa9&index=63&pp=iAQB
