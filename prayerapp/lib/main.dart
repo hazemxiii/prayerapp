@@ -1,8 +1,10 @@
 import "dart:convert";
 import "dart:math";
 import "package:flutter/material.dart";
+import "package:flutter/widgets.dart";
 import 'package:http/http.dart' as http;
-// import 'package:shared_preferences/shared_preferences.dart';
+import "package:shared_preferences/shared_preferences.dart";
+import "tasbih.dart";
 // import "package:geolocator/geolocator.dart";
 // import 'package:geocoding/geocoding.dart';
 
@@ -25,23 +27,14 @@ class PrayerTime extends StatefulWidget {
 }
 
 class _PrayerTime extends State<PrayerTime> {
-  List dates = ["2024-05-15", "2024-05-16"];
-
+  int activePage = 0;
+  // the pages controlled by the bottom nav bar
+  late List<Widget> pages;
   @override
   void initState() {
     super.initState();
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Column(
+    pages = [
+      Column(
         children: [
           Container(
             decoration: const BoxDecoration(
@@ -56,41 +49,126 @@ class _PrayerTime extends State<PrayerTime> {
             width: double.infinity,
           ),
           Expanded(
-            child: PageView.builder(
-                onPageChanged: (v) {},
-                itemCount: dates.length,
-                itemBuilder: (context, i) {
-                  return PrayerDay(time: dates[i]);
-                }),
+            child: FutureBuilder(
+              future: getPrayerTime(),
+              builder: (context, snapshot) {
+                // when the data loads, show it. else show loading
+                if (snapshot.connectionState == ConnectionState.done) {
+                  // if there's data, display. else display no internet
+                  if (snapshot.data!.length > 0) {
+                    return PageView.builder(
+                        itemCount: snapshot.data!.length,
+                        itemBuilder: (context, i) {
+                          return PrayerDay(
+                              // the last index (7) contains the american day to format and display
+                              time: snapshot.data![i][7],
+                              times: snapshot.data[i]);
+                        });
+                  } else {
+                    return const Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Icon(Icons.warning,
+                            size: 40, color: Color.fromRGBO(255, 0, 0, 1)),
+                        Text("No Internet Connection")
+                      ],
+                    );
+                  }
+                } else {
+                  return const Center(child: CircularProgressIndicator());
+                }
+              },
+            ),
           )
         ],
       ),
-    );
+      const Tasbih()
+    ];
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        bottomNavigationBar: SizedBox(
+          height: 40,
+          child: BottomNavigationBar(
+            currentIndex: activePage,
+            backgroundColor: Colors.white,
+            selectedItemColor: Colors.blue,
+            iconSize: 14,
+            selectedFontSize: 10,
+            unselectedFontSize: 10,
+            onTap: (v) {
+              setState(() {
+                activePage = v;
+              });
+            },
+            items: const [
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.alarm), label: "Prayer Times"),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.circle),
+                label: "Tasbih",
+              )
+            ],
+          ),
+        ),
+        backgroundColor: Colors.lightBlue[50],
+        body: pages[activePage]);
   }
 }
 
 class PrayerDay extends StatelessWidget {
   final String time;
-  const PrayerDay({super.key, required this.time});
+  final List times;
+  const PrayerDay({super.key, required this.time, required this.times});
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(0, 10, 0, 0),
-      child: Column(children: [
-        Text(numbersDateToText(time)),
-        Prayer(
-          name: "Fajr",
-          time: DateTime.parse("$time 04:23"),
-        ),
-        Prayer(
-          name: "dhuhr",
-          time: DateTime.parse("$time 12:57"),
-        ),
-        Prayer(
-          name: "Asr",
-          time: DateTime.parse("$time 16:36"),
-        )
-      ]),
+    return SingleChildScrollView(
+      child: Container(
+        // color: Colors.lightBlue[50],
+        padding: const EdgeInsets.fromLTRB(0, 10, 0, 0),
+        child: Column(children: [
+          // format the american date to Weekday, day month
+          Text(numbersDateToText(time)),
+          // hijri date is at index 6
+          Text(
+            times[6],
+            style: const TextStyle(color: Colors.grey),
+          ),
+          // the prayers are in order [fajr,sunrise,dhuhr,asr,maghrib,isha]
+          Prayer(
+            name: "Fajr",
+            time: DateTime.parse("$time ${times[0]}"),
+          ),
+          Prayer(
+            name: "Sunrise",
+            time: DateTime.parse("$time ${times[1]}"),
+          ),
+          Prayer(
+            name: "Dhuhr",
+            time: DateTime.parse("$time ${times[2]}"),
+          ),
+          Prayer(
+            name: "Asr",
+            time: DateTime.parse("$time ${times[3]}"),
+          ),
+          Prayer(
+            name: "Maghrib",
+            time: DateTime.parse("$time ${times[4]}"),
+          ),
+          Prayer(
+            name: "Isha'a",
+            time: DateTime.parse("$time ${times[5]}"),
+          )
+        ]),
+      ),
     );
   }
 }
@@ -105,6 +183,7 @@ class Prayer extends StatefulWidget {
 }
 
 class _Prayer extends State<Prayer> {
+  // create random color away from white
   int red = Random().nextInt(241);
   int green = Random().nextInt(241);
   int blue = Random().nextInt(241);
@@ -112,77 +191,133 @@ class _Prayer extends State<Prayer> {
   @override
   Widget build(BuildContext context) {
     Color color = Color.fromRGBO(red, green, blue, 1);
+
     int hour = widget.time.hour;
     int minutes = widget.time.minute;
     String dayPeriod = "AM";
 
+    // change to PM if it's 12 or higher
     if (hour >= 12) {
       hour = hour - 12;
       dayPeriod = "PM";
     }
+
+    // change to 12 if it's 0
     if (hour == 0) {
       hour = 12;
     }
 
-    String diff = widget.time.difference(DateTime.now()).toString();
+    // get time left for the prayer
+    Duration difference = widget.time.difference(DateTime.now());
+    String diff = difference.toString();
     diff = diff.substring(0, diff.lastIndexOf(":"));
+    if (difference.inHours >= 24 || difference.inHours <= -24) {
+      diff = "";
+    }
+    // take only the hours and minutes
 
     return Column(
       children: [
         Container(
           padding: const EdgeInsets.all(10),
+          margin: const EdgeInsets.all(5),
+          decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.all(Radius.circular(10))),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Row(
                 children: [
-                  Text(
-                    widget.name,
-                    style: TextStyle(color: color),
+                  Container(
+                    width: 3,
+                    height: 20,
+                    color: color,
+                    margin: const EdgeInsets.fromLTRB(0, 0, 10, 0),
                   ),
-                  Text("$hour:$minutes $dayPeriod",
-                      style: TextStyle(color: color))
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.name,
+                        style: TextStyle(color: color),
+                      ),
+                      Text("$hour:${"$minutes".padLeft(2, "0")} $dayPeriod",
+                          style: TextStyle(color: color))
+                    ],
+                  ),
                 ],
               ),
               Text(diff, style: TextStyle(color: color))
             ],
           ),
         ),
-        Container(
-          color: color,
-          height: 3,
-        )
       ],
     );
   }
 }
 
 // functions
-Future<List> getPrayerTime(date) async {
-  // obtains the data from the api
-  var url = Uri.https("api.aladhan.com", "/v1/timingsByCity/:$date",
-      {"city": "Alexandria", "country": "Egypt"});
-  var r = await http.get(url);
-  if (r.statusCode == 200) {
-    var data = jsonDecode(r.body)['data'];
-    var timings = data['timings'];
-    var hijri = data['date']['hijri'];
-    var hirjiDay = hijri['day'];
-    var hijriMonth = hijri['month']['en'];
-    var hijriYear = hijri['year'];
-    return [
-      timings['Fajr'],
-      timings['Sunrise'],
-      timings['Dhuhr'],
-      timings['Asr'],
-      timings['Maghrib'],
-      timings['Isha'],
-      "$hirjiDay - $hijriMonth - $hijriYear"
-    ];
-  } else {
-    return [];
-  }
+Future<dynamic> getPrayerTime() async {
+  // return the 30 days to the user
+  List daysTime = [];
+  await SharedPreferences.getInstance().then((spref) async {
+    // loop on the next 30 days
+    for (int i = 0; i < 30; i++) {
+      DateTime dateO = DateTime.now().add(Duration(days: i));
+      // get the american and normal dates
+      String date = parseDate(dateO, false);
+      String americanDate = parseDate(dateO, true);
+      // if there's no data, create one
+      if (!spref.containsKey("prayers")) {
+        spref.setString("prayers", jsonEncode({}));
+      }
+      // get the old data
+      Map prayerDays = jsonDecode(spref.getString("prayers")!);
+      // if the date is saved on the device, add it to be returned later, else, get it from the API
+      if (prayerDays.containsKey(americanDate)) {
+        daysTime.add(prayerDays[americanDate]);
+      } else {
+        var url = Uri.https("api.aladhan.com", "/v1/timingsByCity/$date",
+            {"city": "Alexandria", "country": "Egypt"});
+        try {
+          var r = await http.get(url);
+          if (r.statusCode == 200) {
+            var data = jsonDecode(r.body)['data'];
+            var timings = data['timings'];
+            var hijri = data['date']['hijri'];
+            var hirjiDay = hijri['day'];
+            var hijriMonth = hijri['month']['en'];
+            var hijriYear = hijri['year'];
+            var hijriDate = "$hirjiDay - $hijriMonth - $hijriYear";
+            List dayWrap = [
+              timings['Fajr'],
+              timings['Sunrise'],
+              timings['Dhuhr'],
+              timings['Asr'],
+              timings['Maghrib'],
+              timings['Isha'],
+              hijriDate,
+              americanDate
+            ];
+            // add the date to the preferences and remove the date behind it with 30 days
+            prayerDays[americanDate] = dayWrap;
+            String dateToRemove = parseDate(
+                DateTime.parse(americanDate).subtract(const Duration(days: 30)),
+                true);
+            if (prayerDays.containsKey(dateToRemove)) {
+              prayerDays.remove(dateToRemove);
+            }
+            spref.setString("prayers", jsonEncode(prayerDays));
+            daysTime.add(dayWrap);
+          }
+        } catch (e) {
+          // print(e);
+        }
+      }
+    }
+  });
+  return daysTime;
 }
 
 String numbersDateToText(String sdate) {
@@ -232,4 +367,19 @@ String numbersDateToText(String sdate) {
   String? month = monthDict[dd.month];
 
   return "$day, $date $month";
+}
+
+String parseDate(DateTime date, bool toAmerican) {
+  // returns the normal or american date as a string
+  int day = date.day;
+  int month = date.month;
+  int year = date.year;
+
+  if (toAmerican) {
+    String monthPad = "$month".padLeft(2, "0");
+    String dayPad = "$day".padLeft(2, "0");
+    return "$year-$monthPad-$dayPad";
+  } else {
+    return "$day-$month-$year";
+  }
 }

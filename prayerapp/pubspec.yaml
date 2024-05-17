@@ -38,6 +38,8 @@ dependencies:
   geolocator: ^11.1.0
   geocoding: ^3.0.0
   http: ^1.2.1
+  flutter_cache_manager: ^3.3.2
+  vibration: ^1.8.4
 
 dev_dependencies:
   flutter_test:

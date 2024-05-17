@@ -2,28 +2,43 @@
 
 ## Content:
 
-- [Notations](#notations)
+- [Navigate pages using bottom nav bar](#navigatePagesUsingNavigateBar)
 - [Display Prayers](#displayprayersnameandtime)
 - [Get prayers from the API](#getprayersfromapi)
 
-## Notations:
+## navigatePagesUsingNavigateBar:
 
-- [ClassName]
+- [pages] -> contains the pages
+- [Tabih] -> the second page
+- [activePage] -> the index of the active page
 
 ## displayPrayersNameAndTime:
 
-- The main page [PrayerTime]
-- [PrayerTime] contains list of the dates to pass to the day [PrayerDay]
-- [PrayerDay] uses numbersDateToText() to change the date format
-- [PrayerDay] contanis prayers [Prayer]
-- Date of the day is passed to [PrayerDay] then it adds the hours and minutes in 24-Hour format to [Prayer]
-- [prayer] creates random values for red,green,blue that will be used to make a random color to be assigned for that prayer
-- [Prayer] has the time period AM by default, it checks if the hour is more than 11 and change it to PM
-- [Prayer] checks if hour is 0 and makes it 12 AM
-- [Prayer] calculates difference between the prayer time and now, it only displays hours and minutes
+- [PrayerDay] -> the container wich has rows of the prayers and the date
+- [PrayerDay.time] -> contains the american date
+- [PrayerDay.times] -> contains the times for the prayers and the american and the hijri dates
+- numbersDateToText() -> changes the format of the date to display
+- [Prayer] -> row contains prayer details in inside [PrayerDay]
+- [Prayer.name] -> prayer name
+- [Prayer.time] -> prayer datetime
+- [Prayer.red] [Prayer.green] [Prayer.blue] -> random numbers that represents the color
+- [Prayer.color] -> the color text in the prayer
+- [Prayer.hour] [Prayer.minutes]
+- [Prayer.dayPeriod] -> AM or PM
+- [Prayer.difference] -> difference between time now and the prayer time
+- [Prayer.diff] -> difference as string
 
 ## getPrayersFromAPI:
 
-- the function is getPrayerTime()
-- changes the url to URI
-- returns the prayer time and the hijri date in a list where the last element is the hijri date
+- getPrayerTimes() -> gets the time from the shared preferences or the API
+- getPrayerTimes().daysTime -> the list of days returned
+- getPrayerTimes().dateO -> the date + i days
+- getPrayerTimes().date getPrayerTimes().americanDate -> normal and american date
+- getPrayerTimes().spref -> shared preferences
+- getPrayerTimes().prayerDays -> the data as a dictionary
+- getPrayerTimes().data getPrayerTimes().timings getPrayerTimes().hijri getPrayerTimes().hijriDay getPrayerTimes().hijriMonth getPrayerTimes().hijriYear -> data from the API
+- getPrayerTimes().hijriDate -> formated hijri date
+- getPrayerTimes().dayWrap -> the day to be appended to getPrayerTimes().daysTime
+- getPrayerTimes().dateToRemove -> the day being replaced in the data
+
+- parseDate() -> generates the normal and the American formats of a date
