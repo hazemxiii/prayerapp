@@ -1,7 +1,6 @@
 import "dart:convert";
 import "dart:math";
 import "package:flutter/material.dart";
-import "package:flutter/widgets.dart";
 import 'package:http/http.dart' as http;
 import "package:shared_preferences/shared_preferences.dart";
 import "tasbih.dart";
@@ -16,23 +15,28 @@ class App extends StatelessWidget {
   const App({super.key});
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(home: PrayerTime());
+    return const MaterialApp(home: MainPage());
   }
 }
 
-class PrayerTime extends StatefulWidget {
-  const PrayerTime({super.key});
+class MainPage extends StatefulWidget {
+  const MainPage({super.key});
   @override
-  State<PrayerTime> createState() => _PrayerTime();
+  State<MainPage> createState() => _MainPage();
 }
 
-class _PrayerTime extends State<PrayerTime> {
+class _MainPage extends State<MainPage> {
   int activePage = 0;
   // the pages controlled by the bottom nav bar
   late List<Widget> pages;
+  late List<dynamic> pagesDrawers;
+  late GlobalKey<ScaffoldState> scaffoldKey;
   @override
   void initState() {
     super.initState();
+
+    scaffoldKey = GlobalKey();
+
     pages = [
       Column(
         children: [
@@ -83,8 +87,12 @@ class _PrayerTime extends State<PrayerTime> {
           )
         ],
       ),
-      const Tasbih()
+      Tasbih(
+        scaffoldKey: scaffoldKey,
+      )
     ];
+
+    pagesDrawers = const [Placeholder(), TasbihDrawer()];
   }
 
   @override
@@ -95,6 +103,8 @@ class _PrayerTime extends State<PrayerTime> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        drawer: pagesDrawers[activePage],
+        key: scaffoldKey,
         bottomNavigationBar: SizedBox(
           height: 40,
           child: BottomNavigationBar(
@@ -130,6 +140,10 @@ class PrayerDay extends StatelessWidget {
   const PrayerDay({super.key, required this.time, required this.times});
   @override
   Widget build(BuildContext context) {
+    String dhuhr = "Dhuhr";
+    if (numbersDateToText(time).contains("Friday")) {
+      dhuhr = "Jumu'a";
+    }
     return SingleChildScrollView(
       child: Container(
         // color: Colors.lightBlue[50],
@@ -152,7 +166,7 @@ class PrayerDay extends StatelessWidget {
             time: DateTime.parse("$time ${times[1]}"),
           ),
           Prayer(
-            name: "Dhuhr",
+            name: dhuhr,
             time: DateTime.parse("$time ${times[2]}"),
           ),
           Prayer(

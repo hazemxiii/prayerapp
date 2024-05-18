@@ -5,6 +5,8 @@
 - [Navigate pages using bottom nav bar](#navigatePagesUsingNavigateBar)
 - [Display Prayers](#displayprayersnameandtime)
 - [Get prayers from the API](#getprayersfromapi)
+- [Change tasbih button size](#changetasbihbuttonsize)
+- [Increase the tasbih and vibrate](#increasereset-the-tasbih-and-vibrate)
 
 ## navigatePagesUsingNavigateBar:
 
@@ -31,14 +33,23 @@
 ## getPrayersFromAPI:
 
 - getPrayerTimes() -> gets the time from the shared preferences or the API
-- getPrayerTimes().daysTime -> the list of days returned
-- getPrayerTimes().dateO -> the date + i days
-- getPrayerTimes().date getPrayerTimes().americanDate -> normal and american date
-- getPrayerTimes().spref -> shared preferences
-- getPrayerTimes().prayerDays -> the data as a dictionary
-- getPrayerTimes().data getPrayerTimes().timings getPrayerTimes().hijri getPrayerTimes().hijriDay getPrayerTimes().hijriMonth getPrayerTimes().hijriYear -> data from the API
-- getPrayerTimes().hijriDate -> formated hijri date
-- getPrayerTimes().dayWrap -> the day to be appended to getPrayerTimes().daysTime
-- getPrayerTimes().dateToRemove -> the day being replaced in the data
-
+- [getPrayerTimes().daysTime] -> the list of days returned
+- [getPrayerTimes().dateO] -> the date + i days
+- [getPrayerTimes().date] [getPrayerTimes().americanDate] -> normal and american date
+- [getPrayerTimes().spref] -> shared preferences
+- [getPrayerTimes().prayerDays] -> the data as a dictionary
+- [getPrayerTimes().data] [getPrayerTimes().timings] [getPrayerTimes().hijri] [getPrayerTimes().hijriDay] [getPrayerTimes().hijriMonth] [getPrayerTimes().hijriYear] -> data from the API
+- [getPrayerTimes().hijriDate] -> formated hijri date
+- [getPrayerTimes().dayWrap] -> the day to be appended to getPrayerTimes().daysTime
+- [getPrayerTimes().dateToRemove] -> the day being replaced in the data
 - parseDate() -> generates the normal and the American formats of a date
+
+## changeTasbihButtonSize:
+
+- [Tasbih.shrinkController] - [Tasbih.shrinkAnimation] -> the shrinking motion at the beginning of the button click
+- [Tasbih.growController] - [Tasbih.growAnimation] -> the shrinking motion at the beginning of the button click
+
+## Increase/Reset the tasbih and vibrate:
+
+- [Tasbih.tasbih] -> the current number of tabih
+- [Tasbih.screenWidth] -> the min between width or the height of the screen
