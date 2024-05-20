@@ -50,6 +50,7 @@ class _Tasbih extends State<Tasbih> with TickerProviderStateMixin {
         });
       });
 
+    // update the number in the button when the data returns from the shared prefs
     getTasbihNow().then((v) {
       setState(() {
         tasbih = v;
@@ -164,26 +165,33 @@ class TasbihDrawer extends StatefulWidget {
 class _TasbihDrawer extends State<TasbihDrawer> {
   @override
   Widget build(BuildContext context) {
+    double drawerWidth = MediaQuery.of(context).size.width / 3 * 2;
     return FutureBuilder(
         future: getTotalTasbihCount(),
         builder: (context, snap) {
           if (snap.connectionState == ConnectionState.done) {
             return Container(
               color: Colors.lightBlue,
-              width: MediaQuery.of(context).size.width / 2,
+              width: drawerWidth,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   TasbihNumber(
+                    width: drawerWidth,
                     name: "Total",
                     number: snap.data![0],
                   ),
                   TasbihNumber(
+                    width: drawerWidth,
                     name: "Total Today",
                     number: snap.data![1],
                   ),
-                  MaterialButton(
-                    color: Colors.white,
+                  TextButton(
+                    style: TextButton.styleFrom(
+                        shape: const RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(10))),
+                        backgroundColor: Colors.white),
                     onPressed: () {
                       setState(() {
                         clearTasbih();
@@ -200,7 +208,7 @@ class _TasbihDrawer extends State<TasbihDrawer> {
           } else {
             return Container(
               color: Colors.lightBlue,
-              width: MediaQuery.of(context).size.width / 2,
+              width: drawerWidth,
             );
           }
         });
@@ -211,7 +219,12 @@ class _TasbihDrawer extends State<TasbihDrawer> {
 class TasbihNumber extends StatefulWidget {
   final String name;
   int number;
-  TasbihNumber({super.key, required this.name, required this.number});
+  final double width;
+  TasbihNumber(
+      {super.key,
+      required this.name,
+      required this.number,
+      required this.width});
 
   @override
   State<TasbihNumber> createState() => _TasbihNumberState();
@@ -222,7 +235,7 @@ class _TasbihNumberState extends State<TasbihNumber> {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(0, 5, 0, 5),
-      width: MediaQuery.of(context).size.width / 2,
+      width: widget.width,
       margin: const EdgeInsets.all(5),
       decoration: const BoxDecoration(
           color: Colors.white,
@@ -242,6 +255,7 @@ class _TasbihNumberState extends State<TasbihNumber> {
 }
 
 Future<List> getTotalTasbihCount() async {
+  // gets the total of tasbih today and overall
   List total = [];
   await SharedPreferences.getInstance().then((prefs) {
     if (!prefs.containsKey("totalTasbih")) {
@@ -256,11 +270,30 @@ Future<List> getTotalTasbihCount() async {
 }
 
 Future<int?> getTasbihNow() async {
+  // gets the total in the button before resetting it
   int? tasbih = 0;
   await SharedPreferences.getInstance().then((prefs) {
     if (!prefs.containsKey("tasbihNow")) {
       prefs.setInt("tasbihNow", 0);
     }
+    if (!prefs.containsKey("tasbihDate")) {
+      String date = DateTime.now().toString();
+      date = date.substring(0, date.indexOf(" "));
+
+      prefs.setString("tasbihDate", date);
+    }
+
+    // if the date changed, reset the total of the day to 0
+    String today = DateTime.now().toString();
+    today = today.substring(0, today.indexOf(" "));
+
+    String? date = prefs.getString("tasbihDate");
+
+    if (today != date) {
+      prefs.setInt("totalTasbihToday", 0);
+      prefs.setString("tasbihDate", today);
+    }
+
     tasbih = prefs.getInt("tasbihNow");
   });
 
@@ -268,6 +301,7 @@ Future<int?> getTasbihNow() async {
 }
 
 void increaseTasbih() async {
+  // increases all tasbih totals by 1
   await SharedPreferences.getInstance().then((prefs) {
     int? oldTotal = prefs.getInt("totalTasbih");
     prefs.setInt("totalTasbih", oldTotal! + 1);
@@ -281,12 +315,14 @@ void increaseTasbih() async {
 }
 
 void clearTasbihNow() async {
+  // clears the tasbih number in the button
   await SharedPreferences.getInstance().then((prefs) {
     prefs.setInt("tasbihNow", 0);
   });
 }
 
 void clearTasbih() async {
+  // clears the tasbih total
   await SharedPreferences.getInstance().then((prefs) {
     prefs.setInt("totalTasbihToday", 0);
     prefs.setInt("totalTasbih", 0);
