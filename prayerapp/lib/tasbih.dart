@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:prayerapp/settings.dart';
 import "package:shared_preferences/shared_preferences.dart";
 import "package:flutter/material.dart";
 import 'package:vibration/vibration.dart';
@@ -13,6 +14,9 @@ class Tasbih extends StatefulWidget {
 
 class _Tasbih extends State<Tasbih> with TickerProviderStateMixin {
   int? tasbih = 0;
+  Color mainColor = Colors.lightBlue;
+  Color secondaryColor = Colors.white;
+  Color backColor = Colors.lightBlue[50]!;
 
   // controllers and the animations
   late AnimationController shrinkController;
@@ -58,6 +62,9 @@ class _Tasbih extends State<Tasbih> with TickerProviderStateMixin {
     });
   }
 
+  bool vibrate = false;
+  int vibrateOn = -1;
+
   @override
   void dispose() {
     super.dispose();
@@ -67,6 +74,17 @@ class _Tasbih extends State<Tasbih> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    getColors().then((data) {
+      setState(() {
+        mainColor = hexToColor(data[0]);
+        secondaryColor = hexToColor(data[1]);
+        backColor = hexToColor(data[2]);
+      });
+    });
+    getVibrationData().then((data) {
+      vibrate = data[0];
+      vibrateOn = data[1];
+    });
     // get what's minimum, the width of the screen or the height
     double screenWidth = min(
         MediaQuery.of(context).size.width, MediaQuery.of(context).size.height);
@@ -81,7 +99,10 @@ class _Tasbih extends State<Tasbih> with TickerProviderStateMixin {
                 onPressed: () {
                   widget.scaffoldKey.currentState!.openDrawer();
                 },
-                icon: const Icon(Icons.menu))
+                icon: Icon(
+                  Icons.menu,
+                  color: mainColor,
+                ))
           ],
         ),
         Expanded(
@@ -89,9 +110,9 @@ class _Tasbih extends State<Tasbih> with TickerProviderStateMixin {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                decoration: const BoxDecoration(
-                    borderRadius: BorderRadius.all(Radius.circular(1000)),
-                    color: Colors.white),
+                decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.all(Radius.circular(1000)),
+                    color: secondaryColor),
                 width: screenWidth / 2 + 30,
                 height: screenWidth / 2 + 30,
                 child: Center(
@@ -104,22 +125,28 @@ class _Tasbih extends State<Tasbih> with TickerProviderStateMixin {
                         height: screenWidth / 2 -
                             shrinkAnimation.value +
                             growAnimation.value,
-                        decoration: const BoxDecoration(
-                          color: Colors.lightBlue,
-                          borderRadius: BorderRadius.all(Radius.circular(1000)),
+                        decoration: BoxDecoration(
+                          color: mainColor,
+                          borderRadius:
+                              const BorderRadius.all(Radius.circular(1000)),
                         ),
                         child: Center(
                             child: Text("$tasbih",
-                                style: const TextStyle(
-                                    fontSize: 20, color: Colors.white)))),
+                                style: TextStyle(
+                                    fontSize: 20, color: secondaryColor)))),
                     onTap: () {
                       setState(() {
                         // vibrate when there are 33 tasbih
                         tasbih = tasbih! + 1;
                         increaseTasbih();
-                        if (tasbih == 33) {
-                          Vibration.vibrate(duration: 1000);
+                        try {
+                          if (tasbih == vibrateOn && vibrate) {
+                            Vibration.vibrate(duration: 1000);
+                          }
+                        } catch (e) {
+                          //
                         }
+
                         // start the animation on click
                         shrinkController.forward();
                       });
@@ -135,9 +162,10 @@ class _Tasbih extends State<Tasbih> with TickerProviderStateMixin {
                 child: Container(
                   width: 30,
                   height: 30,
-                  decoration: const BoxDecoration(
-                      color: Colors.lightBlue,
-                      borderRadius: BorderRadius.all(Radius.circular(1000))),
+                  decoration: BoxDecoration(
+                      color: mainColor,
+                      borderRadius:
+                          const BorderRadius.all(Radius.circular(1000))),
                 ),
                 onTap: () {
                   // reset the tasbih
@@ -163,25 +191,33 @@ class TasbihDrawer extends StatefulWidget {
 }
 
 class _TasbihDrawer extends State<TasbihDrawer> {
+  Color color = Colors.lightBlue;
+  Color secondaryColor = Colors.white;
   @override
   Widget build(BuildContext context) {
+    getColors().then((data) {
+      color = hexToColor(data[0]);
+      secondaryColor = hexToColor(data[1]);
+    });
     double drawerWidth = MediaQuery.of(context).size.width / 3 * 2;
     return FutureBuilder(
         future: getTotalTasbihCount(),
         builder: (context, snap) {
           if (snap.connectionState == ConnectionState.done) {
             return Container(
-              color: Colors.lightBlue,
+              color: color,
               width: drawerWidth,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   TasbihNumber(
+                    color: color,
                     width: drawerWidth,
                     name: "Total",
                     number: snap.data![0],
                   ),
                   TasbihNumber(
+                    color: color,
                     width: drawerWidth,
                     name: "Total Today",
                     number: snap.data![1],
@@ -191,15 +227,15 @@ class _TasbihDrawer extends State<TasbihDrawer> {
                         shape: const RoundedRectangleBorder(
                             borderRadius:
                                 BorderRadius.all(Radius.circular(10))),
-                        backgroundColor: Colors.white),
+                        backgroundColor: secondaryColor),
                     onPressed: () {
                       setState(() {
                         clearTasbih();
                       });
                     },
-                    child: const Text(
+                    child: Text(
                       "Clear",
-                      style: TextStyle(color: Colors.lightBlue),
+                      style: TextStyle(color: color),
                     ),
                   )
                 ],
@@ -207,7 +243,7 @@ class _TasbihDrawer extends State<TasbihDrawer> {
             );
           } else {
             return Container(
-              color: Colors.lightBlue,
+              color: Colors.white,
               width: drawerWidth,
             );
           }
@@ -220,11 +256,13 @@ class TasbihNumber extends StatefulWidget {
   final String name;
   int number;
   final double width;
+  final Color color;
   TasbihNumber(
       {super.key,
       required this.name,
       required this.number,
-      required this.width});
+      required this.width,
+      required this.color});
 
   @override
   State<TasbihNumber> createState() => _TasbihNumberState();
@@ -244,10 +282,9 @@ class _TasbihNumberState extends State<TasbihNumber> {
         children: [
           Text(
             widget.name,
-            style: const TextStyle(color: Colors.lightBlue),
+            style: TextStyle(color: widget.color),
           ),
-          Text("${widget.number}",
-              style: const TextStyle(color: Colors.lightBlue))
+          Text("${widget.number}", style: TextStyle(color: widget.color))
         ],
       ),
     );

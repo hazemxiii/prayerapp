@@ -4,6 +4,7 @@ import "package:flutter/material.dart";
 import 'package:http/http.dart' as http;
 import "package:shared_preferences/shared_preferences.dart";
 import "tasbih.dart";
+import "settings.dart";
 
 void main() {
   runApp(const App());
@@ -25,6 +26,9 @@ class MainPage extends StatefulWidget {
 
 class _MainPage extends State<MainPage> {
   int activePage = 0;
+  Color mainColor = Colors.lightBlue;
+  Color secondaryColor = Colors.white;
+  Color backColor = Colors.lightBlue[50]!;
   // the pages controlled by the bottom nav bar
   late List<Widget> pages;
   late List<dynamic> pagesDrawers;
@@ -63,6 +67,8 @@ class _MainPage extends State<MainPage> {
                         itemCount: snapshot.data!.length,
                         itemBuilder: (context, i) {
                           return PrayerDay(
+                              dateColor: mainColor,
+                              color: secondaryColor,
                               // the last index (7) contains the american day to format and display
                               time: snapshot.data![i][7],
                               times: snapshot.data[i]);
@@ -88,10 +94,11 @@ class _MainPage extends State<MainPage> {
       ),
       Tasbih(
         scaffoldKey: scaffoldKey,
-      )
+      ),
+      const Settings()
     ];
 
-    pagesDrawers = const [Placeholder(), TasbihDrawer()];
+    pagesDrawers = const [Placeholder(), TasbihDrawer(), Placeholder()];
   }
 
   @override
@@ -101,6 +108,13 @@ class _MainPage extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
+    getColors().then((data) {
+      setState(() {
+        mainColor = hexToColor(data[0]);
+        secondaryColor = hexToColor(data[1]);
+        backColor = hexToColor(data[2]);
+      });
+    });
     return Scaffold(
         drawer: pagesDrawers[activePage],
         key: scaffoldKey,
@@ -108,8 +122,9 @@ class _MainPage extends State<MainPage> {
           height: 40,
           child: BottomNavigationBar(
             currentIndex: activePage,
-            backgroundColor: Colors.white,
-            selectedItemColor: Colors.blue,
+            backgroundColor: secondaryColor,
+            selectedItemColor: mainColor,
+            unselectedItemColor: backColor,
             iconSize: 14,
             selectedFontSize: 10,
             unselectedFontSize: 10,
@@ -124,23 +139,40 @@ class _MainPage extends State<MainPage> {
               BottomNavigationBarItem(
                 icon: Icon(Icons.circle),
                 label: "Tasbih",
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.settings),
+                label: "Settings",
               )
             ],
           ),
         ),
-        backgroundColor: Colors.lightBlue[50],
+        backgroundColor: backColor,
         body: pages[activePage]);
   }
 }
 
-class PrayerDay extends StatelessWidget {
+class PrayerDay extends StatefulWidget {
   final String time;
   final List times;
-  const PrayerDay({super.key, required this.time, required this.times});
+  final Color color;
+  final Color dateColor;
+  const PrayerDay(
+      {super.key,
+      required this.time,
+      required this.times,
+      required this.color,
+      required this.dateColor});
+
+  @override
+  State<PrayerDay> createState() => _PrayerDayState();
+}
+
+class _PrayerDayState extends State<PrayerDay> {
   @override
   Widget build(BuildContext context) {
     String dhuhr = "Dhuhr";
-    if (numbersDateToText(time).contains("Friday")) {
+    if (numbersDateToText(widget.time).contains("Friday")) {
       dhuhr = "Jumu'a";
     }
     return SingleChildScrollView(
@@ -149,36 +181,43 @@ class PrayerDay extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(0, 10, 0, 0),
         child: Column(children: [
           // format the american date to Weekday, day month
-          Text(numbersDateToText(time)),
+          Text(numbersDateToText(widget.time),
+              style: TextStyle(color: widget.dateColor)),
           // hijri date is at index 6
           Text(
-            times[6],
-            style: const TextStyle(color: Colors.grey),
+            widget.times[6],
+            style: TextStyle(color: widget.dateColor),
           ),
           // the prayers are in order [fajr,sunrise,dhuhr,asr,maghrib,isha]
           Prayer(
+            color: widget.color,
             name: "Fajr",
-            time: DateTime.parse("$time ${times[0]}"),
+            time: DateTime.parse("${widget.time} ${widget.times[0]}"),
           ),
           Prayer(
+            color: widget.color,
             name: "Sunrise",
-            time: DateTime.parse("$time ${times[1]}"),
+            time: DateTime.parse("${widget.time} ${widget.times[1]}"),
           ),
           Prayer(
+            color: widget.color,
             name: dhuhr,
-            time: DateTime.parse("$time ${times[2]}"),
+            time: DateTime.parse("${widget.time} ${widget.times[2]}"),
           ),
           Prayer(
+            color: widget.color,
             name: "Asr",
-            time: DateTime.parse("$time ${times[3]}"),
+            time: DateTime.parse("${widget.time} ${widget.times[3]}"),
           ),
           Prayer(
+            color: widget.color,
             name: "Maghrib",
-            time: DateTime.parse("$time ${times[4]}"),
+            time: DateTime.parse("${widget.time} ${widget.times[4]}"),
           ),
           Prayer(
+            color: widget.color,
             name: "Isha'a",
-            time: DateTime.parse("$time ${times[5]}"),
+            time: DateTime.parse("${widget.time} ${widget.times[5]}"),
           )
         ]),
       ),
@@ -189,7 +228,9 @@ class PrayerDay extends StatelessWidget {
 class Prayer extends StatefulWidget {
   final String name;
   final DateTime time;
-  const Prayer({super.key, required this.name, required this.time});
+  final Color color;
+  const Prayer(
+      {super.key, required this.name, required this.time, required this.color});
 
   @override
   State<Prayer> createState() => _Prayer();
@@ -197,9 +238,9 @@ class Prayer extends StatefulWidget {
 
 class _Prayer extends State<Prayer> {
   // create random color away from white
-  int red = Random().nextInt(241);
-  int green = Random().nextInt(241);
-  int blue = Random().nextInt(241);
+  int red = Random().nextInt(256);
+  int green = Random().nextInt(256);
+  int blue = Random().nextInt(256);
 
   @override
   Widget build(BuildContext context) {
@@ -234,9 +275,9 @@ class _Prayer extends State<Prayer> {
         Container(
           padding: const EdgeInsets.all(10),
           margin: const EdgeInsets.all(5),
-          decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.all(Radius.circular(10))),
+          decoration: BoxDecoration(
+              color: widget.color,
+              borderRadius: const BorderRadius.all(Radius.circular(10))),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
