@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import "package:shared_preferences/shared_preferences.dart";
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'location.dart';
 
 class Settings extends StatefulWidget {
   const Settings({super.key});
@@ -37,7 +38,6 @@ class _SettingsState extends State<Settings> {
         backColor = hexToColor(data[2]);
       });
     });
-
     return SingleChildScrollView(
       child: Column(
         children: [
@@ -123,6 +123,27 @@ class _SettingsState extends State<Settings> {
             colorKey: "backColor",
             rowColor: secondaryColor,
             textColor: mainColor,
+          ),
+          InkWell(
+            onTap: () {
+              Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => const LocationSettings()));
+            },
+            child: SettingRow(
+                color: secondaryColor,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "Location",
+                      style: TextStyle(color: mainColor),
+                    ),
+                    Icon(
+                      Icons.arrow_right,
+                      color: mainColor,
+                    )
+                  ],
+                )),
           )
         ],
       ),
@@ -232,6 +253,7 @@ class _ColorPickerRowState extends State<ColorPickerRow> {
                       actions: [
                         TextButton(
                             onPressed: () {
+                              Navigator.of(context).pop();
                               saveColor(widget.colorKey, color!.toHexString());
                             },
                             child: Text(
@@ -246,6 +268,7 @@ class _ColorPickerRowState extends State<ColorPickerRow> {
               height: 20,
               width: 20,
               decoration: BoxDecoration(
+                  border: Border.all(color: widget.textColor, width: 1),
                   color: widget.pickerColor,
                   borderRadius: const BorderRadius.all(Radius.circular(999))),
             ),

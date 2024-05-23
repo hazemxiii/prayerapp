@@ -1,13 +1,20 @@
 import "dart:convert";
-import "dart:math";
 import "package:flutter/material.dart";
 import 'package:http/http.dart' as http;
 import "package:shared_preferences/shared_preferences.dart";
 import "tasbih.dart";
 import "settings.dart";
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 
 void main() {
   runApp(const App());
+}
+
+class AppState extends ChangeNotifier {
+  void updateState() {
+    notifyListeners();
+  }
 }
 
 class App extends StatelessWidget {
@@ -157,12 +164,13 @@ class PrayerDay extends StatefulWidget {
   final List times;
   final Color color;
   final Color dateColor;
-  const PrayerDay(
-      {super.key,
-      required this.time,
-      required this.times,
-      required this.color,
-      required this.dateColor});
+  const PrayerDay({
+    super.key,
+    required this.time,
+    required this.times,
+    required this.color,
+    required this.dateColor,
+  });
 
   @override
   State<PrayerDay> createState() => _PrayerDayState();
@@ -191,31 +199,37 @@ class _PrayerDayState extends State<PrayerDay> {
           // the prayers are in order [fajr,sunrise,dhuhr,asr,maghrib,isha]
           Prayer(
             color: widget.color,
+            textColor: widget.dateColor,
             name: "Fajr",
             time: DateTime.parse("${widget.time} ${widget.times[0]}"),
           ),
           Prayer(
             color: widget.color,
+            textColor: widget.dateColor,
             name: "Sunrise",
             time: DateTime.parse("${widget.time} ${widget.times[1]}"),
           ),
           Prayer(
             color: widget.color,
+            textColor: widget.dateColor,
             name: dhuhr,
             time: DateTime.parse("${widget.time} ${widget.times[2]}"),
           ),
           Prayer(
             color: widget.color,
+            textColor: widget.dateColor,
             name: "Asr",
             time: DateTime.parse("${widget.time} ${widget.times[3]}"),
           ),
           Prayer(
             color: widget.color,
+            textColor: widget.dateColor,
             name: "Maghrib",
             time: DateTime.parse("${widget.time} ${widget.times[4]}"),
           ),
           Prayer(
             color: widget.color,
+            textColor: widget.dateColor,
             name: "Isha'a",
             time: DateTime.parse("${widget.time} ${widget.times[5]}"),
           )
@@ -229,23 +243,21 @@ class Prayer extends StatefulWidget {
   final String name;
   final DateTime time;
   final Color color;
+  final Color textColor;
   const Prayer(
-      {super.key, required this.name, required this.time, required this.color});
+      {super.key,
+      required this.name,
+      required this.time,
+      required this.color,
+      required this.textColor});
 
   @override
   State<Prayer> createState() => _Prayer();
 }
 
 class _Prayer extends State<Prayer> {
-  // create random color away from white
-  int red = Random().nextInt(256);
-  int green = Random().nextInt(256);
-  int blue = Random().nextInt(256);
-
   @override
   Widget build(BuildContext context) {
-    Color color = Color.fromRGBO(red, green, blue, 1);
-
     int hour = widget.time.hour;
     int minutes = widget.time.minute;
     String dayPeriod = "AM";
@@ -286,7 +298,7 @@ class _Prayer extends State<Prayer> {
                   Container(
                     width: 3,
                     height: 20,
-                    color: color,
+                    color: widget.textColor,
                     margin: const EdgeInsets.fromLTRB(0, 0, 10, 0),
                   ),
                   Column(
@@ -294,15 +306,15 @@ class _Prayer extends State<Prayer> {
                     children: [
                       Text(
                         widget.name,
-                        style: TextStyle(color: color),
+                        style: TextStyle(color: widget.textColor),
                       ),
                       Text("$hour:${"$minutes".padLeft(2, "0")} $dayPeriod",
-                          style: TextStyle(color: color))
+                          style: TextStyle(color: widget.textColor))
                     ],
                   ),
                 ],
               ),
-              Text(diff, style: TextStyle(color: color))
+              Text(diff, style: TextStyle(color: widget.textColor))
             ],
           ),
         ),
@@ -319,21 +331,42 @@ Future<dynamic> getPrayerTime() async {
     // loop on the next 30 days
     for (int i = 0; i < 30; i++) {
       DateTime dateO = DateTime.now().add(Duration(days: i));
+
       // get the american and normal dates
       String date = parseDate(dateO, false);
       String americanDate = parseDate(dateO, true);
+
       // if there's no data, create one
       if (!spref.containsKey("prayers")) {
         spref.setString("prayers", jsonEncode({}));
       }
+
+      String? country;
+      String? city;
+
+      if (!spref.containsKey("city")) {
+        List data = await getPosition();
+        if (data.isEmpty) {
+          return [];
+        }
+        country = data[0];
+        city = data[1];
+
+        spref.setString("city", city!);
+        spref.setString("country", country!);
+      }
+
       // get the old data
       Map prayerDays = jsonDecode(spref.getString("prayers")!);
+
       // if the date is saved on the device, add it to be returned later, else, get it from the API
       if (prayerDays.containsKey(americanDate)) {
         daysTime.add(prayerDays[americanDate]);
       } else {
-        var url = Uri.https("api.aladhan.com", "/v1/timingsByCity/$date",
-            {"city": "Alexandria", "country": "Egypt"});
+        var url = Uri.https("api.aladhan.com", "/v1/timingsByCity/$date", {
+          "city": spref.getString("city"),
+          "country": spref.getString("country")
+        });
         try {
           var r = await http.get(url);
           if (r.statusCode == 200) {
@@ -344,6 +377,7 @@ Future<dynamic> getPrayerTime() async {
             var hijriMonth = hijri['month']['en'];
             var hijriYear = hijri['year'];
             var hijriDate = "$hirjiDay - $hijriMonth - $hijriYear";
+
             List dayWrap = [
               timings['Fajr'],
               timings['Sunrise'],
@@ -354,14 +388,18 @@ Future<dynamic> getPrayerTime() async {
               hijriDate,
               americanDate
             ];
+
             // add the date to the preferences and remove the date behind it with 30 days
             prayerDays[americanDate] = dayWrap;
+
             String dateToRemove = parseDate(
                 DateTime.parse(americanDate).subtract(const Duration(days: 30)),
                 true);
+
             if (prayerDays.containsKey(dateToRemove)) {
               prayerDays.remove(dateToRemove);
             }
+
             spref.setString("prayers", jsonEncode(prayerDays));
             daysTime.add(dayWrap);
           }
@@ -436,4 +474,45 @@ String parseDate(DateTime date, bool toAmerican) {
   } else {
     return "$day-$month-$year";
   }
+}
+
+Future<List> getPosition() async {
+  bool serviceEnabled;
+  LocationPermission permission;
+
+  serviceEnabled = await Geolocator.isLocationServiceEnabled();
+  if (!serviceEnabled) {
+    // return Future.error('Location services are disabled.');
+    Geolocator.openLocationSettings();
+    return [];
+  }
+
+  permission = await Geolocator.checkPermission();
+  if (permission == LocationPermission.denied) {
+    permission = await Geolocator.requestPermission();
+    if (permission == LocationPermission.denied) {
+      // return Future.error('Location permissions are denied');
+      return [];
+    }
+  }
+
+  if (permission == LocationPermission.deniedForever) {
+    // return Future.error(
+    //     'Location permissions are permanently denied, we cannot request permissions.');
+    return [];
+  }
+  Position position = await Geolocator.getCurrentPosition();
+
+  List address = [];
+  try {
+    await placemarkFromCoordinates(position.latitude, position.longitude)
+        .then((data) {
+      address.add(data[0].toJson()['country']);
+      address.add(data[0].toJson()['administrativeArea']);
+    });
+  } catch (e) {
+    //
+  }
+
+  return address;
 }

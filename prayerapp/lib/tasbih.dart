@@ -1,5 +1,5 @@
 import 'dart:math';
-import 'package:prayerapp/settings.dart';
+import 'settings.dart';
 import "package:shared_preferences/shared_preferences.dart";
 import "package:flutter/material.dart";
 import 'package:vibration/vibration.dart';
@@ -60,6 +60,18 @@ class _Tasbih extends State<Tasbih> with TickerProviderStateMixin {
         tasbih = v;
       });
     });
+
+    getColors().then((data) {
+      setState(() {
+        mainColor = hexToColor(data[0]);
+        secondaryColor = hexToColor(data[1]);
+        backColor = hexToColor(data[2]);
+      });
+    });
+    getVibrationData().then((data) {
+      vibrate = data[0];
+      vibrateOn = data[1];
+    });
   }
 
   bool vibrate = false;
@@ -74,17 +86,6 @@ class _Tasbih extends State<Tasbih> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    getColors().then((data) {
-      setState(() {
-        mainColor = hexToColor(data[0]);
-        secondaryColor = hexToColor(data[1]);
-        backColor = hexToColor(data[2]);
-      });
-    });
-    getVibrationData().then((data) {
-      vibrate = data[0];
-      vibrateOn = data[1];
-    });
     // get what's minimum, the width of the screen or the height
     double screenWidth = min(
         MediaQuery.of(context).size.width, MediaQuery.of(context).size.height);
@@ -193,12 +194,18 @@ class TasbihDrawer extends StatefulWidget {
 class _TasbihDrawer extends State<TasbihDrawer> {
   Color color = Colors.lightBlue;
   Color secondaryColor = Colors.white;
+
   @override
-  Widget build(BuildContext context) {
+  void initState() {
     getColors().then((data) {
       color = hexToColor(data[0]);
       secondaryColor = hexToColor(data[1]);
     });
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     double drawerWidth = MediaQuery.of(context).size.width / 3 * 2;
     return FutureBuilder(
         future: getTotalTasbihCount(),
