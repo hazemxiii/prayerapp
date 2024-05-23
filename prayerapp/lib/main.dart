@@ -6,13 +6,36 @@ import "tasbih.dart";
 import "settings.dart";
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:provider/provider.dart';
 
 void main() {
-  runApp(const App());
+  runApp(ChangeNotifierProvider(
+    create: (context) => ColorPalette(),
+    child: const App(),
+  ));
 }
 
-class AppState extends ChangeNotifier {
-  void updateState() {
+class ColorPalette extends ChangeNotifier {
+  Color main = Colors.lightBlue;
+  Color second = Colors.white;
+  Color back = Colors.lightBlue[50]!;
+
+  Color get getMainC => main;
+  Color get getSecC => second;
+  Color get getBackC => back;
+
+  void setMainC(Color c) {
+    main = c;
+    notifyListeners();
+  }
+
+  void setSecC(Color c) {
+    second = c;
+    notifyListeners();
+  }
+
+  void setBackC(Color c) {
+    back = c;
     notifyListeners();
   }
 }
@@ -74,8 +97,6 @@ class _MainPage extends State<MainPage> {
                         itemCount: snapshot.data!.length,
                         itemBuilder: (context, i) {
                           return PrayerDay(
-                              dateColor: mainColor,
-                              color: secondaryColor,
                               // the last index (7) contains the american day to format and display
                               time: snapshot.data![i][7],
                               times: snapshot.data[i]);
@@ -106,6 +127,17 @@ class _MainPage extends State<MainPage> {
     ];
 
     pagesDrawers = const [Placeholder(), TasbihDrawer(), Placeholder()];
+
+    getColors().then((data) {
+      Provider.of<ColorPalette>(context, listen: false)
+          .setMainC(hexToColor(data[0]));
+
+      Provider.of<ColorPalette>(context, listen: false)
+          .setSecC(hexToColor(data[1]));
+
+      Provider.of<ColorPalette>(context, listen: false)
+          .setBackC(hexToColor(data[2]));
+    });
   }
 
   @override
@@ -115,61 +147,53 @@ class _MainPage extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
-    getColors().then((data) {
-      setState(() {
-        mainColor = hexToColor(data[0]);
-        secondaryColor = hexToColor(data[1]);
-        backColor = hexToColor(data[2]);
-      });
-    });
-    return Scaffold(
-        drawer: pagesDrawers[activePage],
-        key: scaffoldKey,
-        bottomNavigationBar: SizedBox(
-          height: 40,
-          child: BottomNavigationBar(
-            currentIndex: activePage,
-            backgroundColor: secondaryColor,
-            selectedItemColor: mainColor,
-            unselectedItemColor: backColor,
-            iconSize: 14,
-            selectedFontSize: 10,
-            unselectedFontSize: 10,
-            onTap: (v) {
-              setState(() {
-                activePage = v;
-              });
-            },
-            items: const [
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.alarm), label: "Prayer Times"),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.circle),
-                label: "Tasbih",
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.settings),
-                label: "Settings",
-              )
-            ],
+    return Consumer<ColorPalette>(builder: (context, palette, child) {
+      return Scaffold(
+          drawer: pagesDrawers[activePage],
+          key: scaffoldKey,
+          bottomNavigationBar: SizedBox(
+            height: 40,
+            child: BottomNavigationBar(
+              currentIndex: activePage,
+              backgroundColor: palette.getSecC,
+              selectedItemColor: palette.getMainC,
+              unselectedItemColor: palette.getBackC,
+              iconSize: 14,
+              selectedFontSize: 10,
+              unselectedFontSize: 10,
+              onTap: (v) {
+                setState(() {
+                  activePage = v;
+                });
+              },
+              items: const [
+                BottomNavigationBarItem(
+                    icon: Icon(Icons.alarm), label: "Prayer Times"),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.circle),
+                  label: "Tasbih",
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.settings),
+                  label: "Settings",
+                )
+              ],
+            ),
           ),
-        ),
-        backgroundColor: backColor,
-        body: pages[activePage]);
+          backgroundColor: palette.getBackC,
+          body: pages[activePage]);
+    });
   }
 }
 
 class PrayerDay extends StatefulWidget {
   final String time;
   final List times;
-  final Color color;
-  final Color dateColor;
+
   const PrayerDay({
     super.key,
     required this.time,
     required this.times,
-    required this.color,
-    required this.dateColor,
   });
 
   @override
@@ -185,55 +209,44 @@ class _PrayerDayState extends State<PrayerDay> {
     }
     return SingleChildScrollView(
       child: Container(
-        // color: Colors.lightBlue[50],
         padding: const EdgeInsets.fromLTRB(0, 10, 0, 0),
-        child: Column(children: [
-          // format the american date to Weekday, day month
-          Text(numbersDateToText(widget.time),
-              style: TextStyle(color: widget.dateColor)),
-          // hijri date is at index 6
-          Text(
-            widget.times[6],
-            style: TextStyle(color: widget.dateColor),
-          ),
-          // the prayers are in order [fajr,sunrise,dhuhr,asr,maghrib,isha]
-          Prayer(
-            color: widget.color,
-            textColor: widget.dateColor,
-            name: "Fajr",
-            time: DateTime.parse("${widget.time} ${widget.times[0]}"),
-          ),
-          Prayer(
-            color: widget.color,
-            textColor: widget.dateColor,
-            name: "Sunrise",
-            time: DateTime.parse("${widget.time} ${widget.times[1]}"),
-          ),
-          Prayer(
-            color: widget.color,
-            textColor: widget.dateColor,
-            name: dhuhr,
-            time: DateTime.parse("${widget.time} ${widget.times[2]}"),
-          ),
-          Prayer(
-            color: widget.color,
-            textColor: widget.dateColor,
-            name: "Asr",
-            time: DateTime.parse("${widget.time} ${widget.times[3]}"),
-          ),
-          Prayer(
-            color: widget.color,
-            textColor: widget.dateColor,
-            name: "Maghrib",
-            time: DateTime.parse("${widget.time} ${widget.times[4]}"),
-          ),
-          Prayer(
-            color: widget.color,
-            textColor: widget.dateColor,
-            name: "Isha'a",
-            time: DateTime.parse("${widget.time} ${widget.times[5]}"),
-          )
-        ]),
+        child: Consumer<ColorPalette>(builder: (context, palette, child) {
+          return Column(children: [
+            // format the american date to Weekday, day month
+            Text(numbersDateToText(widget.time),
+                style: TextStyle(color: palette.getMainC)),
+            // hijri date is at index 6
+            Text(
+              widget.times[6],
+              style: TextStyle(color: palette.getMainC),
+            ),
+            // the prayers are in order [fajr,sunrise,dhuhr,asr,maghrib,isha]
+            Prayer(
+              name: "Fajr",
+              time: DateTime.parse("${widget.time} ${widget.times[0]}"),
+            ),
+            Prayer(
+              name: "Sunrise",
+              time: DateTime.parse("${widget.time} ${widget.times[1]}"),
+            ),
+            Prayer(
+              name: dhuhr,
+              time: DateTime.parse("${widget.time} ${widget.times[2]}"),
+            ),
+            Prayer(
+              name: "Asr",
+              time: DateTime.parse("${widget.time} ${widget.times[3]}"),
+            ),
+            Prayer(
+              name: "Maghrib",
+              time: DateTime.parse("${widget.time} ${widget.times[4]}"),
+            ),
+            Prayer(
+              name: "Isha'a",
+              time: DateTime.parse("${widget.time} ${widget.times[5]}"),
+            )
+          ]);
+        }),
       ),
     );
   }
@@ -242,14 +255,12 @@ class _PrayerDayState extends State<PrayerDay> {
 class Prayer extends StatefulWidget {
   final String name;
   final DateTime time;
-  final Color color;
-  final Color textColor;
-  const Prayer(
-      {super.key,
-      required this.name,
-      required this.time,
-      required this.color,
-      required this.textColor});
+
+  const Prayer({
+    super.key,
+    required this.name,
+    required this.time,
+  });
 
   @override
   State<Prayer> createState() => _Prayer();
@@ -282,44 +293,46 @@ class _Prayer extends State<Prayer> {
     }
     // take only the hours and minutes
 
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(10),
-          margin: const EdgeInsets.all(5),
-          decoration: BoxDecoration(
-              color: widget.color,
-              borderRadius: const BorderRadius.all(Radius.circular(10))),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 3,
-                    height: 20,
-                    color: widget.textColor,
-                    margin: const EdgeInsets.fromLTRB(0, 0, 10, 0),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.name,
-                        style: TextStyle(color: widget.textColor),
-                      ),
-                      Text("$hour:${"$minutes".padLeft(2, "0")} $dayPeriod",
-                          style: TextStyle(color: widget.textColor))
-                    ],
-                  ),
-                ],
-              ),
-              Text(diff, style: TextStyle(color: widget.textColor))
-            ],
+    return Consumer<ColorPalette>(builder: (context, palette, c) {
+      return Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            margin: const EdgeInsets.all(5),
+            decoration: BoxDecoration(
+                color: palette.getSecC,
+                borderRadius: const BorderRadius.all(Radius.circular(10))),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 3,
+                      height: 20,
+                      color: palette.getMainC,
+                      margin: const EdgeInsets.fromLTRB(0, 0, 10, 0),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.name,
+                          style: TextStyle(color: palette.getMainC),
+                        ),
+                        Text("$hour:${"$minutes".padLeft(2, "0")} $dayPeriod",
+                            style: TextStyle(color: palette.getMainC))
+                      ],
+                    ),
+                  ],
+                ),
+                Text(diff, style: TextStyle(color: palette.getMainC))
+              ],
+            ),
           ),
-        ),
-      ],
-    );
+        ],
+      );
+    });
   }
 }
 

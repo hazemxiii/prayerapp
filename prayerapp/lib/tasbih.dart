@@ -317,6 +317,12 @@ Future<int?> getTasbihNow() async {
   // gets the total in the button before resetting it
   int? tasbih = 0;
   await SharedPreferences.getInstance().then((prefs) {
+    if (!prefs.containsKey("totalTasbih")) {
+      prefs.setInt("totalTasbih", 0);
+    }
+    if (!prefs.containsKey("totalTasbihToday")) {
+      prefs.setInt("totalTasbihToday", 0);
+    }
     if (!prefs.containsKey("tasbihNow")) {
       prefs.setInt("tasbihNow", 0);
     }

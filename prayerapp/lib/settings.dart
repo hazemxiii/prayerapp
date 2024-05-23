@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:prayerappde/main.dart';
+import 'package:provider/provider.dart';
 import "package:shared_preferences/shared_preferences.dart";
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'location.dart';
@@ -13,17 +15,11 @@ class Settings extends StatefulWidget {
 class _SettingsState extends State<Settings> {
   bool vibration = true;
   String hint = "00";
-  Color mainColor = Colors.lightBlue;
-  Color secondaryColor = Colors.white;
-  Color backColor = Colors.lightBlue[50]!;
 
   @override
   void initState() {
     super.initState();
-  }
 
-  @override
-  Widget build(BuildContext context) {
     getVibrationData().then((data) {
       setState(() {
         vibration = data[0];
@@ -32,129 +28,132 @@ class _SettingsState extends State<Settings> {
     });
 
     getColors().then((data) {
-      setState(() {
-        mainColor = hexToColor(data[0]);
-        secondaryColor = hexToColor(data[1]);
-        backColor = hexToColor(data[2]);
-      });
+      Provider.of<ColorPalette>(context, listen: false)
+          .setMainC(hexToColor(data[0]));
+
+      Provider.of<ColorPalette>(context, listen: false)
+          .setSecC(hexToColor(data[1]));
+
+      Provider.of<ColorPalette>(context, listen: false)
+          .setBackC(hexToColor(data[2]));
     });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return SingleChildScrollView(
-      child: Column(
-        children: [
-          const SizedBox(
-            height: 20,
-          ),
-          Text("Settings",
-              style: TextStyle(
-                fontSize: 30,
-                color: mainColor,
-              )),
-          const SizedBox(
-            height: 10,
-          ),
-          SettingRow(
-              color: secondaryColor,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "Allow Vibrations",
-                    style: TextStyle(color: mainColor),
-                  ),
-                  Switch(
-                      activeColor: mainColor,
-                      inactiveThumbColor: backColor,
-                      inactiveTrackColor: secondaryColor,
-                      value: vibration,
-                      onChanged: (v) {
-                        allowVibration(v);
-                        setState(() {
-                          vibration = v;
-                        });
-                      })
-                ],
-              )),
-          SettingRow(
-              color: secondaryColor,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "Vibrate on:",
-                    style: TextStyle(color: mainColor),
-                  ),
-                  SizedBox(
-                    width: 25,
-                    child: TextField(
-                      decoration: InputDecoration(
-                        border: InputBorder.none,
-                        enabled: vibration,
-                        hintText: hint,
-                        hintStyle: TextStyle(color: mainColor),
-                      ),
-                      onChanged: (v) {
-                        try {
-                          updateVibrationCount(int.parse(v));
-                        } catch (e) {
-                          // print(e);
-                        }
-                      },
+      child: Consumer<ColorPalette>(builder: (context, palette, child) {
+        return Column(
+          children: [
+            const SizedBox(
+              height: 20,
+            ),
+            Text("Settings",
+                style: TextStyle(
+                  fontSize: 30,
+                  color: palette.getMainC,
+                )),
+            const SizedBox(
+              height: 10,
+            ),
+            SettingRow(
+                child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Allow Vibrations",
+                  style: TextStyle(color: palette.getMainC),
+                ),
+                Switch(
+                    activeColor: palette.getMainC,
+                    inactiveThumbColor: palette.getBackC,
+                    inactiveTrackColor: palette.getSecC,
+                    value: vibration,
+                    onChanged: (v) {
+                      allowVibration(v);
+                      setState(() {
+                        vibration = v;
+                      });
+                    })
+              ],
+            )),
+            SettingRow(
+                child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Vibrate on:",
+                  style: TextStyle(color: palette.getMainC),
+                ),
+                SizedBox(
+                  width: 25,
+                  child: TextField(
+                    decoration: InputDecoration(
+                      border: InputBorder.none,
+                      enabled: vibration,
+                      hintText: hint,
+                      hintStyle: TextStyle(color: palette.getMainC),
                     ),
+                    onChanged: (v) {
+                      try {
+                        updateVibrationCount(int.parse(v));
+                      } catch (e) {
+                        // print(e);
+                      }
+                    },
+                  ),
+                )
+              ],
+            )),
+            ColorPickerRow(
+              name: "Main Color",
+              pickerColor: palette.getMainC,
+              colorKey: "primaryColor",
+            ),
+            ColorPickerRow(
+              name: "Secondary Color",
+              pickerColor: palette.getSecC,
+              colorKey: "secondaryColor",
+            ),
+            ColorPickerRow(
+              name: "Background Color",
+              pickerColor: palette.getBackC,
+              colorKey: "backColor",
+            ),
+            InkWell(
+              onTap: () {
+                Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => const LocationSettings()));
+              },
+              child: SettingRow(
+                  child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Location",
+                    style: TextStyle(color: palette.getMainC),
+                  ),
+                  Icon(
+                    Icons.arrow_right,
+                    color: palette.getMainC,
                   )
                 ],
               )),
-          ColorPickerRow(
-            name: "Main Color",
-            pickerColor: mainColor,
-            colorKey: "primaryColor",
-            rowColor: secondaryColor,
-            textColor: mainColor,
-          ),
-          ColorPickerRow(
-            name: "Secondary Color",
-            pickerColor: secondaryColor,
-            colorKey: "secondaryColor",
-            rowColor: secondaryColor,
-            textColor: mainColor,
-          ),
-          ColorPickerRow(
-            name: "Background Color",
-            pickerColor: backColor,
-            colorKey: "backColor",
-            rowColor: secondaryColor,
-            textColor: mainColor,
-          ),
-          InkWell(
-            onTap: () {
-              Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => const LocationSettings()));
-            },
-            child: SettingRow(
-                color: secondaryColor,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "Location",
-                      style: TextStyle(color: mainColor),
-                    ),
-                    Icon(
-                      Icons.arrow_right,
-                      color: mainColor,
-                    )
-                  ],
-                )),
-          )
-        ],
-      ),
+            )
+          ],
+        );
+      }),
     );
   }
 }
 
 class SettingRow extends StatefulWidget {
   final Widget child;
-  final Color color;
-  const SettingRow({super.key, required this.child, required this.color});
+
+  const SettingRow({
+    super.key,
+    required this.child,
+  });
 
   @override
   State<SettingRow> createState() => _SettingRowState();
@@ -163,15 +162,17 @@ class SettingRow extends StatefulWidget {
 class _SettingRowState extends State<SettingRow> {
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      margin: const EdgeInsets.all(10),
-      width: double.infinity,
-      decoration: BoxDecoration(
-          color: widget.color,
-          borderRadius: const BorderRadius.all(Radius.circular(10))),
-      child: widget.child,
-    );
+    return Consumer<ColorPalette>(builder: (context, palette, child) {
+      return Container(
+        padding: const EdgeInsets.all(10),
+        margin: const EdgeInsets.all(10),
+        width: double.infinity,
+        decoration: BoxDecoration(
+            color: palette.getSecC,
+            borderRadius: const BorderRadius.all(Radius.circular(10))),
+        child: widget.child,
+      );
+    });
   }
 }
 
@@ -206,16 +207,15 @@ void updateVibrationCount(int count) async {
 class ColorPickerRow extends StatefulWidget {
   final String name;
   final Color pickerColor;
-  final Color rowColor;
+
   final String colorKey;
-  final Color textColor;
-  const ColorPickerRow(
-      {super.key,
-      required this.name,
-      required this.pickerColor,
-      required this.colorKey,
-      required this.rowColor,
-      required this.textColor});
+
+  const ColorPickerRow({
+    super.key,
+    required this.name,
+    required this.pickerColor,
+    required this.colorKey,
+  });
 
   @override
   State<ColorPickerRow> createState() => _ColorPickerRowState();
@@ -224,56 +224,74 @@ class ColorPickerRow extends StatefulWidget {
 class _ColorPickerRowState extends State<ColorPickerRow> {
   @override
   Widget build(BuildContext context) {
-    return SettingRow(
-        color: widget.rowColor,
-        child:
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text(
-            widget.name,
-            style: TextStyle(color: widget.textColor),
+    return Consumer<ColorPalette>(builder: (context, palette, child) {
+      return SettingRow(
+          child:
+              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        Text(
+          widget.name,
+          style: TextStyle(color: palette.getMainC),
+        ),
+        InkWell(
+          splashColor: Colors.transparent,
+          onTap: () {
+            showDialog(
+                context: context,
+                builder: (context) {
+                  Color? color;
+                  return AlertDialog(
+                    title: Text(
+                      "Pick a color",
+                      style: TextStyle(color: palette.getMainC),
+                    ),
+                    content: ColorPicker(
+                      pickerColor: widget.pickerColor,
+                      onColorChanged: (c) {
+                        color = c;
+                      },
+                    ),
+                    actions: [
+                      TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            switch (widget.colorKey) {
+                              case "primaryColor":
+                                Provider.of<ColorPalette>(context,
+                                        listen: false)
+                                    .setMainC(color!);
+                                break;
+                              case "secondaryColor":
+                                Provider.of<ColorPalette>(context,
+                                        listen: false)
+                                    .setSecC(color!);
+                                break;
+                              case "backColor":
+                                Provider.of<ColorPalette>(context,
+                                        listen: false)
+                                    .setBackC(color!);
+                                break;
+                            }
+                            saveColor(widget.colorKey, color!.toHexString());
+                          },
+                          child: Text(
+                            "save",
+                            style: TextStyle(color: palette.getMainC),
+                          ))
+                    ],
+                  );
+                });
+          },
+          child: Container(
+            height: 20,
+            width: 20,
+            decoration: BoxDecoration(
+                border: Border.all(color: palette.getMainC, width: 1),
+                color: widget.pickerColor,
+                borderRadius: const BorderRadius.all(Radius.circular(999))),
           ),
-          InkWell(
-            splashColor: Colors.transparent,
-            onTap: () {
-              showDialog(
-                  context: context,
-                  builder: (context) {
-                    Color? color;
-                    return AlertDialog(
-                      title: Text(
-                        "Pick a color",
-                        style: TextStyle(color: widget.textColor),
-                      ),
-                      content: ColorPicker(
-                        pickerColor: widget.pickerColor,
-                        onColorChanged: (c) {
-                          color = c;
-                        },
-                      ),
-                      actions: [
-                        TextButton(
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                              saveColor(widget.colorKey, color!.toHexString());
-                            },
-                            child: Text(
-                              "save",
-                              style: TextStyle(color: widget.textColor),
-                            ))
-                      ],
-                    );
-                  });
-            },
-            child: Container(
-              height: 20,
-              width: 20,
-              decoration: BoxDecoration(
-                  border: Border.all(color: widget.textColor, width: 1),
-                  color: widget.pickerColor,
-                  borderRadius: const BorderRadius.all(Radius.circular(999))),
-            ),
-          )
-        ]));
+        )
+      ]));
+    });
   }
 }
 

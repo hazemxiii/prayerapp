@@ -1,7 +1,10 @@
 import "package:flutter/material.dart";
+import "package:provider/provider.dart";
 import "package:shared_preferences/shared_preferences.dart";
 import "settings.dart";
 import "main.dart";
+
+// TODO: update the main page when the location is changed
 
 class LocationSettings extends StatefulWidget {
   const LocationSettings({super.key});
@@ -97,7 +100,8 @@ class _LocationSettingsState extends State<LocationSettings> {
                   color: mainColor,
                   onPressed: () {
                     saveLocation(countryController.text, cityController.text);
-                    setState(() {});
+                    Provider.of<ColorPalette>(context, listen: false)
+                        .setMainC(mainColor);
                     Navigator.of(context).pop();
                   },
                   child: Text("Save", style: TextStyle(color: secondaryColor)),
