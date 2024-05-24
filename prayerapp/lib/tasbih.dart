@@ -3,6 +3,7 @@ import 'settings.dart';
 import "package:shared_preferences/shared_preferences.dart";
 import "package:flutter/material.dart";
 import 'package:vibration/vibration.dart';
+import 'vibration_settings.dart';
 
 // ignore: must_be_immutable
 class Tasbih extends StatefulWidget {
@@ -68,14 +69,19 @@ class _Tasbih extends State<Tasbih> with TickerProviderStateMixin {
         backColor = hexToColor(data[2]);
       });
     });
+
     getVibrationData().then((data) {
       vibrate = data[0];
       vibrateOn = data[1];
+      isOn = data[2];
+      vibrateNums = vibrateOn.split(",");
     });
   }
 
   bool vibrate = false;
-  int vibrateOn = -1;
+  String vibrateOn = "-1";
+  bool isOn = true;
+  List vibrateNums = [];
 
   @override
   void dispose() {
@@ -141,8 +147,13 @@ class _Tasbih extends State<Tasbih> with TickerProviderStateMixin {
                         tasbih = tasbih! + 1;
                         increaseTasbih();
                         try {
-                          if (tasbih == vibrateOn && vibrate) {
-                            Vibration.vibrate(duration: 1000);
+                          if (vibrate) {
+                            if (isOn && vibrateNums.contains("$tasbih")) {
+                              Vibration.vibrate(duration: 1000);
+                            } else if (!isOn &&
+                                tasbih! % int.parse(vibrateOn) == 0) {
+                              Vibration.vibrate(duration: 1000);
+                            }
                           }
                         } catch (e) {
                           //

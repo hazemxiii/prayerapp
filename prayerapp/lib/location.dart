@@ -4,8 +4,6 @@ import "package:shared_preferences/shared_preferences.dart";
 import "settings.dart";
 import "main.dart";
 
-// TODO: update the main page when the location is changed
-
 class LocationSettings extends StatefulWidget {
   const LocationSettings({super.key});
 

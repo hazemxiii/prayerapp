@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import "package:shared_preferences/shared_preferences.dart";
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'location.dart';
+import 'vibration_settings.dart';
 
 class Settings extends StatefulWidget {
   const Settings({super.key});
@@ -13,19 +14,9 @@ class Settings extends StatefulWidget {
 }
 
 class _SettingsState extends State<Settings> {
-  bool vibration = true;
-  String hint = "00";
-
   @override
   void initState() {
     super.initState();
-
-    getVibrationData().then((data) {
-      setState(() {
-        vibration = data[0];
-        hint = "${data[1]}";
-      });
-    });
 
     getColors().then((data) {
       Provider.of<ColorPalette>(context, listen: false)
@@ -56,55 +47,26 @@ class _SettingsState extends State<Settings> {
             const SizedBox(
               height: 10,
             ),
-            SettingRow(
-                child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "Allow Vibrations",
-                  style: TextStyle(color: palette.getMainC),
-                ),
-                Switch(
-                    activeColor: palette.getMainC,
-                    inactiveThumbColor: palette.getBackC,
-                    inactiveTrackColor: palette.getSecC,
-                    value: vibration,
-                    onChanged: (v) {
-                      allowVibration(v);
-                      setState(() {
-                        vibration = v;
-                      });
-                    })
-              ],
-            )),
-            SettingRow(
-                child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "Vibrate on:",
-                  style: TextStyle(color: palette.getMainC),
-                ),
-                SizedBox(
-                  width: 25,
-                  child: TextField(
-                    decoration: InputDecoration(
-                      border: InputBorder.none,
-                      enabled: vibration,
-                      hintText: hint,
-                      hintStyle: TextStyle(color: palette.getMainC),
-                    ),
-                    onChanged: (v) {
-                      try {
-                        updateVibrationCount(int.parse(v));
-                      } catch (e) {
-                        // print(e);
-                      }
-                    },
+            InkWell(
+              onTap: () {
+                Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => const VibrationSettings()));
+              },
+              child: SettingRow(
+                  child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Vibration",
+                    style: TextStyle(color: palette.getMainC),
                   ),
-                )
-              ],
-            )),
+                  Icon(
+                    Icons.arrow_right,
+                    color: palette.getMainC,
+                  )
+                ],
+              )),
+            ),
             ColorPickerRow(
               name: "Main Color",
               pickerColor: palette.getMainC,
@@ -174,34 +136,6 @@ class _SettingRowState extends State<SettingRow> {
       );
     });
   }
-}
-
-Future<List> getVibrationData() async {
-  List data = [];
-  await SharedPreferences.getInstance().then((prefs) {
-    if (!prefs.containsKey("vibrationBool")) {
-      prefs.setBool("vibrationBool", true);
-    }
-    if (!prefs.containsKey("vibrationCount")) {
-      prefs.setInt("vibrationCount", 33);
-    }
-    data.add(prefs.getBool("vibrationBool"));
-    data.add(prefs.getInt("vibrationCount"));
-  });
-
-  return data;
-}
-
-void allowVibration(bool allow) async {
-  await SharedPreferences.getInstance().then((prefs) {
-    prefs.setBool("vibrationBool", allow);
-  });
-}
-
-void updateVibrationCount(int count) async {
-  await SharedPreferences.getInstance().then((prefs) {
-    prefs.setInt("vibrationCount", count);
-  });
 }
 
 class ColorPickerRow extends StatefulWidget {
