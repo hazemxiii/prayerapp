@@ -97,21 +97,6 @@ class _Tasbih extends State<Tasbih> with TickerProviderStateMixin {
         MediaQuery.of(context).size.width, MediaQuery.of(context).size.height);
     return Column(
       children: [
-        const SizedBox(
-          height: 20,
-        ),
-        Row(
-          children: [
-            IconButton(
-                onPressed: () {
-                  widget.scaffoldKey.currentState!.openDrawer();
-                },
-                icon: Icon(
-                  Icons.menu,
-                  color: mainColor,
-                ))
-          ],
-        ),
         Expanded(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

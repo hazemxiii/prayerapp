@@ -8,6 +8,9 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:provider/provider.dart';
 
+// TODO: add app bar for the pages
+// TODO: comment tasbih.dart & vibration_settings.dart
+
 void main() {
   runApp(ChangeNotifierProvider(
     create: (context) => ColorPalette(),
@@ -133,7 +136,7 @@ class _MainPage extends State<MainPage> {
       const Settings()
     ];
 
-    pagesDrawers = const [Placeholder(), TasbihDrawer(), Placeholder()];
+    pagesDrawers = const [null, TasbihDrawer(), null];
 
     // get the colors from the database and update them
     getColors().then((data) {
@@ -155,8 +158,21 @@ class _MainPage extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
+    List pagesAppBars = const [
+      null,
+      {"title": ""},
+      {"title": "Settings"}
+    ];
     return Consumer<ColorPalette>(builder: (context, palette, child) {
       return Scaffold(
+          appBar: pagesAppBars[activePage] != null
+              ? AppBar(
+                  backgroundColor: palette.getBackC,
+                  foregroundColor: palette.getMainC,
+                  title: Text(pagesAppBars[activePage]["title"]),
+                  centerTitle: true,
+                )
+              : null,
           drawer: pagesDrawers[activePage],
           key: scaffoldKey,
           bottomNavigationBar: SizedBox(

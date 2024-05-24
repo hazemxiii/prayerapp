@@ -36,17 +36,6 @@ class _SettingsState extends State<Settings> {
       child: Consumer<ColorPalette>(builder: (context, palette, child) {
         return Column(
           children: [
-            const SizedBox(
-              height: 20,
-            ),
-            Text("Settings",
-                style: TextStyle(
-                  fontSize: 30,
-                  color: palette.getMainC,
-                )),
-            const SizedBox(
-              height: 10,
-            ),
             InkWell(
               onTap: () {
                 Navigator.of(context).push(MaterialPageRoute(
