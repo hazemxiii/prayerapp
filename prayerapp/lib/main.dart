@@ -16,16 +16,20 @@ void main() {
 }
 
 class ColorPalette extends ChangeNotifier {
+  /// The class is used to rebuild the pages when the color is changed
   Color main = Colors.lightBlue;
   Color second = Colors.white;
   Color back = Colors.lightBlue[50]!;
 
+  // getters
   Color get getMainC => main;
   Color get getSecC => second;
   Color get getBackC => back;
 
+  // setters
   void setMainC(Color c) {
     main = c;
+    // to update everything that uses this class
     notifyListeners();
   }
 
@@ -59,6 +63,7 @@ class _MainPage extends State<MainPage> {
   Color mainColor = Colors.lightBlue;
   Color secondaryColor = Colors.white;
   Color backColor = Colors.lightBlue[50]!;
+
   // the pages controlled by the bottom nav bar
   late List<Widget> pages;
   late List<dynamic> pagesDrawers;
@@ -85,39 +90,41 @@ class _MainPage extends State<MainPage> {
             height: 250,
             width: double.infinity,
           ),
-          Expanded(
-            child: FutureBuilder(
-              future: getPrayerTime(),
-              builder: (context, snapshot) {
-                // when the data loads, show it. else show loading
-                if (snapshot.connectionState == ConnectionState.done) {
-                  // if there's data, display. else display no internet
-                  if (snapshot.data!.length > 0) {
-                    return PageView.builder(
-                        itemCount: snapshot.data!.length,
-                        itemBuilder: (context, i) {
-                          return PrayerDay(
-                              // the last index (7) contains the american day to format and display
-                              time: snapshot.data![i][7],
-                              times: snapshot.data[i]);
-                        });
+          Consumer<ColorPalette>(builder: (context, palette, child) {
+            return Expanded(
+              child: FutureBuilder(
+                future: getPrayerTime(),
+                builder: (context, snapshot) {
+                  // when the data loads, show it. else show loading
+                  if (snapshot.connectionState == ConnectionState.done) {
+                    // if there's data, display. else display no internet
+                    if (snapshot.data!.length > 0) {
+                      return PageView.builder(
+                          itemCount: snapshot.data!.length,
+                          itemBuilder: (context, i) {
+                            return PrayerDay(
+                                // the last index (7) contains the american day to format and display
+                                time: snapshot.data![i][7],
+                                times: snapshot.data[i]);
+                          });
+                    } else {
+                      return const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Icon(Icons.warning,
+                              size: 40, color: Color.fromRGBO(255, 0, 0, 1)),
+                          Text("No Internet Connection")
+                        ],
+                      );
+                    }
                   } else {
-                    return const Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Icon(Icons.warning,
-                            size: 40, color: Color.fromRGBO(255, 0, 0, 1)),
-                        Text("No Internet Connection")
-                      ],
-                    );
+                    return const Center(child: CircularProgressIndicator());
                   }
-                } else {
-                  return const Center(child: CircularProgressIndicator());
-                }
-              },
-            ),
-          )
+                },
+              ),
+            );
+          })
         ],
       ),
       Tasbih(
@@ -128,6 +135,7 @@ class _MainPage extends State<MainPage> {
 
     pagesDrawers = const [Placeholder(), TasbihDrawer(), Placeholder()];
 
+    // get the colors from the database and update them
     getColors().then((data) {
       Provider.of<ColorPalette>(context, listen: false)
           .setMainC(hexToColor(data[0]));

@@ -1,55 +1,25 @@
 # PrayerApp
 
-## Content:
+## Notes:
 
-- [Navigate pages using bottom nav bar](#navigatePagesUsingNavigateBar)
-- [Display Prayers](#displayprayersnameandtime)
-- [Get prayers from the API](#getprayersfromapi)
-- [Change tasbih button size](#changetasbihbuttonsize)
-- [Increase the tasbih and vibrate](#increasereset-the-tasbih-and-vibrate)
+- class ColorPalette in main.dart --> to rebuild pages when the color is changed
 
-## navigatePagesUsingNavigateBar:
+- Active page of the bottom nav bar is controlled by int activePage
 
-- [pages] -> contains the pages
-- [Tabih] -> the second page
-- [activePage] -> the index of the active page
+- Pages controlled by the bottom nav bar are controlled by List pages, their drawers are in List pagesDrawers
 
-## displayPrayersNameAndTime:
+- The prayer page returns the data from a future from getPrayerTime()
 
-- [PrayerDay] -> the container wich has rows of the prayers and the date
-- [PrayerDay.time] -> contains the american date
-- [PrayerDay.times] -> contains the times for the prayers and the american and the hijri dates
-- numbersDateToText() -> changes the format of the date to display
-- [Prayer] -> row contains prayer details in inside [PrayerDay]
-- [Prayer.name] -> prayer name
-- [Prayer.time] -> prayer datetime
-- [Prayer.red] [Prayer.green] [Prayer.blue] -> random numbers that represents the color
-- [Prayer.color] -> the color text in the prayer
-- [Prayer.hour] [Prayer.minutes]
-- [Prayer.dayPeriod] -> AM or PM
-- [Prayer.difference] -> difference between time now and the prayer time
-- [Prayer.diff] -> difference as string
+- class PrayerDay --> each day in the prayer page
 
-## getPrayersFromAPI:
+- numbersDateToText() --> converts Date to human-readable String
 
-- getPrayerTimes() -> gets the time from the shared preferences or the API
-- [getPrayerTimes().daysTime] -> the list of days returned
-- [getPrayerTimes().dateO] -> the date + i days
-- [getPrayerTimes().date] [getPrayerTimes().americanDate] -> normal and american date
-- [getPrayerTimes().spref] -> shared preferences
-- [getPrayerTimes().prayerDays] -> the data as a dictionary
-- [getPrayerTimes().data] [getPrayerTimes().timings] [getPrayerTimes().hijri] [getPrayerTimes().hijriDay] [getPrayerTimes().hijriMonth] [getPrayerTimes().hijriYear] -> data from the API
-- [getPrayerTimes().hijriDate] -> formated hijri date
-- [getPrayerTimes().dayWrap] -> the day to be appended to getPrayerTimes().daysTime
-- [getPrayerTimes().dateToRemove] -> the day being replaced in the data
-- parseDate() -> generates the normal and the American formats of a date
+- Class Prayer --> each row in the prayer day
 
-## changeTasbihButtonSize:
+- parseDate() --> returns the american or normal form of a date as a String
 
-- [Tasbih.shrinkController] - [Tasbih.shrinkAnimation] -> the shrinking motion at the beginning of the button click
-- [Tasbih.growController] - [Tasbih.growAnimation] -> the shrinking motion at the beginning of the button click
+- getPosition() --> returns the country and city of the current location
 
-## Increase/Reset the tasbih and vibrate:
+- the big button controlled by two animations (shrinkAnimation, growAnimation)
 
-- [Tasbih.tasbih] -> the current number of tabih
-- [Tasbih.screenWidth] -> the min between width or the height of the screen
+- bool vibrate and int vibrateOn decides if and when to vibrate on tasbih
