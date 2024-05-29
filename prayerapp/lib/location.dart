@@ -51,7 +51,7 @@ class _LocationSettingsState extends State<LocationSettings> {
         actions: [
           IconButton(
               onPressed: () {
-                getPosition().then((data) {
+                getPosition(false).then((data) {
                   setState(() {
                     if (data.isNotEmpty) {
                       countryController.text = data[0];

@@ -1,6 +1,7 @@
 import "dart:convert";
 import "package:flutter/material.dart";
 import 'package:http/http.dart' as http;
+import "qiblah.dart";
 import "package:shared_preferences/shared_preferences.dart";
 import "tasbih.dart";
 import "settings.dart";
@@ -8,7 +9,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:provider/provider.dart';
 
-// TODO: add app bar for the pages
 // TODO: comment tasbih.dart & vibration_settings.dart
 
 void main() {
@@ -133,10 +133,11 @@ class _MainPage extends State<MainPage> {
       Tasbih(
         scaffoldKey: scaffoldKey,
       ),
-      const Settings()
+      const Qiblah(),
+      const Settings(),
     ];
 
-    pagesDrawers = const [null, TasbihDrawer(), null];
+    pagesDrawers = const [null, TasbihDrawer(), null, null];
 
     // get the colors from the database and update them
     getColors().then((data) {
@@ -161,7 +162,8 @@ class _MainPage extends State<MainPage> {
     List pagesAppBars = const [
       null,
       {"title": ""},
-      {"title": "Settings"}
+      null,
+      {"title": "Settings"},
     ];
     return Consumer<ColorPalette>(builder: (context, palette, child) {
       return Scaffold(
@@ -196,6 +198,10 @@ class _MainPage extends State<MainPage> {
                 BottomNavigationBarItem(
                   icon: Icon(Icons.circle),
                   label: "Tasbih",
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.directions),
+                  label: "Qiblah",
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.settings),
@@ -382,7 +388,7 @@ Future<dynamic> getPrayerTime() async {
       String? city;
 
       if (!spref.containsKey("city")) {
-        List data = await getPosition();
+        List data = await getPosition(false);
         if (data.isEmpty) {
           return [];
         }
@@ -513,7 +519,7 @@ String parseDate(DateTime date, bool toAmerican) {
   }
 }
 
-Future<List> getPosition() async {
+Future<List> getPosition(bool coordinates) async {
   bool serviceEnabled;
   LocationPermission permission;
 
@@ -539,6 +545,9 @@ Future<List> getPosition() async {
     return [];
   }
   Position position = await Geolocator.getCurrentPosition();
+  if (coordinates) {
+    return [position.latitude, position.longitude];
+  }
 
   List address = [];
   try {
