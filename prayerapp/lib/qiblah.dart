@@ -28,30 +28,45 @@ class _QiblahState extends State<Qiblah> with TickerProviderStateMixin {
         MediaQuery.of(context).size.height, MediaQuery.of(context).size.width);
     return Center(
       child: Consumer<ColorPalette>(builder: (context, palette, child) {
-        return Transform.rotate(
-          angle: toRad(qiblah!),
-          child: InkWell(
-            onTap: () async {
-              qiblah = await changeCompass();
-              setState(() {});
-            },
-            child: Container(
-              height: dimension / 2,
-              width: dimension / 2,
-              decoration: BoxDecoration(
-                  color: palette.getSecC,
-                  borderRadius: BorderRadius.all(Radius.circular(dimension))),
-              child: Column(
-                children: [
-                  Icon(
-                    Icons.arrow_upward,
-                    color: palette.getMainC,
-                  )
-                ],
-              ),
-            ),
-          ),
-        );
+        return FutureBuilder(
+            future: getPosition(true),
+            builder: (context, snap) {
+              if (snap.connectionState == ConnectionState.done) {
+                if (snap.data!.isEmpty) {
+                  return const RefreshProgressIndicator();
+                }
+                return StreamBuilder<CompassEvent>(
+                    stream: FlutterCompass.events,
+                    builder: (context, snapshot) {
+                      double angle = 0;
+                      if (snapshot.hasData) {
+                        angle = changeCompass(snap.data![0], snap.data![1],
+                            snapshot.data!.heading);
+                      }
+                      return Transform.rotate(
+                        angle: angle,
+                        child: Container(
+                          height: dimension / 2,
+                          width: dimension / 2,
+                          decoration: BoxDecoration(
+                              color: palette.getSecC,
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(dimension))),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.arrow_upward,
+                                color: palette.getMainC,
+                              )
+                            ],
+                          ),
+                        ),
+                      );
+                    });
+              } else {
+                return const LinearProgressIndicator();
+              }
+            });
       }),
     );
   }
@@ -65,20 +80,15 @@ double toRad(double angle) {
   return angle * pi / 180;
 }
 
-Future<double> changeCompass() async {
+double changeCompass(double? la1, double? lo1, double? north) {
   // The Ka'bah location
   double la2 = toRad(21.42250867030901);
   double lo2 = toRad(39.8261959472982950);
-  // deviation from north
-  double? north = 0;
-  FlutterCompass.events!.first.then((v) {
-    north = (v.heading! + 360) % 360;
-  });
 
-  // get your current position
-  List coordinates = await getPosition(true);
-  double la1 = toRad(coordinates[0]);
-  double lo1 = toRad(coordinates[0]);
+  la1 = toRad(la1!);
+  lo1 = toRad(lo1!);
+  // deviation from north
+  north = (north! + 360) % 360;
 
   // Calculate bearing
   double diff = lo2 - lo1;
@@ -88,5 +98,5 @@ Future<double> changeCompass() async {
 
   double bearing = (toDeg(atan2(x, y)) + 360) % 360;
 
-  return (bearing - north! + 360) % 360;
+  return toRad((bearing - north + 360) % 360);
 }
