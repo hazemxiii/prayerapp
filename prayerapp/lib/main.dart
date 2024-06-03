@@ -192,21 +192,23 @@ class _MainPage extends State<MainPage> {
                   activePage = v;
                 });
               },
-              items: const [
+              items: [
                 BottomNavigationBarItem(
-                    icon: Icon(Icons.alarm), label: "Prayer Times"),
+                    icon: const Icon(Icons.alarm),
+                    label: "Prayer Times",
+                    backgroundColor: palette.getSecC),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.circle),
-                  label: "Tasbih",
-                ),
+                    icon: const Icon(Icons.circle),
+                    label: "Tasbih",
+                    backgroundColor: palette.getSecC),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.directions),
-                  label: "Qiblah",
-                ),
+                    icon: const Icon(Icons.directions),
+                    label: "Qiblah",
+                    backgroundColor: palette.getSecC),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.settings),
-                  label: "Settings",
-                )
+                    icon: const Icon(Icons.settings),
+                    label: "Settings",
+                    backgroundColor: palette.getSecC)
               ],
             ),
           ),
