@@ -4,6 +4,8 @@ import "package:shared_preferences/shared_preferences.dart";
 import "package:flutter/material.dart";
 import 'package:vibration/vibration.dart';
 import 'vibration_settings.dart';
+import "main.dart";
+import 'package:provider/provider.dart';
 
 // ignore: must_be_immutable
 class Tasbih extends StatefulWidget {
@@ -63,11 +65,14 @@ class _Tasbih extends State<Tasbih> with TickerProviderStateMixin {
     });
 
     getColors().then((data) {
-      setState(() {
-        mainColor = hexToColor(data[0]);
-        secondaryColor = hexToColor(data[1]);
-        backColor = hexToColor(data[2]);
-      });
+      Provider.of<ColorPalette>(context, listen: false)
+          .setMainC(hexToColor(data[0]));
+
+      Provider.of<ColorPalette>(context, listen: false)
+          .setSecC(hexToColor(data[1]));
+
+      Provider.of<ColorPalette>(context, listen: false)
+          .setBackC(hexToColor(data[2]));
     });
 
     getVibrationData().then((data) {
@@ -98,82 +103,86 @@ class _Tasbih extends State<Tasbih> with TickerProviderStateMixin {
     return Column(
       children: [
         Expanded(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                    borderRadius: const BorderRadius.all(Radius.circular(1000)),
-                    color: secondaryColor),
-                width: screenWidth / 2 + 30,
-                height: screenWidth / 2 + 30,
-                child: Center(
-                  child: InkWell(
-                    borderRadius: const BorderRadius.all(Radius.circular(1000)),
-                    child: Container(
-                        width: screenWidth / 2 -
-                            shrinkAnimation.value +
-                            growAnimation.value,
-                        height: screenWidth / 2 -
-                            shrinkAnimation.value +
-                            growAnimation.value,
-                        decoration: BoxDecoration(
-                          color: mainColor,
-                          borderRadius:
-                              const BorderRadius.all(Radius.circular(1000)),
-                        ),
-                        child: Center(
-                            child: Text("$tasbih",
-                                style: TextStyle(
-                                    fontSize: 20, color: secondaryColor)))),
-                    onTap: () {
-                      setState(() {
-                        // vibrate when there are 33 tasbih
-                        tasbih = tasbih! + 1;
-                        increaseTasbih();
-                        try {
-                          if (vibrate) {
-                            if (isOn && vibrateNums.contains("$tasbih")) {
-                              Vibration.vibrate(duration: 1000);
-                            } else if (!isOn &&
-                                tasbih! % int.parse(vibrateOn) == 0) {
-                              Vibration.vibrate(duration: 1000);
+          child: Consumer<ColorPalette>(builder: (context, palette, child) {
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                      borderRadius:
+                          const BorderRadius.all(Radius.circular(1000)),
+                      color: palette.getSecC),
+                  width: screenWidth / 2 + 30,
+                  height: screenWidth / 2 + 30,
+                  child: Center(
+                    child: InkWell(
+                      borderRadius:
+                          const BorderRadius.all(Radius.circular(1000)),
+                      child: Container(
+                          width: screenWidth / 2 -
+                              shrinkAnimation.value +
+                              growAnimation.value,
+                          height: screenWidth / 2 -
+                              shrinkAnimation.value +
+                              growAnimation.value,
+                          decoration: BoxDecoration(
+                            color: palette.getMainC,
+                            borderRadius:
+                                const BorderRadius.all(Radius.circular(1000)),
+                          ),
+                          child: Center(
+                              child: Text("$tasbih",
+                                  style: TextStyle(
+                                      fontSize: 20, color: palette.getSecC)))),
+                      onTap: () {
+                        setState(() {
+                          // vibrate when there are 33 tasbih
+                          tasbih = tasbih! + 1;
+                          increaseTasbih();
+                          try {
+                            if (vibrate) {
+                              if (isOn && vibrateNums.contains("$tasbih")) {
+                                Vibration.vibrate(duration: 1000);
+                              } else if (!isOn &&
+                                  tasbih! % int.parse(vibrateOn) == 0) {
+                                Vibration.vibrate(duration: 1000);
+                              }
                             }
+                          } catch (e) {
+                            //
                           }
-                        } catch (e) {
-                          //
-                        }
 
-                        // start the animation on click
-                        shrinkController.forward();
-                      });
-                    },
+                          // start the animation on click
+                          shrinkController.forward();
+                        });
+                      },
+                    ),
                   ),
                 ),
-              ),
-              Container(
-                height: 10,
-              ),
-              InkWell(
-                borderRadius: const BorderRadius.all(Radius.circular(1000)),
-                child: Container(
-                  width: 30,
-                  height: 30,
-                  decoration: BoxDecoration(
-                      color: mainColor,
-                      borderRadius:
-                          const BorderRadius.all(Radius.circular(1000))),
+                Container(
+                  height: 10,
                 ),
-                onTap: () {
-                  // reset the tasbih
-                  setState(() {
-                    tasbih = 0;
-                    clearTasbihNow();
-                  });
-                },
-              )
-            ],
-          ),
+                InkWell(
+                  borderRadius: const BorderRadius.all(Radius.circular(1000)),
+                  child: Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                        color: palette.getMainC,
+                        borderRadius:
+                            const BorderRadius.all(Radius.circular(1000))),
+                  ),
+                  onTap: () {
+                    // reset the tasbih
+                    setState(() {
+                      tasbih = 0;
+                      clearTasbihNow();
+                    });
+                  },
+                )
+              ],
+            );
+          }),
         )
       ],
     );
@@ -188,15 +197,8 @@ class TasbihDrawer extends StatefulWidget {
 }
 
 class _TasbihDrawer extends State<TasbihDrawer> {
-  Color color = Colors.lightBlue;
-  Color secondaryColor = Colors.white;
-
   @override
   void initState() {
-    getColors().then((data) {
-      color = hexToColor(data[0]);
-      secondaryColor = hexToColor(data[1]);
-    });
     super.initState();
   }
 
@@ -207,43 +209,43 @@ class _TasbihDrawer extends State<TasbihDrawer> {
         future: getTotalTasbihCount(),
         builder: (context, snap) {
           if (snap.connectionState == ConnectionState.done) {
-            return Container(
-              color: color,
-              width: drawerWidth,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  TasbihNumber(
-                    color: color,
-                    width: drawerWidth,
-                    name: "Total",
-                    number: snap.data![0],
-                  ),
-                  TasbihNumber(
-                    color: color,
-                    width: drawerWidth,
-                    name: "Total Today",
-                    number: snap.data![1],
-                  ),
-                  TextButton(
-                    style: TextButton.styleFrom(
-                        shape: const RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(10))),
-                        backgroundColor: secondaryColor),
-                    onPressed: () {
-                      setState(() {
-                        clearTasbih();
-                      });
-                    },
-                    child: Text(
-                      "Clear",
-                      style: TextStyle(color: color),
+            return Consumer<ColorPalette>(builder: (context, palette, child) {
+              return Container(
+                color: palette.getMainC,
+                width: drawerWidth,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TasbihNumber(
+                      width: drawerWidth,
+                      name: "Total",
+                      number: snap.data![0],
                     ),
-                  )
-                ],
-              ),
-            );
+                    TasbihNumber(
+                      width: drawerWidth,
+                      name: "Total Today",
+                      number: snap.data![1],
+                    ),
+                    TextButton(
+                      style: TextButton.styleFrom(
+                          shape: const RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(10))),
+                          backgroundColor: palette.getSecC),
+                      onPressed: () {
+                        setState(() {
+                          clearTasbih();
+                        });
+                      },
+                      child: Text(
+                        "Clear",
+                        style: TextStyle(color: palette.getMainC),
+                      ),
+                    )
+                  ],
+                ),
+              );
+            });
           } else {
             return Container(
               color: Colors.white,
@@ -259,13 +261,12 @@ class TasbihNumber extends StatefulWidget {
   final String name;
   int number;
   final double width;
-  final Color color;
-  TasbihNumber(
-      {super.key,
-      required this.name,
-      required this.number,
-      required this.width,
-      required this.color});
+  TasbihNumber({
+    super.key,
+    required this.name,
+    required this.number,
+    required this.width,
+  });
 
   @override
   State<TasbihNumber> createState() => _TasbihNumberState();
@@ -274,23 +275,25 @@ class TasbihNumber extends StatefulWidget {
 class _TasbihNumberState extends State<TasbihNumber> {
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(0, 5, 0, 5),
-      width: widget.width,
-      margin: const EdgeInsets.all(5),
-      decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.all(Radius.circular(10))),
-      child: Column(
-        children: [
-          Text(
-            widget.name,
-            style: TextStyle(color: widget.color),
-          ),
-          Text("${widget.number}", style: TextStyle(color: widget.color))
-        ],
-      ),
-    );
+    return Consumer<ColorPalette>(builder: (context, palette, child) {
+      return Container(
+        padding: const EdgeInsets.fromLTRB(0, 5, 0, 5),
+        width: widget.width,
+        margin: const EdgeInsets.all(5),
+        decoration: BoxDecoration(
+            color: palette.getSecC,
+            borderRadius: const BorderRadius.all(Radius.circular(10))),
+        child: Column(
+          children: [
+            Text(
+              widget.name,
+              style: TextStyle(color: palette.getMainC),
+            ),
+            Text("${widget.number}", style: TextStyle(color: palette.getMainC))
+          ],
+        ),
+      );
+    });
   }
 }
 
