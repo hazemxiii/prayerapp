@@ -79,56 +79,64 @@ class _MainPage extends State<MainPage> {
 
     // the pages controlled by the bottom navbar
     pages = [
-      Column(
-        children: [
-          Container(
-            decoration: const BoxDecoration(
-                borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(10),
-                    bottomRight: Radius.circular(10)),
-                image: DecorationImage(
-                  image: AssetImage("images/masjid.jpeg"),
-                  fit: BoxFit.cover,
-                )),
-            height: 250,
-            width: double.infinity,
-          ),
-          Consumer<ColorPalette>(builder: (context, palette, child) {
-            return Expanded(
-              child: FutureBuilder(
-                future: getPrayerTime(),
-                builder: (context, snapshot) {
-                  // when the data loads, show it. else show loading
-                  if (snapshot.connectionState == ConnectionState.done) {
-                    // if there's data, display. else display no internet
-                    if (snapshot.data!.length > 0) {
-                      return PageView.builder(
-                          itemCount: snapshot.data!.length,
-                          itemBuilder: (context, i) {
-                            return PrayerDay(
-                                // the last index (7) contains the american day to format and display
-                                time: snapshot.data![i][7],
-                                times: snapshot.data[i]);
-                          });
-                    } else {
-                      return const Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Icon(Icons.warning,
-                              size: 40, color: Color.fromRGBO(255, 0, 0, 1)),
-                          Text("No Internet Connection")
-                        ],
-                      );
-                    }
-                  } else {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                },
-              ),
-            );
-          })
-        ],
+      Container(
+        decoration: const BoxDecoration(
+            image: DecorationImage(
+          image: AssetImage("images/back.jpg"),
+          fit: BoxFit.cover,
+        )),
+        child: Column(
+          children: [
+            const SizedBox(
+              height: 250,
+              width: double.infinity,
+            ),
+            Consumer<ColorPalette>(builder: (context, palette, child) {
+              return Expanded(
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                      color: palette.getBackC,
+                      borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(20),
+                          topRight: Radius.circular(20))),
+                  child: FutureBuilder(
+                    future: getPrayerTime(),
+                    builder: (context, snapshot) {
+                      // when the data loads, show it. else show loading
+                      if (snapshot.connectionState == ConnectionState.done) {
+                        // if there's data, display. else display no internet
+                        if (snapshot.data!.length > 0) {
+                          return PageView.builder(
+                              itemCount: snapshot.data!.length,
+                              itemBuilder: (context, i) {
+                                return PrayerDay(
+                                    // the last index (7) contains the american day to format and display
+                                    time: snapshot.data![i][7],
+                                    times: snapshot.data[i]);
+                              });
+                        } else {
+                          return const Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Icon(Icons.warning,
+                                  size: 40,
+                                  color: Color.fromRGBO(255, 0, 0, 1)),
+                              Text("No Internet Connection")
+                            ],
+                          );
+                        }
+                      } else {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                    },
+                  ),
+                ),
+              );
+            })
+          ],
+        ),
       ),
       Tasbih(
         scaffoldKey: scaffoldKey,
