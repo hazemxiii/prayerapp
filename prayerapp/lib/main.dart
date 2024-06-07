@@ -8,6 +8,7 @@ import "settings.dart";
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:provider/provider.dart';
+import "package:home_widget/home_widget.dart";
 
 // TODO: comment tasbih.dart & vibration_settings.dart
 
@@ -167,6 +168,11 @@ class _MainPage extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
+    HomeWidget.saveWidgetData("name", "fajr");
+    HomeWidget.updateWidget(androidName: "nextPrayerWidget");
+    HomeWidget.getInstalledWidgets().then((v) {
+      print(v);
+    });
     List pagesAppBars = const [
       null,
       {"title": ""},
@@ -210,7 +216,7 @@ class _MainPage extends State<MainPage> {
                     label: "Tasbih",
                     backgroundColor: palette.getSecC),
                 BottomNavigationBarItem(
-                    icon: const Icon(Icons.directions),
+                    icon: const Icon(Icons.mosque),
                     label: "Qiblah",
                     backgroundColor: palette.getSecC),
                 BottomNavigationBarItem(
