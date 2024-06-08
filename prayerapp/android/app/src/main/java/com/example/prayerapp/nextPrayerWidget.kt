@@ -26,17 +26,11 @@ class nextPrayerWidget : AppWidgetProvider() {
     val data = HomeWidgetPlugin.getData(context)
             val views = RemoteViews(context.packageName, R.layout.next_prayer_widget).apply{
                 Log.d("tag","updated")
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
                     val fajr = data.getString("Isha'a","No data")
-                    val fajrTime = LocalDateTime.parse(fajr,formatter)
-                    val now = LocalDateTime.now()
-                    val diff = Duration.between(now,fajrTime)
+
                     setTextViewText(R.id.name, "Isha'a")
-                    setTextViewText(R.id.time, "${diff.toHours()}:${diff.toMinutes()-diff.toHours()*60}:${60-now.second}")
-                } else {
-                    TODO("VERSION.SDK_INT < O")
-                }
+                    setTextViewText(R.id.time, fajr)
+
             }
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }

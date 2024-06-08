@@ -9,10 +9,20 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:provider/provider.dart';
 import "package:home_widget/home_widget.dart";
+import 'package:workmanager/workmanager.dart';
 
-// TODO: comment tasbih.dart & vibration_settings.dart
+@pragma("vm:entry-point")
+void callbackDispatcher() async {
+  Workmanager().executeTask((task, data) {
+    HomeWidget.saveWidgetData("Isha'a", DateTime.now().toString());
+    HomeWidget.updateWidget(name: "nextPrayerWidget");
+    return Future.value(true);
+  });
+}
 
 void main() {
+  // WidgetsFlutterBinding.ensureInitialized();
+  // Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
   runApp(ChangeNotifierProvider(
     create: (context) => ColorPalette(),
     child: const App(),

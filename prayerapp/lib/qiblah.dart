@@ -64,7 +64,7 @@ class _QiblahState extends State<Qiblah> with TickerProviderStateMixin {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                "$north°",
+                                "${north.floor()}°",
                                 style: TextStyle(
                                     color: palette.getMainC, fontSize: 20),
                               )
