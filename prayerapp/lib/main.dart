@@ -1,7 +1,7 @@
 import "dart:convert";
 import "package:flutter/material.dart";
 import 'package:http/http.dart' as http;
-import "qiblah.dart";
+import "qiblah copy.dart";
 import "package:shared_preferences/shared_preferences.dart";
 import "tasbih.dart";
 import "settings.dart";
@@ -63,7 +63,7 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPage extends State<MainPage> {
-  int activePage = 0;
+  int activePage = 2;
   Color mainColor = Colors.lightBlue;
   Color secondaryColor = Colors.white;
   Color backColor = Colors.lightBlue[50]!;

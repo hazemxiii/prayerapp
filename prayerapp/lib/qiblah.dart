@@ -38,33 +38,31 @@ class _QiblahState extends State<Qiblah> with TickerProviderStateMixin {
                 return StreamBuilder<CompassEvent>(
                     stream: FlutterCompass.events,
                     builder: (context, snapshot) {
+                      double north = 0;
                       double angle = 0;
                       if (snapshot.hasData) {
-                        angle = changeCompass(snap.data![0], snap.data![1],
-                            snapshot.data!.heading);
+                        north = (snapshot.data!.heading! + 360) % 360;
+                        angle =
+                            changeCompass(snap.data![0], snap.data![1], north);
                       }
                       return Transform.rotate(
-                        angle: angle,
-                        child: Container(
-                          height: dimension / 2,
-                          width: dimension / 2,
-                          decoration: BoxDecoration(
-                              color: palette.getSecC,
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(dimension))),
-                          child: Column(
-                            children: [
-                              Icon(
-                                Icons.arrow_upward,
-                                color: palette.getMainC,
-                              )
-                            ],
+                        angle: -toRad(north),
+                        child: SizedBox(
+                          height: dimension - dimension / 4,
+                          width: dimension - dimension / 4,
+                          child: CustomPaint(
+                            painter: CompassPainter(palette.getSecC,
+                                palette.getMainC, toRad(angle)),
                           ),
                         ),
                       );
                     });
               } else {
-                return const LinearProgressIndicator();
+                return Center(
+                  child: SizedBox(
+                      width: dimension - dimension / 4,
+                      child: const LinearProgressIndicator()),
+                );
               }
             });
       }),
@@ -88,7 +86,7 @@ double changeCompass(double? la1, double? lo1, double? north) {
   la1 = toRad(la1!);
   lo1 = toRad(lo1!);
   // deviation from north
-  north = (north! + 360) % 360;
+  // north = (north! + 360) % 360;
 
   // Calculate bearing
   double diff = lo2 - lo1;
@@ -98,5 +96,86 @@ double changeCompass(double? la1, double? lo1, double? north) {
 
   double bearing = (toDeg(atan2(x, y)) + 360) % 360;
 
-  return toRad((bearing - north + 360) % 360);
+  // return toRad((bearing - north! + 360) % 360);
+  return bearing;
+}
+
+class CompassPainter extends CustomPainter {
+  Color compassC = Colors.white;
+  Color textC = Colors.lightBlue;
+  double qiblah = 0;
+
+  CompassPainter(this.compassC, this.textC, this.qiblah);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = min(size.width / 2, size.height / 2);
+
+    final back = Paint()
+      ..color = compassC
+      ..style = PaintingStyle.fill;
+
+    canvas.drawCircle(center, radius, back);
+
+    final qiblahCircle = Paint()
+      ..color = textC
+      ..style = PaintingStyle.fill;
+
+    canvas.drawCircle(
+        Offset(center.dx + (radius) * cos(qiblah - pi / 2),
+            center.dy + (radius) * sin(qiblah - pi / 2)),
+        10,
+        qiblahCircle);
+
+    for (double i = 0; i < 360; i = i + 30) {
+      Color dotC = textC;
+      String text = "${i.floor()}";
+      if (i == 0) {
+        dotC = Colors.red;
+        text = "N";
+      } else if (i == 90) {
+        dotC = Colors.green;
+        text = "E";
+      } else if (i == 180) {
+        dotC = Colors.blue;
+        text = "S";
+      } else if (i == 270) {
+        dotC = Colors.yellow;
+        text = "W";
+      }
+
+      var dot = Paint()
+        ..color = dotC
+        ..style = PaintingStyle.fill;
+
+      double angle = toRad(i);
+
+      Offset dotOff = Offset(center.dx + (radius - 30) * cos(angle - pi / 2),
+          center.dy + (radius - 30) * sin(angle - pi / 2));
+
+      canvas.drawCircle(dotOff, 2, dot);
+
+      var textPainter = TextPainter(
+          text: TextSpan(text: text, style: TextStyle(color: dotC)),
+          textDirection: TextDirection.ltr,
+          textAlign: TextAlign.center);
+
+      textPainter.layout();
+
+      Offset textOff = Offset(center.dx + (radius - 15) * cos(angle - pi / 2),
+          center.dy + (radius - 15) * sin(angle - pi / 2));
+      canvas.save();
+      canvas.translate(textOff.dx, textOff.dy);
+      canvas.rotate(angle);
+      textPainter.paint(
+          canvas, Offset(-textPainter.width / 2, -textPainter.height / 2));
+      canvas.restore();
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return false;
+  }
 }
