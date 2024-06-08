@@ -168,11 +168,6 @@ class _MainPage extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
-    HomeWidget.saveWidgetData("name", "fajr");
-    HomeWidget.updateWidget(androidName: "nextPrayerWidget");
-    HomeWidget.getInstalledWidgets().then((v) {
-      print(v);
-    });
     List pagesAppBars = const [
       null,
       {"title": ""},
@@ -315,6 +310,10 @@ class Prayer extends StatefulWidget {
 class _Prayer extends State<Prayer> {
   @override
   Widget build(BuildContext context) {
+    String isoDate = widget.time.toIso8601String();
+    HomeWidget.saveWidgetData(
+        widget.name, isoDate.substring(0, isoDate.indexOf(".")));
+    HomeWidget.updateWidget(name: "nextPrayerWidget");
     int hour = widget.time.hour;
     int minutes = widget.time.minute;
     String dayPeriod = "AM";
