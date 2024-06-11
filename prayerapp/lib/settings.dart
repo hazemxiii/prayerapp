@@ -17,17 +17,6 @@ class _SettingsState extends State<Settings> {
   @override
   void initState() {
     super.initState();
-
-    getColors().then((data) {
-      Provider.of<ColorPalette>(context, listen: false)
-          .setMainC(hexToColor(data[0]));
-
-      Provider.of<ColorPalette>(context, listen: false)
-          .setSecC(hexToColor(data[1]));
-
-      Provider.of<ColorPalette>(context, listen: false)
-          .setBackC(hexToColor(data[2]));
-    });
   }
 
   @override

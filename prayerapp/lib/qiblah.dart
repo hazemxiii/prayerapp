@@ -87,35 +87,6 @@ class _QiblahState extends State<Qiblah> with TickerProviderStateMixin {
   }
 }
 
-double toDeg(double angle) {
-  return angle * 180 / pi;
-}
-
-double toRad(double angle) {
-  return angle * pi / 180;
-}
-
-double changeCompass(double? la1, double? lo1, double? north) {
-  // The Ka'bah location
-  double la2 = toRad(21.42250867030901);
-  double lo2 = toRad(39.8261959472982950);
-
-  la1 = toRad(la1!);
-  lo1 = toRad(lo1!);
-
-  // Calculate bearing
-  double diff = lo2 - lo1;
-
-  double x = sin(diff) * cos(la2);
-  double y = cos(la1) * sin(la2) - cos(la2) * sin(la1) * cos(diff);
-
-  // difference between north and qiblah
-  double bearing = (toDeg(atan2(x, y)) + 360) % 360;
-
-  // return toRad((bearing - north! + 360) % 360);
-  return bearing;
-}
-
 class CompassPainter extends CustomPainter {
   Color compassC = Colors.white;
   Color textC = Colors.lightBlue;
@@ -201,4 +172,33 @@ class CompassPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
     return false;
   }
+}
+
+double toDeg(double angle) {
+  return angle * 180 / pi;
+}
+
+double toRad(double angle) {
+  return angle * pi / 180;
+}
+
+double changeCompass(double? la1, double? lo1, double? north) {
+  // The Ka'bah location
+  double la2 = toRad(21.42250867030901);
+  double lo2 = toRad(39.8261959472982950);
+
+  la1 = toRad(la1!);
+  lo1 = toRad(lo1!);
+
+  // Calculate bearing
+  double diff = lo2 - lo1;
+
+  double x = sin(diff) * cos(la2);
+  double y = cos(la1) * sin(la2) - cos(la2) * sin(la1) * cos(diff);
+
+  // difference between north and qiblah
+  double bearing = (toDeg(atan2(x, y)) + 360) % 360;
+
+  // return toRad((bearing - north! + 360) % 360);
+  return bearing;
 }

@@ -1,5 +1,5 @@
 import 'dart:math';
-import 'settings.dart';
+// import 'settings.dart';
 import "package:shared_preferences/shared_preferences.dart";
 import "package:flutter/material.dart";
 import 'package:vibration/vibration.dart';
@@ -7,10 +7,8 @@ import 'vibration_settings.dart';
 import "main.dart";
 import 'package:provider/provider.dart';
 
-// ignore: must_be_immutable
 class Tasbih extends StatefulWidget {
-  GlobalKey<ScaffoldState> scaffoldKey;
-  Tasbih({super.key, required this.scaffoldKey});
+  const Tasbih({super.key});
   @override
   State<Tasbih> createState() => _Tasbih();
 }
@@ -62,17 +60,6 @@ class _Tasbih extends State<Tasbih> with TickerProviderStateMixin {
       setState(() {
         tasbih = v;
       });
-    });
-
-    getColors().then((data) {
-      Provider.of<ColorPalette>(context, listen: false)
-          .setMainC(hexToColor(data[0]));
-
-      Provider.of<ColorPalette>(context, listen: false)
-          .setSecC(hexToColor(data[1]));
-
-      Provider.of<ColorPalette>(context, listen: false)
-          .setBackC(hexToColor(data[2]));
     });
 
     getVibrationData().then((data) {

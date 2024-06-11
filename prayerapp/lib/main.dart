@@ -8,26 +8,6 @@ import "settings.dart";
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:provider/provider.dart';
-import "package:home_widget/home_widget.dart";
-import 'package:workmanager/workmanager.dart';
-
-@pragma("vm:entry-point")
-void callbackDispatcher() async {
-  Workmanager().executeTask((task, data) {
-    HomeWidget.saveWidgetData("Isha'a", DateTime.now().toString());
-    HomeWidget.updateWidget(name: "nextPrayerWidget");
-    return Future.value(true);
-  });
-}
-
-void main() {
-  // WidgetsFlutterBinding.ensureInitialized();
-  // Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
-  runApp(ChangeNotifierProvider(
-    create: (context) => ColorPalette(),
-    child: const App(),
-  ));
-}
 
 class ColorPalette extends ChangeNotifier {
   /// The class is used to rebuild the pages when the color is changed
@@ -58,6 +38,13 @@ class ColorPalette extends ChangeNotifier {
   }
 }
 
+void main() async {
+  runApp(ChangeNotifierProvider(
+    create: (context) => ColorPalette(),
+    child: const App(),
+  ));
+}
+
 class App extends StatelessWidget {
   const App({super.key});
   @override
@@ -74,19 +61,16 @@ class MainPage extends StatefulWidget {
 
 class _MainPage extends State<MainPage> {
   int activePage = 0;
-  Color mainColor = Colors.lightBlue;
-  Color secondaryColor = Colors.white;
-  Color backColor = Colors.lightBlue[50]!;
+  // Color mainColor = Colors.lightBlue;
+  // Color secondaryColor = Colors.white;
+  // Color backColor = Colors.lightBlue[50]!;
 
   // the pages controlled by the bottom nav bar
   late List<Widget> pages;
   late List<dynamic> pagesDrawers;
-  late GlobalKey<ScaffoldState> scaffoldKey;
   @override
   void initState() {
     super.initState();
-
-    scaffoldKey = GlobalKey();
 
     // the pages controlled by the bottom navbar
     pages = [
@@ -121,9 +105,10 @@ class _MainPage extends State<MainPage> {
                           return PageView.builder(
                               itemCount: snapshot.data!.length,
                               itemBuilder: (context, i) {
+                                int americanDateIndex = 7;
                                 return PrayerDay(
                                     // the last index (7) contains the american day to format and display
-                                    time: snapshot.data![i][7],
+                                    time: snapshot.data![i][americanDateIndex],
                                     times: snapshot.data[i]);
                               });
                         } else {
@@ -149,9 +134,7 @@ class _MainPage extends State<MainPage> {
           ],
         ),
       ),
-      Tasbih(
-        scaffoldKey: scaffoldKey,
-      ),
+      const Tasbih(),
       const Qiblah(),
       const Settings(),
     ];
@@ -195,7 +178,6 @@ class _MainPage extends State<MainPage> {
                 )
               : null,
           drawer: pagesDrawers[activePage],
-          key: scaffoldKey,
           bottomNavigationBar: SizedBox(
             height: 40,
             child: BottomNavigationBar(
@@ -320,10 +302,6 @@ class Prayer extends StatefulWidget {
 class _Prayer extends State<Prayer> {
   @override
   Widget build(BuildContext context) {
-    String isoDate = widget.time.toIso8601String();
-    HomeWidget.saveWidgetData(
-        widget.name, isoDate.substring(0, isoDate.indexOf(".")));
-    HomeWidget.updateWidget(name: "nextPrayerWidget");
     int hour = widget.time.hour;
     int minutes = widget.time.minute;
     String dayPeriod = "AM";

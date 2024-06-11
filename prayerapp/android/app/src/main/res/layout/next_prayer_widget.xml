@@ -1,9 +1,10 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
 
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#000000"
+    android:background="#000A22"
     android:orientation="vertical"
     android:padding="15px"
     android:theme="@style/Theme.Android.AppWidgetContainer">
@@ -12,7 +13,11 @@
         android:id="@+id/name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
         android:layout_margin="0dp"
+        android:layout_marginTop="6dp"
+        android:layout_marginEnd="5dp"
         android:contentDescription="@string/appwidget_text"
         android:text="Name"
         android:textColor="#FFFFFF"
@@ -21,12 +26,31 @@
 
     <TextView
         android:id="@+id/time"
-        android:layout_width="match_parent"
+        android:layout_width="246dp"
         android:layout_height="wrap_content"
-        android:layout_margin="0dp"
+        android:layout_below="@+id/name"
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="0dp"
+        android:layout_marginLeft="0dp"
+        android:layout_marginTop="0dp"
+        android:layout_marginEnd="0dp"
+        android:layout_marginRight="0dp"
+        android:layout_marginBottom="0dp"
         android:contentDescription="@string/appwidget_text"
         android:text="Time"
-        android:textColor="#FFFFFF"
+        android:textColor="#BCBCBC"
         android:textSize="24sp"
         android:textStyle="bold|italic" />
-</LinearLayout>
+
+    <ImageButton
+        android:id="@+id/reload"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/name"
+        android:layout_alignParentEnd="true"
+        android:layout_marginTop="0dp"
+        android:layout_marginEnd="0dp"
+        android:background="#000A22"
+        android:src="@android:drawable/ic_menu_rotate" />
+
+</RelativeLayout>
