@@ -1,5 +1,7 @@
+import "dart:async";
 import "dart:convert";
 import "package:flutter/material.dart";
+import "package:flutter_colorpicker/flutter_colorpicker.dart";
 import 'package:http/http.dart' as http;
 import "qiblah.dart";
 import "package:shared_preferences/shared_preferences.dart";
@@ -61,9 +63,6 @@ class MainPage extends StatefulWidget {
 
 class _MainPage extends State<MainPage> {
   int activePage = 0;
-  // Color mainColor = Colors.lightBlue;
-  // Color secondaryColor = Colors.white;
-  // Color backColor = Colors.lightBlue[50]!;
 
   // the pages controlled by the bottom nav bar
   late List<Widget> pages;
@@ -74,66 +73,7 @@ class _MainPage extends State<MainPage> {
 
     // the pages controlled by the bottom navbar
     pages = [
-      Container(
-        decoration: const BoxDecoration(
-            image: DecorationImage(
-          image: AssetImage("images/back.jpg"),
-          fit: BoxFit.cover,
-        )),
-        child: Column(
-          children: [
-            const SizedBox(
-              height: 250,
-              width: double.infinity,
-            ),
-            Consumer<ColorPalette>(builder: (context, palette, child) {
-              return Expanded(
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                      color: palette.getBackC,
-                      borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(20),
-                          topRight: Radius.circular(20))),
-                  child: FutureBuilder(
-                    future: getPrayerTime(),
-                    builder: (context, snapshot) {
-                      // when the data loads, show it. else show loading
-                      if (snapshot.connectionState == ConnectionState.done) {
-                        // if there's data, display. else display no internet
-                        if (snapshot.data!.length > 0) {
-                          return PageView.builder(
-                              itemCount: snapshot.data!.length,
-                              itemBuilder: (context, i) {
-                                int americanDateIndex = 7;
-                                return PrayerDay(
-                                    // the last index (7) contains the american day to format and display
-                                    time: snapshot.data![i][americanDateIndex],
-                                    times: snapshot.data[i]);
-                              });
-                        } else {
-                          return const Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Icon(Icons.warning,
-                                  size: 40,
-                                  color: Color.fromRGBO(255, 0, 0, 1)),
-                              Text("No Internet Connection")
-                            ],
-                          );
-                        }
-                      } else {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                    },
-                  ),
-                ),
-              );
-            })
-          ],
-        ),
-      ),
+      const PrayerTime(),
       const Tasbih(),
       const Qiblah(),
       const Settings(),
@@ -215,6 +155,183 @@ class _MainPage extends State<MainPage> {
           ),
           backgroundColor: palette.getBackC,
           body: pages[activePage]);
+    });
+  }
+}
+
+class PrayerTime extends StatefulWidget {
+  const PrayerTime({super.key});
+
+  @override
+  State<PrayerTime> createState() => PrayerTimeState();
+}
+
+class PrayerTimeState extends State<PrayerTime> {
+  @override
+  Widget build(BuildContext context) {
+    ValueNotifier nextPrayerRemainingTimeNotifier =
+        ValueNotifier(DateTime.now().toString());
+    return Consumer<ColorPalette>(builder: (context, palette, child) {
+      return FutureBuilder(
+          future: getPrayerTime(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.done) {
+              String nextPrayerName = "";
+              String nextPrayerTime = "";
+              // the percentage passed of the total time between two prayers
+              double percentagePassed = 0;
+              if (snapshot.data!.length > 0) {
+                List prayerNames = [
+                  "Fajr",
+                  "Sunrise",
+                  "Dhuhr",
+                  "Asr",
+                  "Maghrib",
+                  "Isha'a"
+                ];
+
+                List todayPrayersTimes = snapshot.data![0];
+                for (int i = 0; i < todayPrayersTimes.length - 2; i++) {
+                  DateTime prayerTime = DateTime.parse(
+                      "${todayPrayersTimes[7]} ${todayPrayersTimes[i]}");
+
+                  if (!prayerTime.difference(DateTime.now()).isNegative) {
+                    nextPrayerName = prayerNames[i];
+                    DateTime lastPrayerTime;
+
+                    if (i != 0) {
+                      lastPrayerTime = DateTime.parse(
+                          "${todayPrayersTimes[7]} ${todayPrayersTimes[i - 1]}");
+                    } else {
+                      lastPrayerTime =
+                          DateTime.parse("${todayPrayersTimes[7]} 00:00");
+                    }
+
+                    nextPrayerRemainingTimeNotifier.value =
+                        calculateRemainingPrayerTime(
+                            prayerTime, lastPrayerTime)[0];
+                    percentagePassed = calculateRemainingPrayerTime(
+                        prayerTime, lastPrayerTime)[1];
+
+                    Timer.periodic(const Duration(seconds: 1), (timer) {
+                      nextPrayerRemainingTimeNotifier.value =
+                          calculateRemainingPrayerTime(
+                              prayerTime, lastPrayerTime)[0];
+                      percentagePassed = calculateRemainingPrayerTime(
+                          prayerTime, lastPrayerTime)[1];
+                    });
+
+                    int hour = prayerTime.hour;
+                    String minute = "${prayerTime.minute}".padLeft(2, "0");
+
+                    String dayPeriod = "AM";
+
+                    if (hour >= 12) {
+                      dayPeriod = "PM";
+                      hour = hour % 12;
+                    }
+
+                    if (hour == 0) {
+                      hour = 12;
+                    }
+
+                    nextPrayerTime =
+                        "${'$hour'.padLeft(2, "0")}:$minute $dayPeriod";
+
+                    break;
+                  }
+                }
+
+                return Column(
+                  children: [
+                    Container(
+                      height: MediaQuery.of(context).size.height / 4,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                          color: palette.getSecC,
+                          borderRadius: const BorderRadius.only(
+                              bottomLeft: Radius.circular(10),
+                              bottomRight: Radius.circular(10))),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              Column(
+                                children: [
+                                  Text(
+                                    nextPrayerName,
+                                    style: TextStyle(
+                                        color: palette.getMainC, fontSize: 20),
+                                  ),
+                                  Text(
+                                    nextPrayerTime,
+                                    style: TextStyle(
+                                        color: palette.getMainC, fontSize: 18),
+                                  )
+                                ],
+                              ),
+                              ValueListenableBuilder(
+                                  valueListenable:
+                                      nextPrayerRemainingTimeNotifier,
+                                  builder: (context, value, child) {
+                                    return Column(
+                                      children: [
+                                        CircularProgressIndicator(
+                                          value: percentagePassed,
+                                          color: palette.getMainC,
+                                        ),
+                                        Text(value,
+                                            style: TextStyle(
+                                                color: palette.getMainC,
+                                                fontSize: 18))
+                                      ],
+                                    );
+                                  })
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: Container(
+                        color: palette.getBackC,
+                        width: double.infinity,
+                        child: PageView.builder(
+                            itemCount: snapshot.data!.length,
+                            itemBuilder: (context, i) {
+                              int americanDateIndex = 7;
+                              return PrayerDay(
+                                  // the last index (7) contains the american day to format and display
+                                  time: snapshot.data![i][americanDateIndex],
+                                  times: snapshot.data[i]);
+                            }),
+                      ),
+                    )
+                  ],
+                );
+              } else {
+                return const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Icon(Icons.warning,
+                          size: 40, color: Color.fromRGBO(255, 0, 0, 1)),
+                      Text("No Internet Connection")
+                    ],
+                  ),
+                );
+              }
+            } else {
+              return Center(
+                child: CircularProgressIndicator(
+                  color: palette.getMainC,
+                ),
+              );
+            }
+          });
     });
   }
 }
@@ -564,4 +681,17 @@ Future<List> getPosition(bool coordinates) async {
   }
 
   return address;
+}
+
+List calculateRemainingPrayerTime(DateTime nextP, DateTime prevP) {
+  Duration diff = nextP.difference(DateTime.now());
+  double percentagePassed = diff.inSeconds / nextP.difference(prevP).inSeconds;
+  int hDiff = diff.inHours;
+  int mDiff = diff.inMinutes - hDiff * 60;
+  int sDiff = diff.inSeconds - hDiff * 60 * 60 - mDiff * 60;
+
+  String diffString =
+      "${'$hDiff'.padLeft(2, "0")}:${'$mDiff'.padLeft(2, "0")}:${'$sDiff'.padLeft(2, "0")}";
+
+  return [diffString, percentagePassed];
 }
