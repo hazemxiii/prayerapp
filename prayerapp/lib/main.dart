@@ -1,7 +1,6 @@
 import "dart:async";
 import "dart:convert";
 import "package:flutter/material.dart";
-import "package:flutter_colorpicker/flutter_colorpicker.dart";
 import 'package:http/http.dart' as http;
 import "qiblah.dart";
 import "package:shared_preferences/shared_preferences.dart";
@@ -176,71 +175,27 @@ class PrayerTimeState extends State<PrayerTime> {
           future: getPrayerTime(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.done) {
-              String nextPrayerName = "";
-              String nextPrayerTime = "";
-              // the percentage passed of the total time between two prayers
-              double percentagePassed = 0;
               if (snapshot.data!.length > 0) {
-                List prayerNames = [
-                  "Fajr",
-                  "Sunrise",
-                  "Dhuhr",
-                  "Asr",
-                  "Maghrib",
-                  "Isha'a"
-                ];
+                Map nextPrayerData =
+                    getNextPrayer(snapshot.data![0], snapshot.data![1]);
 
-                List todayPrayersTimes = snapshot.data![0];
-                for (int i = 0; i < todayPrayersTimes.length - 2; i++) {
-                  DateTime prayerTime = DateTime.parse(
-                      "${todayPrayersTimes[7]} ${todayPrayersTimes[i]}");
+                String nextPrayerName = nextPrayerData["name"];
+                String timeLeft = nextPrayerData["timeLeft"];
+                String time = nextPrayerData["time"];
+                double remianingTimePercentage =
+                    nextPrayerData["percentageLeft"];
+                nextPrayerRemainingTimeNotifier.value = timeLeft;
 
-                  if (!prayerTime.difference(DateTime.now()).isNegative) {
-                    nextPrayerName = prayerNames[i];
-                    DateTime lastPrayerTime;
+                Timer.periodic(const Duration(seconds: 1), (timer) {
+                  Map nextPrayerData =
+                      getNextPrayer(snapshot.data![0], snapshot.data![1]);
 
-                    if (i != 0) {
-                      lastPrayerTime = DateTime.parse(
-                          "${todayPrayersTimes[7]} ${todayPrayersTimes[i - 1]}");
-                    } else {
-                      lastPrayerTime =
-                          DateTime.parse("${todayPrayersTimes[7]} 00:00");
-                    }
-
-                    nextPrayerRemainingTimeNotifier.value =
-                        calculateRemainingPrayerTime(
-                            prayerTime, lastPrayerTime)[0];
-                    percentagePassed = calculateRemainingPrayerTime(
-                        prayerTime, lastPrayerTime)[1];
-
-                    Timer.periodic(const Duration(seconds: 1), (timer) {
-                      nextPrayerRemainingTimeNotifier.value =
-                          calculateRemainingPrayerTime(
-                              prayerTime, lastPrayerTime)[0];
-                      percentagePassed = calculateRemainingPrayerTime(
-                          prayerTime, lastPrayerTime)[1];
-                    });
-
-                    int hour = prayerTime.hour;
-                    String minute = "${prayerTime.minute}".padLeft(2, "0");
-
-                    String dayPeriod = "AM";
-
-                    if (hour >= 12) {
-                      dayPeriod = "PM";
-                      hour = hour % 12;
-                    }
-
-                    if (hour == 0) {
-                      hour = 12;
-                    }
-
-                    nextPrayerTime =
-                        "${'$hour'.padLeft(2, "0")}:$minute $dayPeriod";
-
-                    break;
-                  }
-                }
+                  nextPrayerName = nextPrayerData["name"];
+                  timeLeft = nextPrayerData["timeLeft"];
+                  time = nextPrayerData["time"];
+                  remianingTimePercentage = nextPrayerData["percentageLeft"];
+                  nextPrayerRemainingTimeNotifier.value = timeLeft;
+                });
 
                 return Column(
                   children: [
@@ -266,7 +221,7 @@ class PrayerTimeState extends State<PrayerTime> {
                                         color: palette.getMainC, fontSize: 20),
                                   ),
                                   Text(
-                                    nextPrayerTime,
+                                    time,
                                     style: TextStyle(
                                         color: palette.getMainC, fontSize: 18),
                                   )
@@ -279,7 +234,7 @@ class PrayerTimeState extends State<PrayerTime> {
                                     return Column(
                                       children: [
                                         CircularProgressIndicator(
-                                          value: percentagePassed,
+                                          value: remianingTimePercentage,
                                           color: palette.getMainC,
                                         ),
                                         Text(value,
@@ -683,15 +638,55 @@ Future<List> getPosition(bool coordinates) async {
   return address;
 }
 
-List calculateRemainingPrayerTime(DateTime nextP, DateTime prevP) {
-  Duration diff = nextP.difference(DateTime.now());
-  double percentagePassed = diff.inSeconds / nextP.difference(prevP).inSeconds;
-  int hDiff = diff.inHours;
-  int mDiff = diff.inMinutes - hDiff * 60;
-  int sDiff = diff.inSeconds - hDiff * 60 * 60 - mDiff * 60;
+Map getNextPrayer(List todayPrayers, List tommorowPrayers) {
+  String todayDateString = todayPrayers[todayPrayers.length - 1];
+  String tommorowDateString = tommorowPrayers[tommorowPrayers.length - 1];
 
-  String diffString =
-      "${'$hDiff'.padLeft(2, "0")}:${'$mDiff'.padLeft(2, "0")}:${'$sDiff'.padLeft(2, "0")}";
+  List prayerNames = ["Fajr", "Sunrise", "Dhuhr", "Asr", "Maghrib", "Isha'a"];
 
-  return [diffString, percentagePassed];
+// initialise the next prayer as tomorrow's fajr and the last prayer as today's Isha'a
+  DateTime nextPrayer =
+      DateTime.parse("$tommorowDateString ${tommorowPrayers[0]}");
+
+  String nextPrayerName = prayerNames[0];
+
+  DateTime lastPrayer = DateTime.parse("$todayDateString ${todayPrayers[5]}");
+
+  DateTime now = DateTime.now();
+  for (int i = 0; i < todayPrayers.length - 2; i++) {
+    DateTime prayer = DateTime.parse("$todayDateString ${todayPrayers[i]}");
+    if (!prayer.difference(now).isNegative) {
+      nextPrayer = prayer;
+      nextPrayerName = prayerNames[i];
+      if (i != 0) {
+        lastPrayer = DateTime.parse("$todayDateString ${todayPrayers[i - 1]}");
+      } else {
+        lastPrayer = DateTime.parse("$tommorowDateString ${todayPrayers[5]}");
+      }
+      break;
+    }
+  }
+  Duration diff = nextPrayer.difference(now);
+  int dHour = diff.inHours;
+  int dMinute = diff.inMinutes - dHour * 60;
+  int dSecond = diff.inSeconds - dHour * 60 * 60 - dMinute * 60;
+
+  String timeLeft =
+      "${'$dHour'.padLeft(2, "0")}:${'$dMinute'.padLeft(2, "0")}:${'$dSecond'.padLeft(2, "0")}";
+
+  int totalTimeBetweenPrayers = nextPrayer.difference(lastPrayer).inSeconds;
+
+  double percentageTimeRemain = diff.inSeconds / totalTimeBetweenPrayers;
+
+  TimeOfDay time = TimeOfDay.fromDateTime(nextPrayer);
+  String hour = "${time.hourOfPeriod}".padLeft(2, "0");
+  String minute = "${time.minute}".padLeft(2, "0");
+  String period = time.period == DayPeriod.pm ? "PM" : "AM";
+
+  return {
+    "timeLeft": timeLeft,
+    "name": nextPrayerName,
+    "percentageLeft": percentageTimeRemain,
+    "time": "$hour:$minute $period"
+  };
 }
