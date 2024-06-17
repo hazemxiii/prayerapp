@@ -332,11 +332,11 @@ class _PrayerDayState extends State<PrayerDay> {
           return Column(children: [
             // format the american date to Weekday, day month
             Text(numbersDateToText(widget.time),
-                style: TextStyle(color: palette.getMainC)),
+                style: TextStyle(color: palette.getSecC)),
             // hijri date is at index 6
             Text(
               widget.times[6],
-              style: TextStyle(color: palette.getMainC),
+              style: TextStyle(color: palette.getSecC),
             ),
             // the prayers are in order [fajr,sunrise,dhuhr,asr,maghrib,isha]
             Prayer(
@@ -614,7 +614,6 @@ Future<List> getPosition(bool coordinates) async {
   serviceEnabled = await Geolocator.isLocationServiceEnabled();
   if (!serviceEnabled) {
     // return Future.error('Location services are disabled.');
-    Geolocator.openLocationSettings();
     return [];
   }
 

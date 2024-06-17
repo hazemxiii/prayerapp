@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_compass/flutter_compass.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 import 'main.dart';
 
@@ -30,7 +31,12 @@ class _QiblahState extends State<Qiblah> with TickerProviderStateMixin {
               if (snap.connectionState == ConnectionState.done) {
                 // location services are off
                 if (snap.data!.isEmpty) {
-                  return const RefreshProgressIndicator();
+                  return Center(
+                    child: Text(
+                      "Please enable location services!",
+                      style: TextStyle(color: palette.getSecC),
+                    ),
+                  );
                 }
                 return StreamBuilder<CompassEvent>(
                     stream: FlutterCompass.events,
@@ -78,7 +84,9 @@ class _QiblahState extends State<Qiblah> with TickerProviderStateMixin {
                   child: SizedBox(
                       width: dimension - dimension / 4,
                       // still loading
-                      child: const LinearProgressIndicator()),
+                      child: LinearProgressIndicator(
+                        color: palette.getMainC,
+                      )),
                 );
               }
             });

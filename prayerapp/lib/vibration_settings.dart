@@ -117,6 +117,8 @@ class _VibrationSettingsState extends State<VibrationSettings> {
                   style: TextStyle(color: palette.getMainC),
                   cursorColor: palette.getMainC,
                   decoration: InputDecoration(
+                      hintText:
+                          "Difference between two vibrations for every | Exact numbers for on",
                       enabledBorder: UnderlineInputBorder(
                           borderSide: BorderSide(color: palette.getBackC)),
                       focusedBorder: UnderlineInputBorder(
