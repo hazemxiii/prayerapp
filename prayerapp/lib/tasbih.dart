@@ -155,7 +155,7 @@ class _Tasbih extends State<Tasbih> with TickerProviderStateMixin {
                     width: 30,
                     height: 30,
                     decoration: BoxDecoration(
-                        color: palette.getMainC,
+                        color: palette.getSecC,
                         borderRadius:
                             const BorderRadius.all(Radius.circular(1000))),
                   ),
@@ -198,7 +198,7 @@ class _TasbihDrawer extends State<TasbihDrawer> {
           if (snap.connectionState == ConnectionState.done) {
             return Consumer<ColorPalette>(builder: (context, palette, child) {
               return Container(
-                color: palette.getMainC,
+                color: palette.getSecC,
                 width: drawerWidth,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -218,7 +218,7 @@ class _TasbihDrawer extends State<TasbihDrawer> {
                           shape: const RoundedRectangleBorder(
                               borderRadius:
                                   BorderRadius.all(Radius.circular(10))),
-                          backgroundColor: palette.getSecC),
+                          backgroundColor: palette.getMainC),
                       onPressed: () {
                         setState(() {
                           clearTasbih();
@@ -226,7 +226,7 @@ class _TasbihDrawer extends State<TasbihDrawer> {
                       },
                       child: Text(
                         "Clear",
-                        style: TextStyle(color: palette.getMainC),
+                        style: TextStyle(color: palette.getSecC),
                       ),
                     )
                   ],
@@ -268,15 +268,15 @@ class _TasbihNumberState extends State<TasbihNumber> {
         width: widget.width,
         margin: const EdgeInsets.all(5),
         decoration: BoxDecoration(
-            color: palette.getSecC,
+            color: palette.getMainC,
             borderRadius: const BorderRadius.all(Radius.circular(10))),
         child: Column(
           children: [
             Text(
               widget.name,
-              style: TextStyle(color: palette.getMainC),
+              style: TextStyle(color: palette.getSecC),
             ),
-            Text("${widget.number}", style: TextStyle(color: palette.getMainC))
+            Text("${widget.number}", style: TextStyle(color: palette.getSecC))
           ],
         ),
       );

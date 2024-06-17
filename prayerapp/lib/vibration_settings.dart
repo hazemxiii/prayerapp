@@ -32,7 +32,7 @@ class _VibrationSettingsState extends State<VibrationSettings> {
   Widget build(BuildContext context) {
     return Consumer<ColorPalette>(builder: (context, palette, child) {
       return Scaffold(
-        backgroundColor: palette.getBackC,
+        backgroundColor: palette.getSecC,
         appBar: AppBar(
           backgroundColor: palette.getMainC,
           foregroundColor: palette.getSecC,
@@ -57,7 +57,7 @@ class _VibrationSettingsState extends State<VibrationSettings> {
                   ),
                   Switch(
                       activeColor: palette.getMainC,
-                      inactiveThumbColor: palette.getBackC,
+                      inactiveThumbColor: palette.getMainC,
                       inactiveTrackColor: palette.getSecC,
                       value: vibrationOn,
                       onChanged: (v) {
@@ -75,7 +75,7 @@ class _VibrationSettingsState extends State<VibrationSettings> {
                 Column(
                   children: [
                     Radio(
-                        activeColor: palette.getMainC,
+                        fillColor: WidgetStatePropertyAll(palette.getMainC),
                         value: "on",
                         groupValue: vibrateRadio,
                         onChanged: (v) {
@@ -83,7 +83,8 @@ class _VibrationSettingsState extends State<VibrationSettings> {
                             vibrateRadio = v!;
                           });
                         }),
-                    const Text("Vibrate on")
+                    Text("Vibrate on",
+                        style: TextStyle(color: palette.getMainC))
                   ],
                 ),
                 const SizedBox(
@@ -92,7 +93,7 @@ class _VibrationSettingsState extends State<VibrationSettings> {
                 Column(
                   children: [
                     Radio(
-                        activeColor: palette.getMainC,
+                        fillColor: WidgetStatePropertyAll(palette.getMainC),
                         value: "every",
                         groupValue: vibrateRadio,
                         onChanged: (v) {
@@ -100,7 +101,10 @@ class _VibrationSettingsState extends State<VibrationSettings> {
                             vibrateRadio = v!;
                           });
                         }),
-                    const Text("Vibrate every")
+                    Text(
+                      "Vibrate every",
+                      style: TextStyle(color: palette.getMainC),
+                    )
                   ],
                 )
               ],
@@ -110,7 +114,11 @@ class _VibrationSettingsState extends State<VibrationSettings> {
                 margin: const EdgeInsets.all(10),
                 child: TextField(
                   controller: vibrationController,
+                  style: TextStyle(color: palette.getMainC),
+                  cursorColor: palette.getMainC,
                   decoration: InputDecoration(
+                      enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: palette.getBackC)),
                       focusedBorder: UnderlineInputBorder(
                           borderSide: BorderSide(color: palette.getMainC))),
                 )),

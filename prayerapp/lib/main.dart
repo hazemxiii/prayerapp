@@ -111,7 +111,7 @@ class _MainPage extends State<MainPage> {
           appBar: pagesAppBars[activePage] != null
               ? AppBar(
                   backgroundColor: palette.getBackC,
-                  foregroundColor: palette.getMainC,
+                  foregroundColor: palette.getSecC,
                   title: Text(pagesAppBars[activePage]["title"]),
                   centerTitle: true,
                 )
@@ -166,6 +166,15 @@ class PrayerTime extends StatefulWidget {
 }
 
 class PrayerTimeState extends State<PrayerTime> {
+  late PageController pageViewCont;
+
+  @override
+  void initState() {
+    super.initState();
+
+    pageViewCont = PageController(initialPage: 1);
+  }
+
   @override
   Widget build(BuildContext context) {
     ValueNotifier nextPrayerRemainingTimeNotifier =
@@ -176,8 +185,8 @@ class PrayerTimeState extends State<PrayerTime> {
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.done) {
               if (snapshot.data!.length > 0) {
-                Map nextPrayerData =
-                    getNextPrayer(snapshot.data![0], snapshot.data![1]);
+                Map nextPrayerData = getNextPrayer(
+                    snapshot.data![0], snapshot.data![1], snapshot.data![2]);
 
                 String nextPrayerName = nextPrayerData["name"];
                 String timeLeft = nextPrayerData["timeLeft"];
@@ -187,8 +196,8 @@ class PrayerTimeState extends State<PrayerTime> {
                 nextPrayerRemainingTimeNotifier.value = timeLeft;
 
                 Timer.periodic(const Duration(seconds: 1), (timer) {
-                  Map nextPrayerData =
-                      getNextPrayer(snapshot.data![0], snapshot.data![1]);
+                  Map nextPrayerData = getNextPrayer(
+                      snapshot.data![0], snapshot.data![1], snapshot.data![2]);
 
                   nextPrayerName = nextPrayerData["name"];
                   timeLeft = nextPrayerData["timeLeft"];
@@ -254,6 +263,7 @@ class PrayerTimeState extends State<PrayerTime> {
                         color: palette.getBackC,
                         width: double.infinity,
                         child: PageView.builder(
+                            controller: pageViewCont,
                             itemCount: snapshot.data!.length,
                             itemBuilder: (context, i) {
                               int americanDateIndex = 7;
@@ -274,7 +284,10 @@ class PrayerTimeState extends State<PrayerTime> {
                     children: [
                       Icon(Icons.warning,
                           size: 40, color: Color.fromRGBO(255, 0, 0, 1)),
-                      Text("No Internet Connection")
+                      Text(
+                        "No Internet Connection",
+                        style: TextStyle(color: Colors.orange),
+                      )
                     ],
                   ),
                 );
@@ -448,7 +461,7 @@ Future<dynamic> getPrayerTime() async {
   await SharedPreferences.getInstance().then((spref) async {
     // loop on the next 30 days
     for (int i = 0; i < 30; i++) {
-      DateTime dateO = DateTime.now().add(Duration(days: i));
+      DateTime dateO = DateTime.now().add(Duration(days: i - 1));
 
       // get the american and normal dates
       String date = parseDate(dateO, false);
@@ -638,7 +651,9 @@ Future<List> getPosition(bool coordinates) async {
   return address;
 }
 
-Map getNextPrayer(List todayPrayers, List tommorowPrayers) {
+Map getNextPrayer(
+    List yesterdayPrayers, List todayPrayers, List tommorowPrayers) {
+  String yesterdayPrayersString = yesterdayPrayers[yesterdayPrayers.length - 1];
   String todayDateString = todayPrayers[todayPrayers.length - 1];
   String tommorowDateString = tommorowPrayers[tommorowPrayers.length - 1];
 
@@ -661,7 +676,8 @@ Map getNextPrayer(List todayPrayers, List tommorowPrayers) {
       if (i != 0) {
         lastPrayer = DateTime.parse("$todayDateString ${todayPrayers[i - 1]}");
       } else {
-        lastPrayer = DateTime.parse("$tommorowDateString ${todayPrayers[5]}");
+        lastPrayer =
+            DateTime.parse("$yesterdayPrayersString ${yesterdayPrayers[5]}");
       }
       break;
     }

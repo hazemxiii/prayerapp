@@ -85,7 +85,7 @@ class _LocationSettingsState extends State<LocationSettings> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 MaterialButton(
-                  color: backColor,
+                  color: secondaryColor,
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
@@ -133,6 +133,8 @@ class _LocationInputState extends State<LocationInput> {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       child: TextField(
+        style: TextStyle(color: widget.color),
+        cursorColor: widget.color,
         controller: widget.controller,
         decoration: InputDecoration(
             focusedBorder: OutlineInputBorder(
