@@ -1,0 +1,232 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import "main.dart";
+
+class PrayerNotificationSettings extends StatefulWidget {
+  final String prayer;
+  const PrayerNotificationSettings({super.key, required this.prayer});
+
+  @override
+  State<PrayerNotificationSettings> createState() =>
+      _PrayerNotificationSettingsState();
+}
+
+class _PrayerNotificationSettingsState
+    extends State<PrayerNotificationSettings> {
+  ValueNotifier beforeAdhanTime = ValueNotifier(-1);
+  ValueNotifier afterAdhanTime = ValueNotifier(-1);
+
+  @override
+  void initState() {
+    super.initState();
+
+    getNotificationsData(widget.prayer).then((data) {
+      setState(() {
+        beforeAdhanTime = ValueNotifier(data[0]);
+        afterAdhanTime = ValueNotifier(data[1]);
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<ColorPalette>(builder: (context, palette, child) {
+      return Scaffold(
+        backgroundColor: palette.getSecC,
+        appBar: AppBar(
+          foregroundColor: palette.getSecC,
+          backgroundColor: palette.getMainC,
+          title: Text(
+              "${widget.prayer == "Jumu'a" ? "Dhuhr" : widget.prayer} Notification"),
+          centerTitle: true,
+        ),
+        body: Column(
+          children: [
+            PickTimeRow(
+              notifier: beforeAdhanTime,
+              min: 0,
+              max: 30,
+              step: 1,
+              text: "Before Adhan",
+            ),
+            PickTimeRow(
+              notifier: afterAdhanTime,
+              min: 1,
+              max: 15,
+              step: 1,
+              text: "After Adhan",
+            ),
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              MaterialButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  color: palette.getSecC,
+                  textColor: palette.getMainC,
+                  child: const Text("Cancel")),
+              const SizedBox(
+                width: 10,
+              ),
+              MaterialButton(
+                  onPressed: () {
+                    saveNotificationTimes(widget.prayer, beforeAdhanTime.value,
+                        afterAdhanTime.value);
+                    Navigator.of(context).pop();
+                  },
+                  color: palette.getMainC,
+                  textColor: palette.getSecC,
+                  child: const Text("Save"))
+            ])
+          ],
+        ),
+      );
+    });
+  }
+}
+
+class PickTimeRow extends StatefulWidget {
+  final ValueNotifier notifier;
+  final int min;
+  final int max;
+  final int step;
+  final String text;
+  const PickTimeRow(
+      {super.key,
+      required this.notifier,
+      required this.min,
+      required this.max,
+      required this.step,
+      required this.text});
+
+  @override
+  State<PickTimeRow> createState() => _PickTimeRowState();
+}
+
+class _PickTimeRowState extends State<PickTimeRow> {
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<ColorPalette>(builder: (context, palette, child) {
+      return InkWell(
+          onTap: () {
+            showDialog(
+                context: context,
+                builder: (context) {
+                  return Dialog(
+                    child: ValueListenableBuilder(
+                        valueListenable: widget.notifier,
+                        builder: (context, value, child) {
+                          return NumberPicker(
+                            min: widget.min,
+                            max: widget.max,
+                            step: widget.step,
+                            value: widget.notifier,
+                          );
+                        }),
+                  );
+                });
+          },
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  widget.text,
+                  style: TextStyle(color: palette.getMainC),
+                ),
+                ValueListenableBuilder(
+                    valueListenable: widget.notifier,
+                    builder: (context, value, child) {
+                      return Text(
+                        value >= widget.min ? "$value" : "OFF",
+                        style: TextStyle(color: palette.getMainC),
+                      );
+                    }),
+              ],
+            ),
+          ));
+    });
+  }
+}
+
+class NumberPicker extends StatefulWidget {
+  final int min;
+  final int max;
+  final int step;
+  final ValueNotifier value;
+  const NumberPicker(
+      {super.key,
+      required this.min,
+      required this.max,
+      required this.step,
+      required this.value});
+
+  @override
+  State<NumberPicker> createState() => _NumberPickerState();
+}
+
+class _NumberPickerState extends State<NumberPicker> {
+  late PageController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = PageController(
+        initialPage:
+            ((widget.value.value - widget.min) / widget.step).floor() + 1);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    int count = ((widget.max - widget.min) / widget.step).floor() + 2;
+    return Consumer<ColorPalette>(builder: (context, palette, child) {
+      return Container(
+          decoration: BoxDecoration(
+              borderRadius: const BorderRadius.all(Radius.circular(20)),
+              color: palette.getMainC),
+          height: 40,
+          width: 40,
+          child: PageView.builder(
+              scrollDirection: Axis.vertical,
+              controller: controller,
+              onPageChanged: (i) {
+                widget.value.value = (i - 1) * widget.step + widget.min;
+              },
+              itemCount: count,
+              itemBuilder: (context, i) => Center(
+                    child: Text(
+                      i != 0 ? "${(i - 1) * widget.step + widget.min}" : "OFF",
+                      style: TextStyle(color: palette.getSecC),
+                    ),
+                  )));
+    });
+  }
+}
+
+void saveNotificationTimes(String prayer, int before, int after) async {
+  SharedPreferences spref = await SharedPreferences.getInstance();
+
+  String keyBefore = "${prayer}_notification_b";
+  String keyAfter = "${prayer}_notification_a";
+
+  spref.setInt(keyBefore, before);
+  spref.setInt(keyAfter, after);
+}
+
+Future<List> getNotificationsData(String prayer) async {
+  SharedPreferences sprefs = await SharedPreferences.getInstance();
+
+  String keyBefore = "${prayer}_notification_b";
+  String keyAfter = "${prayer}_notification_a";
+
+  if (!sprefs.containsKey(keyBefore)) {
+    sprefs.setInt(keyBefore, -1);
+  }
+
+  if (!sprefs.containsKey(keyAfter)) {
+    sprefs.setInt(keyAfter, -1);
+  }
+
+  return [sprefs.getInt(keyBefore), sprefs.getInt(keyAfter)];
+}

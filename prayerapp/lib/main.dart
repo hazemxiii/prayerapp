@@ -2,6 +2,7 @@ import "dart:async";
 import "dart:convert";
 import "package:flutter/material.dart";
 import 'package:http/http.dart' as http;
+import "package:prayerapp/notification.dart";
 import "qiblah.dart";
 import "package:shared_preferences/shared_preferences.dart";
 import "tasbih.dart";
@@ -183,7 +184,8 @@ class PrayerTimeState extends State<PrayerTime> {
       return FutureBuilder(
           future: getPrayerTime(),
           builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.done) {
+            if (snapshot.connectionState == ConnectionState.done &&
+                snapshot.hasData) {
               if (snapshot.data!.length > 0) {
                 Map nextPrayerData = getNextPrayer(
                     snapshot.data![0], snapshot.data![1], snapshot.data![2]);
@@ -214,8 +216,8 @@ class PrayerTimeState extends State<PrayerTime> {
                       decoration: BoxDecoration(
                           color: palette.getSecC,
                           borderRadius: const BorderRadius.only(
-                              bottomLeft: Radius.circular(10),
-                              bottomRight: Radius.circular(10))),
+                              bottomLeft: Radius.circular(20),
+                              bottomRight: Radius.circular(20))),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -321,10 +323,6 @@ class PrayerDay extends StatefulWidget {
 class _PrayerDayState extends State<PrayerDay> {
   @override
   Widget build(BuildContext context) {
-    String dhuhr = "Dhuhr";
-    if (numbersDateToText(widget.time).contains("Friday")) {
-      dhuhr = "Jumu'a";
-    }
     return SingleChildScrollView(
       child: Container(
         padding: const EdgeInsets.fromLTRB(0, 10, 0, 0),
@@ -348,7 +346,9 @@ class _PrayerDayState extends State<PrayerDay> {
               time: DateTime.parse("${widget.time} ${widget.times[1]}"),
             ),
             Prayer(
-              name: dhuhr,
+              name: numbersDateToText(widget.time).contains("Friday")
+                  ? "Jumu'a"
+                  : "Dhuhr",
               time: DateTime.parse("${widget.time} ${widget.times[2]}"),
             ),
             Prayer(
@@ -412,45 +412,78 @@ class _Prayer extends State<Prayer> {
     // take only the hours and minutes
 
     return Consumer<ColorPalette>(builder: (context, palette, c) {
-      return Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            margin: const EdgeInsets.all(5),
-            decoration: BoxDecoration(
-                color: palette.getSecC,
-                borderRadius: const BorderRadius.all(Radius.circular(10))),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 3,
-                      height: 20,
-                      color: palette.getMainC,
-                      margin: const EdgeInsets.fromLTRB(0, 0, 10, 0),
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.name,
-                          style: TextStyle(color: palette.getMainC),
-                        ),
-                        Text("$hour:${"$minutes".padLeft(2, "0")} $dayPeriod",
-                            style: TextStyle(color: palette.getMainC))
-                      ],
-                    ),
-                  ],
-                ),
-                Text(diff, style: TextStyle(color: palette.getMainC))
-              ],
+      return InkWell(
+        onLongPress: () {
+          Navigator.of(context).push(MaterialPageRoute(
+              builder: (context) =>
+                  PrayerNotificationSettings(prayer: widget.name)));
+        },
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              margin: const EdgeInsets.all(5),
+              decoration: BoxDecoration(
+                  color: palette.getSecC,
+                  borderRadius: const BorderRadius.all(Radius.circular(10))),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 3,
+                        height: 20,
+                        color: palette.getMainC,
+                        margin: const EdgeInsets.fromLTRB(0, 0, 10, 0),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.name,
+                            style: TextStyle(color: palette.getMainC),
+                          ),
+                          Text("$hour:${"$minutes".padLeft(2, "0")} $dayPeriod",
+                              style: TextStyle(color: palette.getMainC))
+                        ],
+                      ),
+                    ],
+                  ),
+                  Text(diff, style: TextStyle(color: palette.getMainC))
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       );
     });
+  }
+}
+
+class Divider extends CustomPainter {
+  Color mainC = Colors.lightBlue;
+  Color? secC = Colors.lightBlue[50];
+
+  Divider(this.mainC, this.secC);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    var paint = Paint()
+      ..color = mainC
+      ..style = PaintingStyle.fill;
+    var path = Path();
+    path.moveTo(0, size.height / 2);
+    path.quadraticBezierTo(
+        size.width / 4, size.height, size.width / 2, size.height / 2);
+    path.quadraticBezierTo(size.width / 4 * 3, 0, size.width, size.height / 2);
+    path.close();
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return false;
   }
 }
 
