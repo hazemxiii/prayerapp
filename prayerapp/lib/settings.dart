@@ -152,11 +152,14 @@ class _ColorPickerRowState extends State<ColorPickerRow> {
                 builder: (context) {
                   Color? color;
                   return AlertDialog(
+                    backgroundColor: palette.getSecC,
                     title: Text(
                       "Pick a color",
                       style: TextStyle(color: palette.getMainC),
                     ),
                     content: ColorPicker(
+                      labelTypes: const [],
+                      hexInputBar: true,
                       pickerColor: widget.pickerColor,
                       onColorChanged: (c) {
                         color = c;

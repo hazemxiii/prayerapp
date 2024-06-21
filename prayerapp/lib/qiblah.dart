@@ -85,7 +85,7 @@ class _QiblahState extends State<Qiblah> with TickerProviderStateMixin {
                       width: dimension - dimension / 4,
                       // still loading
                       child: LinearProgressIndicator(
-                        color: palette.getMainC,
+                        color: palette.getSecC,
                       )),
                 );
               }

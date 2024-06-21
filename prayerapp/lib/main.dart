@@ -246,7 +246,7 @@ class PrayerTimeState extends State<PrayerTime> {
                                       children: [
                                         CircularProgressIndicator(
                                           value: remianingTimePercentage,
-                                          color: palette.getMainC,
+                                          color: palette.getSecC,
                                         ),
                                         Text(value,
                                             style: TextStyle(
@@ -321,8 +321,12 @@ class PrayerDay extends StatefulWidget {
 }
 
 class _PrayerDayState extends State<PrayerDay> {
+  List prayerNames = ["Fajr", "Sunrise", "Dhuhr", "Asr", "Maghrib", "Isha'a"];
+  DateTime? lastPrayerOfDay;
   @override
   Widget build(BuildContext context) {
+    lastPrayerOfDay = DateTime.parse("${widget.time} ${widget.times[0]}");
+
     return SingleChildScrollView(
       child: Container(
         padding: const EdgeInsets.fromLTRB(0, 10, 0, 0),
@@ -336,33 +340,24 @@ class _PrayerDayState extends State<PrayerDay> {
               widget.times[6],
               style: TextStyle(color: palette.getSecC),
             ),
-            // the prayers are in order [fajr,sunrise,dhuhr,asr,maghrib,isha]
-            Prayer(
-              name: "Fajr",
-              time: DateTime.parse("${widget.time} ${widget.times[0]}"),
-            ),
-            Prayer(
-              name: "Sunrise",
-              time: DateTime.parse("${widget.time} ${widget.times[1]}"),
-            ),
-            Prayer(
-              name: numbersDateToText(widget.time).contains("Friday")
-                  ? "Jumu'a"
-                  : "Dhuhr",
-              time: DateTime.parse("${widget.time} ${widget.times[2]}"),
-            ),
-            Prayer(
-              name: "Asr",
-              time: DateTime.parse("${widget.time} ${widget.times[3]}"),
-            ),
-            Prayer(
-              name: "Maghrib",
-              time: DateTime.parse("${widget.time} ${widget.times[4]}"),
-            ),
-            Prayer(
-              name: "Isha'a",
-              time: DateTime.parse("${widget.time} ${widget.times[5]}"),
-            )
+
+            ...prayerNames.indexed.map((prayer) {
+              DateTime date =
+                  DateTime.parse("${widget.time} ${widget.times[prayer.$1]}");
+
+              if (date.difference(lastPrayerOfDay!).isNegative) {
+                date = date.add(const Duration(days: 1));
+              }
+
+              lastPrayerOfDay = date;
+
+              return Prayer(
+                name: prayer.$2 == "Dhuhr" && date.weekday == 5
+                    ? "Jumu'a"
+                    : prayer.$2,
+                time: date,
+              );
+            })
           ]);
         }),
       ),
@@ -704,7 +699,9 @@ Map getNextPrayer(
     DateTime prayer = DateTime.parse("$todayDateString ${todayPrayers[i]}");
     if (!prayer.difference(now).isNegative) {
       nextPrayer = prayer;
-      nextPrayerName = prayerNames[i];
+      nextPrayerName = prayerNames[i] == "Dhuhr" && nextPrayer.weekday == 5
+          ? "Jumu'a"
+          : prayerNames[i];
       if (i != 0) {
         lastPrayer = DateTime.parse("$todayDateString ${todayPrayers[i - 1]}");
       } else {
