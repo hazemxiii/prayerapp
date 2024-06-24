@@ -10,6 +10,8 @@ import "settings.dart";
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:provider/provider.dart';
+import 'package:workmanager/workmanager.dart';
+// import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class ColorPalette extends ChangeNotifier {
   /// The class is used to rebuild the pages when the color is changed
@@ -40,7 +42,17 @@ class ColorPalette extends ChangeNotifier {
   }
 }
 
+@pragma('vm:entry-point')
+void callbackDispatcher() {
+  Workmanager().executeTask((task, inputData) async {
+    return Future.value(true);
+  });
+}
+
 void main() async {
+  // WidgetsFlutterBinding.ensureInitialized();
+  // Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
+
   runApp(ChangeNotifierProvider(
     create: (context) => ColorPalette(),
     child: const App(),
@@ -102,7 +114,7 @@ class _MainPage extends State<MainPage> {
   @override
   Widget build(BuildContext context) {
     List pagesAppBars = const [
-      null,
+      {"title": "", "height": 10.0},
       {"title": ""},
       null,
       {"title": "Settings"},
@@ -111,6 +123,7 @@ class _MainPage extends State<MainPage> {
       return Scaffold(
           appBar: pagesAppBars[activePage] != null
               ? AppBar(
+                  toolbarHeight: pagesAppBars[activePage]["height"],
                   backgroundColor: palette.getBackC,
                   foregroundColor: palette.getSecC,
                   title: Text(pagesAppBars[activePage]["title"]),
@@ -211,13 +224,14 @@ class PrayerTimeState extends State<PrayerTime> {
                 return Column(
                   children: [
                     Container(
-                      height: MediaQuery.of(context).size.height / 4,
+                      // height: MediaQuery.of(context).size.height / 4,
+                      padding: const EdgeInsets.all(10),
+                      margin: const EdgeInsets.all(10),
                       width: double.infinity,
                       decoration: BoxDecoration(
                           color: palette.getSecC,
-                          borderRadius: const BorderRadius.only(
-                              bottomLeft: Radius.circular(20),
-                              bottomRight: Radius.circular(20))),
+                          borderRadius:
+                              const BorderRadius.all(Radius.circular(10))),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -246,7 +260,7 @@ class PrayerTimeState extends State<PrayerTime> {
                                       children: [
                                         CircularProgressIndicator(
                                           value: remianingTimePercentage,
-                                          color: palette.getSecC,
+                                          color: palette.getMainC,
                                         ),
                                         Text(value,
                                             style: TextStyle(
@@ -297,7 +311,7 @@ class PrayerTimeState extends State<PrayerTime> {
             } else {
               return Center(
                 child: CircularProgressIndicator(
-                  color: palette.getMainC,
+                  color: palette.getSecC,
                 ),
               );
             }
@@ -735,3 +749,5 @@ Map getNextPrayer(
     "time": "$hour:$minute $period"
   };
 }
+
+void notify() async {}

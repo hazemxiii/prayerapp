@@ -104,12 +104,12 @@ class _SettingRowState extends State<SettingRow> {
   Widget build(BuildContext context) {
     return Consumer<ColorPalette>(builder: (context, palette, child) {
       return Container(
-        padding: const EdgeInsets.all(10),
-        margin: const EdgeInsets.all(10),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
+        margin: const EdgeInsets.all(3),
         width: double.infinity,
         decoration: BoxDecoration(
             color: palette.getSecC,
-            borderRadius: const BorderRadius.all(Radius.circular(10))),
+            borderRadius: const BorderRadius.all(Radius.circular(5))),
         child: widget.child,
       );
     });
@@ -134,30 +134,34 @@ class ColorPickerRow extends StatefulWidget {
 }
 
 class _ColorPickerRowState extends State<ColorPickerRow> {
+  late TextEditingController hexController;
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<ColorPalette>(builder: (context, palette, child) {
-      return SettingRow(
-          child:
-              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        Text(
-          widget.name,
-          style: TextStyle(color: palette.getMainC),
-        ),
-        InkWell(
-          splashColor: Colors.transparent,
-          onTap: () {
-            showDialog(
-                context: context,
-                builder: (context) {
-                  Color? color;
-                  return AlertDialog(
-                    backgroundColor: palette.getSecC,
-                    title: Text(
-                      "Pick a color",
-                      style: TextStyle(color: palette.getMainC),
-                    ),
-                    content: ColorPicker(
+      return InkWell(
+        splashColor: Colors.transparent,
+        onTap: () {
+          showDialog(
+              context: context,
+              builder: (context) {
+                Color? color;
+                return AlertDialog(
+                  backgroundColor: palette.getSecC,
+                  title: Text(
+                    "Pick a color",
+                    style: TextStyle(color: palette.getMainC),
+                  ),
+                  content: SingleChildScrollView(
+                    child: ColorPicker(
+                      displayThumbColor: true,
+                      hexInputColor: palette.getMainC,
+                      enableAlpha: false,
                       labelTypes: const [],
                       hexInputBar: true,
                       pickerColor: widget.pickerColor,
@@ -165,47 +169,53 @@ class _ColorPickerRowState extends State<ColorPickerRow> {
                         color = c;
                       },
                     ),
-                    actions: [
-                      TextButton(
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                            switch (widget.colorKey) {
-                              case "primaryColor":
-                                Provider.of<ColorPalette>(context,
-                                        listen: false)
-                                    .setMainC(color!);
-                                break;
-                              case "secondaryColor":
-                                Provider.of<ColorPalette>(context,
-                                        listen: false)
-                                    .setSecC(color!);
-                                break;
-                              case "backColor":
-                                Provider.of<ColorPalette>(context,
-                                        listen: false)
-                                    .setBackC(color!);
-                                break;
-                            }
-                            saveColor(widget.colorKey, color!.toHexString());
-                          },
-                          child: Text(
-                            "save",
-                            style: TextStyle(color: palette.getMainC),
-                          ))
-                    ],
-                  );
-                });
-          },
-          child: Container(
-            height: 20,
-            width: 20,
-            decoration: BoxDecoration(
-                border: Border.all(color: palette.getMainC, width: 1),
-                color: widget.pickerColor,
-                borderRadius: const BorderRadius.all(Radius.circular(999))),
-          ),
-        )
-      ]));
+                  ),
+                  actions: [
+                    TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          switch (widget.colorKey) {
+                            case "primaryColor":
+                              Provider.of<ColorPalette>(context, listen: false)
+                                  .setMainC(color!);
+                              break;
+                            case "secondaryColor":
+                              Provider.of<ColorPalette>(context, listen: false)
+                                  .setSecC(color!);
+                              break;
+                            case "backColor":
+                              Provider.of<ColorPalette>(context, listen: false)
+                                  .setBackC(color!);
+                              break;
+                          }
+                          saveColor(widget.colorKey, color!.toHexString());
+                        },
+                        child: Text(
+                          "save",
+                          style: TextStyle(color: palette.getMainC),
+                        ))
+                  ],
+                );
+              });
+        },
+        child: SettingRow(
+            child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+              Text(
+                widget.name,
+                style: TextStyle(color: palette.getMainC),
+              ),
+              Container(
+                height: 20,
+                width: 20,
+                decoration: BoxDecoration(
+                    border: Border.all(color: palette.getMainC, width: 1),
+                    color: widget.pickerColor,
+                    borderRadius: const BorderRadius.all(Radius.circular(999))),
+              )
+            ])),
+      );
     });
   }
 }
