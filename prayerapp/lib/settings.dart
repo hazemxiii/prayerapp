@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
-import 'main.dart';
+import 'global.dart';
 import 'package:provider/provider.dart';
 import "package:shared_preferences/shared_preferences.dart";
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'location.dart';
 import 'vibration_settings.dart';
 
-class Settings extends StatefulWidget {
-  const Settings({super.key});
+class SettingsPage extends StatefulWidget {
+  const SettingsPage({super.key});
 
   @override
-  State<Settings> createState() => _SettingsState();
+  State<SettingsPage> createState() => _SettingsPageState();
 }
 
-class _SettingsState extends State<Settings> {
+class _SettingsPageState extends State<SettingsPage> {
   @override
   void initState() {
     super.initState();
@@ -28,9 +28,9 @@ class _SettingsState extends State<Settings> {
             InkWell(
               onTap: () {
                 Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => const VibrationSettings()));
+                    builder: (context) => const VibrationSettingsPage()));
               },
-              child: SettingRow(
+              child: SettingRowWidget(
                   child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -45,17 +45,17 @@ class _SettingsState extends State<Settings> {
                 ],
               )),
             ),
-            ColorPickerRow(
+            ColorPickerRowWidget(
               name: "Main Color",
               pickerColor: palette.getMainC,
               colorKey: "primaryColor",
             ),
-            ColorPickerRow(
+            ColorPickerRowWidget(
               name: "Secondary Color",
               pickerColor: palette.getSecC,
               colorKey: "secondaryColor",
             ),
-            ColorPickerRow(
+            ColorPickerRowWidget(
               name: "Background Color",
               pickerColor: palette.getBackC,
               colorKey: "backColor",
@@ -63,9 +63,9 @@ class _SettingsState extends State<Settings> {
             InkWell(
               onTap: () {
                 Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => const LocationSettings()));
+                    builder: (context) => const LocationSettingsPage()));
               },
-              child: SettingRow(
+              child: SettingRowWidget(
                   child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -87,19 +87,19 @@ class _SettingsState extends State<Settings> {
   }
 }
 
-class SettingRow extends StatefulWidget {
+class SettingRowWidget extends StatefulWidget {
   final Widget child;
 
-  const SettingRow({
+  const SettingRowWidget({
     super.key,
     required this.child,
   });
 
   @override
-  State<SettingRow> createState() => _SettingRowState();
+  State<SettingRowWidget> createState() => _SettingRowWidgetState();
 }
 
-class _SettingRowState extends State<SettingRow> {
+class _SettingRowWidgetState extends State<SettingRowWidget> {
   @override
   Widget build(BuildContext context) {
     return Consumer<ColorPalette>(builder: (context, palette, child) {
@@ -116,13 +116,13 @@ class _SettingRowState extends State<SettingRow> {
   }
 }
 
-class ColorPickerRow extends StatefulWidget {
+class ColorPickerRowWidget extends StatefulWidget {
   final String name;
   final Color pickerColor;
 
   final String colorKey;
 
-  const ColorPickerRow({
+  const ColorPickerRowWidget({
     super.key,
     required this.name,
     required this.pickerColor,
@@ -130,10 +130,10 @@ class ColorPickerRow extends StatefulWidget {
   });
 
   @override
-  State<ColorPickerRow> createState() => _ColorPickerRowState();
+  State<ColorPickerRowWidget> createState() => _ColorPickerRowWidgetState();
 }
 
-class _ColorPickerRowState extends State<ColorPickerRow> {
+class _ColorPickerRowWidgetState extends State<ColorPickerRowWidget> {
   late TextEditingController hexController;
 
   @override
@@ -198,7 +198,7 @@ class _ColorPickerRowState extends State<ColorPickerRow> {
                 );
               });
         },
-        child: SettingRow(
+        child: SettingRowWidget(
             child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [

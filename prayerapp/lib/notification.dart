@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import "main.dart";
+import "global.dart";
 
-class PrayerNotificationSettings extends StatefulWidget {
+class PrayerNotificationSettingsPage extends StatefulWidget {
   final String prayer;
-  const PrayerNotificationSettings({super.key, required this.prayer});
+  const PrayerNotificationSettingsPage({super.key, required this.prayer});
 
   @override
-  State<PrayerNotificationSettings> createState() =>
-      _PrayerNotificationSettingsState();
+  State<PrayerNotificationSettingsPage> createState() =>
+      _PrayerNotificationSettingsPageState();
 }
 
-class _PrayerNotificationSettingsState
-    extends State<PrayerNotificationSettings> {
+class _PrayerNotificationSettingsPageState
+    extends State<PrayerNotificationSettingsPage> {
   ValueNotifier beforeAdhanTime = ValueNotifier(-1);
   ValueNotifier afterAdhanTime = ValueNotifier(-1);
 
@@ -43,14 +43,14 @@ class _PrayerNotificationSettingsState
         ),
         body: Column(
           children: [
-            PickTimeRow(
+            PickTimeRowWidget(
               notifier: beforeAdhanTime,
               min: 0,
               max: 30,
               step: 1,
               text: "Before Adhan",
             ),
-            PickTimeRow(
+            PickTimeRowWidget(
               notifier: afterAdhanTime,
               min: 1,
               max: 15,
@@ -85,13 +85,13 @@ class _PrayerNotificationSettingsState
   }
 }
 
-class PickTimeRow extends StatefulWidget {
+class PickTimeRowWidget extends StatefulWidget {
   final ValueNotifier notifier;
   final int min;
   final int max;
   final int step;
   final String text;
-  const PickTimeRow(
+  const PickTimeRowWidget(
       {super.key,
       required this.notifier,
       required this.min,
@@ -100,10 +100,10 @@ class PickTimeRow extends StatefulWidget {
       required this.text});
 
   @override
-  State<PickTimeRow> createState() => _PickTimeRowState();
+  State<PickTimeRowWidget> createState() => _PickTimeRowWidgetState();
 }
 
-class _PickTimeRowState extends State<PickTimeRow> {
+class _PickTimeRowWidgetState extends State<PickTimeRowWidget> {
   @override
   Widget build(BuildContext context) {
     return Consumer<ColorPalette>(builder: (context, palette, child) {
@@ -116,7 +116,7 @@ class _PickTimeRowState extends State<PickTimeRow> {
                     child: ValueListenableBuilder(
                         valueListenable: widget.notifier,
                         builder: (context, value, child) {
-                          return NumberPicker(
+                          return NumberPickerWidget(
                             min: widget.min,
                             max: widget.max,
                             step: widget.step,
@@ -150,12 +150,12 @@ class _PickTimeRowState extends State<PickTimeRow> {
   }
 }
 
-class NumberPicker extends StatefulWidget {
+class NumberPickerWidget extends StatefulWidget {
   final int min;
   final int max;
   final int step;
   final ValueNotifier value;
-  const NumberPicker(
+  const NumberPickerWidget(
       {super.key,
       required this.min,
       required this.max,
@@ -163,10 +163,10 @@ class NumberPicker extends StatefulWidget {
       required this.value});
 
   @override
-  State<NumberPicker> createState() => _NumberPickerState();
+  State<NumberPickerWidget> createState() => _NumberPickerWidgetState();
 }
 
-class _NumberPickerState extends State<NumberPicker> {
+class _NumberPickerWidgetState extends State<NumberPickerWidget> {
   late PageController controller;
 
   @override

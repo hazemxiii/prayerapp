@@ -1,16 +1,16 @@
 import "package:flutter/material.dart";
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'main.dart';
+import 'global.dart';
 
-class VibrationSettings extends StatefulWidget {
-  const VibrationSettings({super.key});
+class VibrationSettingsPage extends StatefulWidget {
+  const VibrationSettingsPage({super.key});
 
   @override
-  State<VibrationSettings> createState() => _VibrationSettingsState();
+  State<VibrationSettingsPage> createState() => _VibrationSettingsPageState();
 }
 
-class _VibrationSettingsState extends State<VibrationSettings> {
+class _VibrationSettingsPageState extends State<VibrationSettingsPage> {
   late TextEditingController vibrationController;
 
   @override

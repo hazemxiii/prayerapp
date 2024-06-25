@@ -1,18 +1,18 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_compass/flutter_compass.dart';
-// import 'package:geolocator/geolocator.dart';
+import "global.dart";
 import 'package:provider/provider.dart';
 import 'main.dart';
 
-class Qiblah extends StatefulWidget {
-  const Qiblah({super.key});
+class QiblahPage extends StatefulWidget {
+  const QiblahPage({super.key});
 
   @override
-  State<Qiblah> createState() => _QiblahState();
+  State<QiblahPage> createState() => _QiblahPageState();
 }
 
-class _QiblahState extends State<Qiblah> with TickerProviderStateMixin {
+class _QiblahPageState extends State<QiblahPage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
@@ -42,11 +42,10 @@ class _QiblahState extends State<Qiblah> with TickerProviderStateMixin {
                     stream: FlutterCompass.events,
                     builder: (context, snapshot) {
                       double north = 0;
-                      // bearing angle
-                      double angle = 0;
+                      double bearingAngle = 0;
                       if (snapshot.hasData) {
                         north = (snapshot.data!.heading! + 360) % 360;
-                        angle =
+                        bearingAngle =
                             changeCompass(snap.data![0], snap.data![1], north);
                       }
                       return Column(
@@ -59,7 +58,7 @@ class _QiblahState extends State<Qiblah> with TickerProviderStateMixin {
                               width: dimension - dimension / 4,
                               child: CustomPaint(
                                 painter: CompassPainter(palette.getSecC,
-                                    palette.getMainC, toRad(angle)),
+                                    palette.getMainC, toRad(bearingAngle)),
                               ),
                             ),
                           ),

@@ -1,34 +1,22 @@
 import "package:flutter/material.dart";
 import "package:provider/provider.dart";
 import "package:shared_preferences/shared_preferences.dart";
-import "settings.dart";
 import "main.dart";
+import "global.dart";
 
-class LocationSettings extends StatefulWidget {
-  const LocationSettings({super.key});
+class LocationSettingsPage extends StatefulWidget {
+  const LocationSettingsPage({super.key});
 
   @override
-  State<LocationSettings> createState() => _LocationSettingsState();
+  State<LocationSettingsPage> createState() => _LocationSettingsPageState();
 }
 
-class _LocationSettingsState extends State<LocationSettings> {
-  Color mainColor = Colors.lightBlue;
-  Color secondaryColor = Colors.white;
-  Color backColor = Colors.lightBlue[50]!;
-
+class _LocationSettingsPageState extends State<LocationSettingsPage> {
   late TextEditingController cityController;
   late TextEditingController countryController;
 
   @override
   void initState() {
-    getColors().then((data) {
-      setState(() {
-        mainColor = hexToColor(data[0]);
-        secondaryColor = hexToColor(data[1]);
-        backColor = hexToColor(data[2]);
-      });
-    });
-
     cityController = TextEditingController();
     countryController = TextEditingController();
 
@@ -45,89 +33,93 @@ class _LocationSettingsState extends State<LocationSettings> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: secondaryColor,
-      appBar: AppBar(
-        actions: [
-          IconButton(
-              onPressed: () {
-                getPosition(false).then((data) {
-                  setState(() {
-                    if (data.isNotEmpty) {
-                      countryController.text = data[0];
-                      cityController.text = data[1];
-                    }
+    return Consumer<ColorPalette>(builder: (context, palette, child) {
+      return Scaffold(
+        backgroundColor: palette.getSecC,
+        appBar: AppBar(
+          actions: [
+            IconButton(
+                onPressed: () {
+                  getPosition(false).then((data) {
+                    setState(() {
+                      if (data.isNotEmpty) {
+                        countryController.text = data[0];
+                        cityController.text = data[1];
+                      }
+                    });
                   });
-                });
-              },
-              icon: const Icon(Icons.gps_fixed))
-        ],
-        backgroundColor: mainColor,
-        foregroundColor: secondaryColor,
-        title: const Text(
-          "Location settings",
-          style: TextStyle(fontSize: 20),
-        ),
-        centerTitle: true,
-      ),
-      body: Container(
-        padding: const EdgeInsets.all(10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            LocationInput(
-                text: "City", color: mainColor, controller: cityController),
-            LocationInput(
-                text: "Country",
-                color: mainColor,
-                controller: countryController),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                MaterialButton(
-                  color: secondaryColor,
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: Text("Cancel", style: TextStyle(color: mainColor)),
-                ),
-                const SizedBox(
-                  width: 10,
-                ),
-                MaterialButton(
-                  color: mainColor,
-                  onPressed: () {
-                    saveLocation(countryController.text, cityController.text);
-                    Provider.of<ColorPalette>(context, listen: false)
-                        .setMainC(mainColor);
-                    Navigator.of(context).pop();
-                  },
-                  child: Text("Save", style: TextStyle(color: secondaryColor)),
-                )
-              ],
-            )
+                },
+                icon: const Icon(Icons.gps_fixed))
           ],
+          backgroundColor: palette.getMainC,
+          foregroundColor: palette.getSecC,
+          title: const Text(
+            "Location settings",
+            style: TextStyle(fontSize: 20),
+          ),
+          centerTitle: true,
         ),
-      ),
-    );
+        body: Container(
+          padding: const EdgeInsets.all(10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              LocationInputWidget(
+                  text: "City",
+                  color: palette.getMainC,
+                  controller: cityController),
+              LocationInputWidget(
+                  text: "Country",
+                  color: palette.getMainC,
+                  controller: countryController),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  MaterialButton(
+                    color: palette.getSecC,
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: Text("Cancel",
+                        style: TextStyle(color: palette.getMainC)),
+                  ),
+                  const SizedBox(
+                    width: 10,
+                  ),
+                  MaterialButton(
+                    color: palette.getMainC,
+                    onPressed: () {
+                      saveLocation(context, countryController.text,
+                          cityController.text, palette.getMainC);
+                    },
+                    child:
+                        Text("Save", style: TextStyle(color: palette.getSecC)),
+                  )
+                ],
+              )
+            ],
+          ),
+        ),
+      );
+    });
   }
 }
 
-class LocationInput extends StatefulWidget {
+class LocationInputWidget extends StatefulWidget {
   final Color color;
   final TextEditingController controller;
   final String text;
-  const LocationInput(
+  const LocationInputWidget(
       {super.key,
       required this.color,
       required this.controller,
       required this.text});
 
   @override
-  State<LocationInput> createState() => _LocationInputState();
+  State<LocationInputWidget> createState() => _LocationInputWidgetState();
 }
 
-class _LocationInputState extends State<LocationInput> {
+class _LocationInputWidgetState extends State<LocationInputWidget> {
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -165,10 +157,14 @@ Future<List> getPositionFromPrefs() async {
   return position;
 }
 
-void saveLocation(String country, String city) async {
+void saveLocation(
+    BuildContext context, String country, String city, Color c) async {
   await SharedPreferences.getInstance().then((prefs) {
     prefs.remove("prayers");
     prefs.setString("city", city);
     prefs.setString("country", country);
+
+    Provider.of<ColorPalette>(context, listen: false).setMainC(c);
+    Navigator.of(context).pop();
   });
 }

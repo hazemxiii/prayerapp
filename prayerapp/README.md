@@ -1,25 +1,195 @@
 # PrayerApp
 
-## Notes:
+## main.dart
 
-- class ColorPalette in main.dart --> to rebuild pages when the color is changed
+### class MainPage
 
-- Active page of the bottom nav bar is controlled by int activePage
+- int activePage
+- List pages
+- List pagesDrawers
+- List pagesAppBars
+- """
+  Display active page, drawer, and appBar
+  """
 
-- Pages controlled by the bottom nav bar are controlled by List pages, their drawers are in List pagesDrawers
+### class PrayerTimeWidget
 
-- The prayer page returns the data from a future from getPrayerTime()
+- PageController pageViewCont
+- ValueNotifier nextPrayerRemainingTimeNotifier
+- Timer timer
+- updateNextPrayerTime
+- """
+  gets next prayer to display remaining time
+  """
 
-- class PrayerDay --> each day in the prayer page
+### class PrayerDayWidget
 
-- numbersDateToText() --> converts Date to human-readable String
+- String dateString
+- List times
+- List prayerNames
+- DateTime lastPrayerOfDay
+- prayerDayWidgetBuilder()
 
-- Class Prayer --> each row in the prayer day
+### class PrayerWidget
 
-- parseDate() --> returns the american or normal form of a date as a String
+- String name
+- DateTime time
+- TimeOfDay timeOfDay
+- int hour
+- int minutes
+- String dayPeriod
+- """
+  Displays prayer time and calculates remaining time for this prayer
+  """
 
-- getPosition() --> returns the country and city of the current location
+### no class
 
-- the big button controlled by two animations (shrinkAnimation, growAnimation)
+- getPrayerTime()
+- numbersDateToText()
+- dateToString()
+- getPosition()
+- getNextPrayer()
 
-- bool vibrate and int vibrateOn decides if and when to vibrate on tasbih
+## location.dart
+
+### class LocationSettingsPage
+
+- TextEditingController cityController
+- TextEditingController countryController
+- """
+  gets location data from shared preferences to display it
+  """
+
+### class LocationInputWidget
+
+### no class
+
+- getPositionFromPrefs()
+- saveLocation()
+
+## notification.dart
+
+### class PrayerNotificationSettingsPage
+
+- String prayer;
+- ValueNotifier beforeAdhanTime
+- ValueNotifier afterAdhanTime
+
+### class PickTimeRowWidget
+
+- ValueNotifier notifier
+- int min
+- int max
+- int step
+- String text
+
+### class NumberPickerWidget
+
+- int min
+- int max
+- int step
+- ValueNotifier value
+- PageController controller
+- """
+  Creates pageview with the range of data specified, and adds OFF option which is a number smaller than the min by 1
+  """
+- """
+  Calculates what page to show and change the notifier value
+  """
+
+### no class
+
+- saveNotificationTimes()
+- getNotificationsData()
+
+## qiblah.dart
+
+### class QiblahPage
+
+### class CompassPainter
+
+### no class
+
+- toDeg()
+- toRad()
+- changeCompass()
+
+## settings.dart
+
+### class SettingsPage
+
+### class SettingRowWidget
+
+- Widget child
+
+### class ColorPickerRowWidget
+
+- String name;
+- Color pickerColor
+- String colorKey
+- TextEditingController hexController
+
+### no class
+
+- getColors()
+- hexToColor()
+- saveColor()
+
+## tasbih.dart
+
+### class TasbihPage
+
+- int tasbih
+- AnimationController shrinkController
+- Animation shrinkAnimation
+- AnimationController growController
+- Animation growAnimation
+- bool vibrate
+- String vibrateOn
+- bool isOn
+- List vibrateNums
+- initState()
+  - initialise animations
+  - getTasbihData
+  - getVibrationData
+- InkWell()
+  - increases tasbih by 1
+  - vibrate if needed
+  - start animation
+- InkWell()
+  - resets tasbih to 0
+
+### class TasbihDrawer
+
+- TextButton
+  - cleares tasbih history
+
+### class TabihNumberWidget
+
+- String name
+- int number
+- double width
+
+### no class
+
+- getTotalTasbihCount()
+- getTasbihNow()
+- increaseTasbih()
+- clearTasbihNow()
+- clearTasbih()
+
+## vibration_settings.dart
+
+### class VibrationSettingsPage
+
+- initState
+  - get vibration data from prefs and updates the screen
+- String vibrateRadio
+- bool vibrationOn
+
+### no class
+
+- onSave()
+- getVibrationData()
+- allowVibration()
+- updateVibrationCount()

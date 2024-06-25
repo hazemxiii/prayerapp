@@ -1,23 +1,19 @@
 import 'dart:math';
-// import 'settings.dart';
 import "package:shared_preferences/shared_preferences.dart";
 import "package:flutter/material.dart";
 import 'package:vibration/vibration.dart';
 import 'vibration_settings.dart';
-import "main.dart";
+import 'global.dart';
 import 'package:provider/provider.dart';
 
-class Tasbih extends StatefulWidget {
-  const Tasbih({super.key});
+class TasbihPage extends StatefulWidget {
+  const TasbihPage({super.key});
   @override
-  State<Tasbih> createState() => _Tasbih();
+  State<TasbihPage> createState() => _Tasbih();
 }
 
-class _Tasbih extends State<Tasbih> with TickerProviderStateMixin {
+class _Tasbih extends State<TasbihPage> with TickerProviderStateMixin {
   int? tasbih = 0;
-  Color mainColor = Colors.lightBlue;
-  Color secondaryColor = Colors.white;
-  Color backColor = Colors.lightBlue[50]!;
 
   // controllers and the animations
   late AnimationController shrinkController;
@@ -203,12 +199,12 @@ class _TasbihDrawer extends State<TasbihDrawer> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    TasbihNumber(
+                    TasbihNumberWidget(
                       width: drawerWidth,
                       name: "Total",
                       number: snap.data![0],
                     ),
-                    TasbihNumber(
+                    TasbihNumberWidget(
                       width: drawerWidth,
                       name: "Total Today",
                       number: snap.data![1],
@@ -243,12 +239,13 @@ class _TasbihDrawer extends State<TasbihDrawer> {
   }
 }
 
+// TODO: document here
 // ignore: must_be_immutable
-class TasbihNumber extends StatefulWidget {
+class TasbihNumberWidget extends StatefulWidget {
   final String name;
   int number;
   final double width;
-  TasbihNumber({
+  TasbihNumberWidget({
     super.key,
     required this.name,
     required this.number,
@@ -256,10 +253,10 @@ class TasbihNumber extends StatefulWidget {
   });
 
   @override
-  State<TasbihNumber> createState() => _TasbihNumberState();
+  State<TasbihNumberWidget> createState() => _TasbihNumberWidgetState();
 }
 
-class _TasbihNumberState extends State<TasbihNumber> {
+class _TasbihNumberWidgetState extends State<TasbihNumberWidget> {
   @override
   Widget build(BuildContext context) {
     return Consumer<ColorPalette>(builder: (context, palette, child) {
