@@ -64,11 +64,11 @@ class _MainPage extends State<MainPage> {
       const SettingsPage(),
     ];
 
-    pagesDrawers = const [null, TasbihDrawer(), null, null];
+    pagesDrawers = const [null, null, null, null];
 
     pagesAppBars = const [
       {"title": "", "height": 10.0},
-      {"title": ""},
+      null,
       null,
       {"title": "Settings"},
     ];

@@ -6,6 +6,10 @@ import 'vibration_settings.dart';
 import 'global.dart';
 import 'package:provider/provider.dart';
 
+Function? reset;
+bool infoVisible = false;
+Function? toggleInfoVisible;
+
 class TasbihPage extends StatefulWidget {
   const TasbihPage({super.key});
   @override
@@ -14,7 +18,6 @@ class TasbihPage extends StatefulWidget {
 
 class _Tasbih extends State<TasbihPage> with TickerProviderStateMixin {
   int? tasbih = 0;
-
   // controllers and the animations
   late AnimationController shrinkController;
   late Animation<double> shrinkAnimation;
@@ -25,6 +28,29 @@ class _Tasbih extends State<TasbihPage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    // TODO: turn this into a change notifier
+    toggleInfoVisible = () {
+      setState(() {});
+      infoVisible = !infoVisible;
+    };
+    reset = () {
+      getTasbihNow().then((v) {
+        setState(() {
+          tasbih = v;
+        });
+      });
+
+      getVibrationData().then((data) {
+        setState(() {
+          vibrate = data[0];
+          vibrateOn = data[1];
+          isOn = data[2];
+          vibrateNums = vibrateOn.split(",");
+        });
+      });
+    };
+    // update the number in the button when the data returns from the shared prefs
+    reset!();
 
     shrinkController = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 50));
@@ -50,20 +76,6 @@ class _Tasbih extends State<TasbihPage> with TickerProviderStateMixin {
           }
         });
       });
-
-    // update the number in the button when the data returns from the shared prefs
-    getTasbihNow().then((v) {
-      setState(() {
-        tasbih = v;
-      });
-    });
-
-    getVibrationData().then((data) {
-      vibrate = data[0];
-      vibrateOn = data[1];
-      isOn = data[2];
-      vibrateNums = vibrateOn.split(",");
-    });
   }
 
   bool vibrate = false;
@@ -83,202 +95,327 @@ class _Tasbih extends State<TasbihPage> with TickerProviderStateMixin {
     // get what's minimum, the width of the screen or the height
     double screenWidth = min(
         MediaQuery.of(context).size.width, MediaQuery.of(context).size.height);
-    return Column(
+    return Stack(
+      children: [
+        Column(
+          children: [
+            Expanded(
+              child: Consumer<ColorPalette>(builder: (context, palette, child) {
+                return Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                          borderRadius:
+                              const BorderRadius.all(Radius.circular(1000)),
+                          color: palette.getSecC),
+                      width: screenWidth / 2 + 30,
+                      height: screenWidth / 2 + 30,
+                      child: Center(
+                        child: InkWell(
+                          borderRadius:
+                              const BorderRadius.all(Radius.circular(1000)),
+                          child: Container(
+                              width: screenWidth / 2 -
+                                  shrinkAnimation.value +
+                                  growAnimation.value,
+                              height: screenWidth / 2 -
+                                  shrinkAnimation.value +
+                                  growAnimation.value,
+                              decoration: BoxDecoration(
+                                color: palette.getMainC,
+                                borderRadius: const BorderRadius.all(
+                                    Radius.circular(1000)),
+                              ),
+                              child: Center(
+                                  child: Text("$tasbih",
+                                      style: TextStyle(
+                                          fontSize: 20,
+                                          color: palette.getSecC)))),
+                          onTap: () {
+                            setState(() {
+                              // vibrate when there are 33 tasbih
+                              // TODO make it only update the preferences
+                              tasbih = tasbih! + 1;
+                              changeTasbih(true);
+                              try {
+                                if (vibrate) {
+                                  if (isOn && vibrateNums.contains("$tasbih")) {
+                                    Vibration.vibrate(duration: 1000);
+                                  } else if (!isOn &&
+                                      tasbih! % int.parse(vibrateOn) == 0) {
+                                    Vibration.vibrate(duration: 1000);
+                                  }
+                                }
+                              } catch (e) {
+                                //
+                              }
+
+                              // start the animation on click
+                              shrinkController.forward();
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+                    Container(
+                      height: 10,
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SmallButton(
+                            iconData: Icons.close,
+                            onTap: () {
+                              // reset the tasbih
+                              setState(() {
+                                tasbih = 0;
+                                clearTasbihNow();
+                              });
+                            }),
+                        const SizedBox(width: 10),
+                        SmallButton(
+                          iconData: Icons.remove,
+                          onTap: () {
+                            setState(() {
+                              if (tasbih! <= 0) {
+                                return;
+                              }
+                              tasbih = tasbih! - 1;
+                              changeTasbih(false);
+                            });
+                          },
+                        )
+                      ],
+                    )
+                  ],
+                );
+              }),
+            )
+          ],
+        ),
+        Container(
+          height: infoVisible ? MediaQuery.of(context).size.height : 0,
+          width: infoVisible ? MediaQuery.of(context).size.width : 0,
+          color: const Color.fromRGBO(0, 0, 0, 0.5),
+        ),
+        Consumer<ColorPalette>(builder: (context, palette, child) {
+          return TasbihInfo(
+            backC: palette.getMainC,
+            textC: palette.getSecC,
+          );
+        }),
+      ],
+    );
+  }
+}
+
+class SmallButton extends StatelessWidget {
+  final Function onTap;
+  final IconData iconData;
+  const SmallButton({super.key, required this.onTap, required this.iconData});
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<ColorPalette>(builder: (context, palette, child) {
+      return InkWell(
+        borderRadius: const BorderRadius.all(Radius.circular(1000)),
+        onTap: () {
+          onTap();
+        },
+        child: Container(
+          width: 30,
+          height: 30,
+          decoration: BoxDecoration(
+              color: palette.getSecC,
+              borderRadius: const BorderRadius.all(Radius.circular(1000))),
+          child: Icon(
+            iconData,
+            color: palette.getMainC,
+          ),
+        ),
+      );
+    });
+  }
+}
+
+class TasbihInfo extends StatefulWidget {
+  final Color backC;
+  final Color textC;
+  const TasbihInfo({
+    super.key,
+    required this.backC,
+    required this.textC,
+  });
+
+  @override
+  State<TasbihInfo> createState() => _TasbihInfoState();
+}
+
+class _TasbihInfoState extends State<TasbihInfo> with TickerProviderStateMixin {
+  late AnimationController showInfoAnimationCont;
+  late Animation showInfoAnimation;
+  double animationMin = 0;
+  double animationMax = 10;
+  int totalTasbih = 0;
+  int totalTasbihToday = 0;
+
+  @override
+  void initState() {
+    showInfoAnimationCont = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 300));
+
+    showInfoAnimation = Tween<double>(begin: animationMin, end: animationMax)
+        .animate(showInfoAnimationCont);
+
+    showInfoAnimationCont.addListener(() {
+      setState(() {
+        if (showInfoAnimationCont.isCompleted) {
+          toggleInfoVisible!();
+        }
+      });
+    });
+
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      left: 10,
+      top: 10,
+      child: InkWell(
+        onTap: () {
+          if (!infoVisible) {
+            showInfoAnimationCont.forward();
+          } else {
+            toggleInfoVisible!();
+            showInfoAnimationCont.reverse();
+          }
+          getTotalTasbihCount().then((total) {
+            totalTasbih = total[0];
+            totalTasbihToday = total[1];
+          });
+        },
+        child: Container(
+          width: mapValue(showInfoAnimation.value, animationMin, animationMax,
+              30, MediaQuery.of(context).size.width - 20),
+          height: mapValue(
+              showInfoAnimation.value, animationMin, animationMax, 30, 200),
+          decoration: BoxDecoration(
+              color: widget.backC,
+              borderRadius: BorderRadius.all(
+                  Radius.circular(showInfoAnimation.value + 10))),
+          child: !infoVisible
+              ? Icon(
+                  Icons.question_mark,
+                  color: widget.textC,
+                )
+              : Center(
+                  child: TasbihInfoNumbers(
+                      color: widget.textC,
+                      today: totalTasbihToday,
+                      total: totalTasbih),
+                ),
+        ),
+      ),
+    );
+  }
+}
+
+class TasbihInfoNumbers extends StatefulWidget {
+  final Color color;
+  final int total;
+  final int today;
+
+  const TasbihInfoNumbers({
+    super.key,
+    required this.color,
+    required this.total,
+    required this.today,
+  });
+
+  @override
+  State<TasbihInfoNumbers> createState() => _TasbihInfoNumbersState();
+}
+
+class _TasbihInfoNumbersState extends State<TasbihInfoNumbers> {
+  int total = 0;
+  int today = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    total = widget.total;
+    today = widget.today;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Expanded(
-          child: Consumer<ColorPalette>(builder: (context, palette, child) {
-            return Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                      borderRadius:
-                          const BorderRadius.all(Radius.circular(1000)),
-                      color: palette.getSecC),
-                  width: screenWidth / 2 + 30,
-                  height: screenWidth / 2 + 30,
-                  child: Center(
-                    child: InkWell(
-                      borderRadius:
-                          const BorderRadius.all(Radius.circular(1000)),
-                      child: Container(
-                          width: screenWidth / 2 -
-                              shrinkAnimation.value +
-                              growAnimation.value,
-                          height: screenWidth / 2 -
-                              shrinkAnimation.value +
-                              growAnimation.value,
-                          decoration: BoxDecoration(
-                            color: palette.getMainC,
-                            borderRadius:
-                                const BorderRadius.all(Radius.circular(1000)),
-                          ),
-                          child: Center(
-                              child: Text("$tasbih",
-                                  style: TextStyle(
-                                      fontSize: 20, color: palette.getSecC)))),
-                      onTap: () {
-                        setState(() {
-                          // vibrate when there are 33 tasbih
-                          tasbih = tasbih! + 1;
-                          increaseTasbih();
-                          try {
-                            if (vibrate) {
-                              if (isOn && vibrateNums.contains("$tasbih")) {
-                                Vibration.vibrate(duration: 1000);
-                              } else if (!isOn &&
-                                  tasbih! % int.parse(vibrateOn) == 0) {
-                                Vibration.vibrate(duration: 1000);
-                              }
-                            }
-                          } catch (e) {
-                            //
-                          }
-
-                          // start the animation on click
-                          shrinkController.forward();
-                        });
-                      },
-                    ),
-                  ),
-                ),
-                Container(
-                  height: 10,
-                ),
-                InkWell(
-                  borderRadius: const BorderRadius.all(Radius.circular(1000)),
-                  child: Container(
-                    width: 30,
-                    height: 30,
-                    decoration: BoxDecoration(
-                        color: palette.getSecC,
-                        borderRadius:
-                            const BorderRadius.all(Radius.circular(1000))),
-                  ),
-                  onTap: () {
-                    // reset the tasbih
-                    setState(() {
-                      tasbih = 0;
-                      clearTasbihNow();
-                    });
-                  },
-                )
-              ],
-            );
-          }),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                "Total",
+                style: TextStyle(color: widget.color, fontSize: 20),
+              ),
+              Text(
+                "$total",
+                style: TextStyle(color: widget.color),
+              )
+            ],
+          ),
+        ),
+        Column(
+          children: [
+            Container(
+              color: widget.color,
+              width: 3,
+              height: 150,
+            ),
+            IconButton(
+                onPressed: () {
+                  setState(() {
+                    today = 0;
+                    total = 0;
+                  });
+                  clearTasbih();
+                  clearTasbihNow();
+                  reset!();
+                },
+                icon: Icon(
+                  Icons.close,
+                  color: widget.color,
+                ))
+          ],
+        ),
+        Expanded(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                "Today",
+                style: TextStyle(color: widget.color, fontSize: 20),
+              ),
+              Text(
+                "$today",
+                style: TextStyle(color: widget.color),
+              )
+            ],
+          ),
         )
       ],
     );
   }
 }
 
-class TasbihDrawer extends StatefulWidget {
-  const TasbihDrawer({super.key});
-
-  @override
-  State<TasbihDrawer> createState() => _TasbihDrawer();
-}
-
-class _TasbihDrawer extends State<TasbihDrawer> {
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    double drawerWidth = MediaQuery.of(context).size.width / 3 * 2;
-    return FutureBuilder(
-        future: getTotalTasbihCount(),
-        builder: (context, snap) {
-          if (snap.connectionState == ConnectionState.done) {
-            return Consumer<ColorPalette>(builder: (context, palette, child) {
-              return Container(
-                color: palette.getSecC,
-                width: drawerWidth,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    TasbihNumberWidget(
-                      width: drawerWidth,
-                      name: "Total",
-                      number: snap.data![0],
-                    ),
-                    TasbihNumberWidget(
-                      width: drawerWidth,
-                      name: "Total Today",
-                      number: snap.data![1],
-                    ),
-                    TextButton(
-                      style: TextButton.styleFrom(
-                          shape: const RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(10))),
-                          backgroundColor: palette.getMainC),
-                      onPressed: () {
-                        setState(() {
-                          clearTasbih();
-                        });
-                      },
-                      child: Text(
-                        "Clear",
-                        style: TextStyle(color: palette.getSecC),
-                      ),
-                    )
-                  ],
-                ),
-              );
-            });
-          } else {
-            return Container(
-              color: Colors.white,
-              width: drawerWidth,
-            );
-          }
-        });
-  }
-}
-
-// TODO: document here
-// ignore: must_be_immutable
-class TasbihNumberWidget extends StatefulWidget {
-  final String name;
-  int number;
-  final double width;
-  TasbihNumberWidget({
-    super.key,
-    required this.name,
-    required this.number,
-    required this.width,
-  });
-
-  @override
-  State<TasbihNumberWidget> createState() => _TasbihNumberWidgetState();
-}
-
-class _TasbihNumberWidgetState extends State<TasbihNumberWidget> {
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<ColorPalette>(builder: (context, palette, child) {
-      return Container(
-        padding: const EdgeInsets.fromLTRB(0, 5, 0, 5),
-        width: widget.width,
-        margin: const EdgeInsets.all(5),
-        decoration: BoxDecoration(
-            color: palette.getMainC,
-            borderRadius: const BorderRadius.all(Radius.circular(10))),
-        child: Column(
-          children: [
-            Text(
-              widget.name,
-              style: TextStyle(color: palette.getSecC),
-            ),
-            Text("${widget.number}", style: TextStyle(color: palette.getSecC))
-          ],
-        ),
-      );
-    });
-  }
+double mapValue(
+    double value, double min, double max, double newMin, double newMax) {
+  return (value - min) / (max - min) * (newMax - newMin) + newMin;
 }
 
 Future<List> getTotalTasbihCount() async {
@@ -333,17 +470,18 @@ Future<int?> getTasbihNow() async {
   return tasbih;
 }
 
-void increaseTasbih() async {
+void changeTasbih(bool increase) async {
   // increases all tasbih totals by 1
   await SharedPreferences.getInstance().then((prefs) {
+    int number = increase ? 1 : -1;
     int? oldTotal = prefs.getInt("totalTasbih");
-    prefs.setInt("totalTasbih", oldTotal! + 1);
+    prefs.setInt("totalTasbih", oldTotal! + number);
 
     int? oldTotalToday = prefs.getInt("totalTasbihToday");
-    prefs.setInt("totalTasbihToday", oldTotalToday! + 1);
+    prefs.setInt("totalTasbihToday", oldTotalToday! + number);
 
     int? oldNow = prefs.getInt("tasbihNow");
-    prefs.setInt("tasbihNow", oldNow! + 1);
+    prefs.setInt("tasbihNow", oldNow! + number);
   });
 }
 
