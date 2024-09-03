@@ -3,6 +3,7 @@ import "dart:convert";
 import "package:flutter/material.dart";
 import 'package:http/http.dart' as http;
 import "package:prayerapp/notification.dart";
+import "package:prayerapp/tasbih_notifier.dart";
 import "qiblah.dart";
 import "package:shared_preferences/shared_preferences.dart";
 import "tasbih.dart";
@@ -25,10 +26,18 @@ void main() async {
   // WidgetsFlutterBinding.ensureInitialized();
   // Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
 
-  runApp(ChangeNotifierProvider(
-    create: (context) => ColorPalette(),
+  runApp(MultiProvider(
+    providers: [
+      ChangeNotifierProvider(create: (context) => ColorPalette()),
+      ChangeNotifierProvider(create: (context) => TasbihNotifier())
+    ],
     child: const App(),
   ));
+
+  // runApp(ChangeNotifierProvider(
+  //   create: (context) => ColorPalette(),
+  //   child: const App(),
+  // ));
 }
 
 class App extends StatelessWidget {
@@ -50,7 +59,6 @@ class _MainPage extends State<MainPage> {
 
   // the pages controlled by the bottom nav bar
   late List<Widget> pages;
-  late List<dynamic> pagesDrawers;
   late List pagesAppBars;
   @override
   void initState() {
@@ -64,10 +72,8 @@ class _MainPage extends State<MainPage> {
       const SettingsPage(),
     ];
 
-    pagesDrawers = const [null, null, null, null];
-
     pagesAppBars = const [
-      {"title": "", "height": 10.0},
+      null,
       null,
       null,
       {"title": "Settings"},
@@ -104,7 +110,6 @@ class _MainPage extends State<MainPage> {
                   centerTitle: true,
                 )
               : null,
-          drawer: pagesDrawers[activePage],
           bottomNavigationBar: SizedBox(
             height: 40,
             child: BottomNavigationBar(
@@ -141,7 +146,7 @@ class _MainPage extends State<MainPage> {
             ),
           ),
           backgroundColor: palette.getBackC,
-          body: pages[activePage]);
+          body: SafeArea(child: pages[activePage]));
     });
   }
 }
