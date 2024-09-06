@@ -77,7 +77,7 @@ class TasbihNotifier extends ChangeNotifier {
     });
   }
 
-  void changeTasbih(bool increase) async {
+  Future<void> changeTasbih(bool increase) async {
     // increases all tasbih totals by 1
     await SharedPreferences.getInstance().then((prefs) {
       int number = increase ? 1 : -1;

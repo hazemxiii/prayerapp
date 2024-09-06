@@ -102,8 +102,8 @@ class _Tasbih extends State<TasbihPage> with TickerProviderStateMixin {
                                         style: TextStyle(
                                             fontSize: 20,
                                             color: palette.getSecC)))),
-                            onTap: () {
-                              Provider.of<TasbihNotifier>(context,
+                            onTap: () async {
+                              await Provider.of<TasbihNotifier>(context,
                                       listen: false)
                                   .changeTasbih(true);
                               try {
@@ -185,8 +185,8 @@ class SmallButton extends StatelessWidget {
           onTap();
         },
         child: Container(
-          width: 30,
-          height: 30,
+          width: 50,
+          height: 50,
           decoration: BoxDecoration(
               color: palette.getSecC,
               borderRadius: const BorderRadius.all(Radius.circular(1000))),

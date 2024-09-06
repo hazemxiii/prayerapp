@@ -1,7 +1,6 @@
 import "package:flutter/material.dart";
 import "package:provider/provider.dart";
 import "package:shared_preferences/shared_preferences.dart";
-import "main.dart";
 import "global.dart";
 
 class LocationSettingsPage extends StatefulWidget {
@@ -163,7 +162,7 @@ void saveLocation(
     prefs.remove("prayers");
     prefs.setString("city", city);
     prefs.setString("country", country);
-
+    // we need to update the main page to get prayer times again
     Provider.of<ColorPalette>(context, listen: false).setMainC(c);
     Navigator.of(context).pop();
   });

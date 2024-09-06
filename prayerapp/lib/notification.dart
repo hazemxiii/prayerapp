@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import "global.dart";
+import 'service.dart';
 
 class PrayerNotificationSettingsPage extends StatefulWidget {
   final String prayer;
@@ -37,8 +38,7 @@ class _PrayerNotificationSettingsPageState
         appBar: AppBar(
           foregroundColor: palette.getSecC,
           backgroundColor: palette.getMainC,
-          title: Text(
-              "${widget.prayer == "Jumu'a" ? "Dhuhr" : widget.prayer} Notification"),
+          title: Text("${widget.prayer} Notification"),
           centerTitle: true,
         ),
         body: Column(
@@ -212,21 +212,4 @@ void saveNotificationTimes(String prayer, int before, int after) async {
 
   spref.setInt(keyBefore, before);
   spref.setInt(keyAfter, after);
-}
-
-Future<List> getNotificationsData(String prayer) async {
-  SharedPreferences sprefs = await SharedPreferences.getInstance();
-
-  String keyBefore = "${prayer}_notification_b";
-  String keyAfter = "${prayer}_notification_a";
-
-  if (!sprefs.containsKey(keyBefore)) {
-    sprefs.setInt(keyBefore, -1);
-  }
-
-  if (!sprefs.containsKey(keyAfter)) {
-    sprefs.setInt(keyAfter, -1);
-  }
-
-  return [sprefs.getInt(keyBefore), sprefs.getInt(keyAfter)];
 }

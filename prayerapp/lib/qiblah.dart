@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import "global.dart";
 import 'package:provider/provider.dart';
-import 'main.dart';
 
 class QiblahPage extends StatefulWidget {
   const QiblahPage({super.key});
@@ -32,9 +31,10 @@ class _QiblahPageState extends State<QiblahPage> with TickerProviderStateMixin {
                 // location services are off
                 if (snap.data!.isEmpty) {
                   return Center(
-                    child: Text(
-                      "Please enable location services!",
-                      style: TextStyle(color: palette.getSecC),
+                    child: Icon(
+                      size: 40,
+                      Icons.location_off_outlined,
+                      color: palette.getSecC,
                     ),
                   );
                 }
@@ -51,6 +51,14 @@ class _QiblahPageState extends State<QiblahPage> with TickerProviderStateMixin {
                       return Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
+                          Text(
+                            snap.data![2].join(", "),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: palette.getMainC),
+                          ),
+                          const SizedBox(
+                            height: 10,
+                          ),
                           Transform.rotate(
                             angle: -toRad(north),
                             child: SizedBox(

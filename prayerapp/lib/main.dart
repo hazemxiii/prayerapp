@@ -1,5 +1,6 @@
 import "dart:async";
 import "dart:convert";
+import "dart:io";
 import "package:flutter/material.dart";
 import 'package:http/http.dart' as http;
 import "package:prayerapp/notification.dart";
@@ -8,23 +9,15 @@ import "qiblah.dart";
 import "package:shared_preferences/shared_preferences.dart";
 import "tasbih.dart";
 import "settings.dart";
-import 'package:geolocator/geolocator.dart';
-import 'package:geocoding/geocoding.dart';
 import 'package:provider/provider.dart';
-import 'package:workmanager/workmanager.dart';
 import "global.dart";
-// import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-
-@pragma('vm:entry-point')
-void callbackDispatcher() {
-  Workmanager().executeTask((task, inputData) async {
-    return Future.value(true);
-  });
-}
+import "service.dart";
 
 void main() async {
-  // WidgetsFlutterBinding.ensureInitialized();
-  // Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
+  WidgetsFlutterBinding.ensureInitialized();
+  if (Platform.isAndroid) {
+    await initializeService();
+  }
 
   runApp(MultiProvider(
     providers: [
@@ -33,11 +26,6 @@ void main() async {
     ],
     child: const App(),
   ));
-
-  // runApp(ChangeNotifierProvider(
-  //   create: (context) => ColorPalette(),
-  //   child: const App(),
-  // ));
 }
 
 class App extends StatelessWidget {
@@ -56,7 +44,6 @@ class MainPage extends StatefulWidget {
 
 class _MainPage extends State<MainPage> {
   int activePage = 0;
-
   // the pages controlled by the bottom nav bar
   late List<Widget> pages;
   late List pagesAppBars;
@@ -72,7 +59,7 @@ class _MainPage extends State<MainPage> {
       const SettingsPage(),
     ];
 
-    pagesAppBars = const [
+    pagesAppBars = [
       null,
       null,
       null,
@@ -99,6 +86,7 @@ class _MainPage extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
+    getPrayerNotification();
     return Consumer<ColorPalette>(builder: (context, palette, child) {
       return Scaffold(
           appBar: pagesAppBars[activePage] != null
@@ -162,17 +150,21 @@ class PrayerTimeWidgetState extends State<PrayerTimeWidget> {
   late PageController pageViewCont;
   late ValueNotifier nextPrayerRemainingTimeNotifier;
   late Timer timer;
-  String? nextPrayerName;
-  String? timeLeft;
-  String? time;
-  double? remianingTimePercentage;
+  // String nextPrayerName = "";
+  // String timeLeft = "";
+  // String time = "";
+  // double remianingTimePercentage = 0;
 
   @override
   void initState() {
     super.initState();
-
     pageViewCont = PageController(initialPage: 1);
-    nextPrayerRemainingTimeNotifier = ValueNotifier(DateTime.now().toString());
+    nextPrayerRemainingTimeNotifier = ValueNotifier({
+      "timeLeft": DateTime.now().toString(),
+      "prayerName": "",
+      "time": "",
+      "remainPercentage": 0
+    });
   }
 
   @override
@@ -180,7 +172,6 @@ class PrayerTimeWidgetState extends State<PrayerTimeWidget> {
     super.dispose();
     pageViewCont.dispose();
     timer.cancel();
-    // nextPrayerRemainingTimeNotifier.dispose();
   }
 
   @override
@@ -199,55 +190,12 @@ class PrayerTimeWidgetState extends State<PrayerTimeWidget> {
 
                 return Column(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      margin: const EdgeInsets.all(10),
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                          color: palette.getSecC,
-                          borderRadius:
-                              const BorderRadius.all(Radius.circular(10))),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              Column(
-                                children: [
-                                  Text(
-                                    nextPrayerName!,
-                                    style: TextStyle(
-                                        color: palette.getMainC, fontSize: 20),
-                                  ),
-                                  Text(
-                                    time!,
-                                    style: TextStyle(
-                                        color: palette.getMainC, fontSize: 18),
-                                  )
-                                ],
-                              ),
-                              ValueListenableBuilder(
-                                  valueListenable:
-                                      nextPrayerRemainingTimeNotifier,
-                                  builder: (context, value, child) {
-                                    return Column(
-                                      children: [
-                                        CircularProgressIndicator(
-                                          value: remianingTimePercentage,
-                                          color: palette.getMainC,
-                                        ),
-                                        Text(value,
-                                            style: TextStyle(
-                                                color: palette.getMainC,
-                                                fontSize: 18))
-                                      ],
-                                    );
-                                  })
-                            ],
-                          ),
-                        ],
-                      ),
+                    NextPrayerWidget(
+                      // nextPrayerName: nextPrayerName,
+                      nextPrayerRemainingTimeNotifier:
+                          nextPrayerRemainingTimeNotifier,
+                      // remianingTimePercentage: remianingTimePercentage,
+                      // time: time
                     ),
                     Expanded(
                       child: Container(
@@ -259,7 +207,6 @@ class PrayerTimeWidgetState extends State<PrayerTimeWidget> {
                             itemBuilder: (context, i) {
                               int americanDateIndex = 7;
                               return PrayerDayWidget(
-                                  // the last index (7) contains the american day to format and display
                                   dateString: snapshot.data![i]
                                       [americanDateIndex],
                                   times: snapshot.data[i]);
@@ -298,11 +245,88 @@ class PrayerTimeWidgetState extends State<PrayerTimeWidget> {
   void updateNextPrayerTime(data) {
     Map nextPrayerData = getNextPrayer(data![0], data![1], data![2]);
 
-    nextPrayerName = nextPrayerData["name"];
-    timeLeft = nextPrayerData["timeLeft"];
-    time = nextPrayerData["time"];
-    remianingTimePercentage = nextPrayerData["percentageLeft"];
-    nextPrayerRemainingTimeNotifier.value = timeLeft;
+    String nextPrayerName = nextPrayerData["name"];
+    String timeLeft = nextPrayerData["timeLeft"];
+    String nextPrayerTime = nextPrayerData["time"];
+    double remianingTimePercentage = nextPrayerData["percentageLeft"];
+    nextPrayerRemainingTimeNotifier.value = {
+      "timeLeft": timeLeft,
+      "prayerName": nextPrayerName,
+      "time": nextPrayerTime,
+      "remainPercentage": remianingTimePercentage
+    };
+  }
+}
+
+class NextPrayerWidget extends StatefulWidget {
+  final ValueNotifier nextPrayerRemainingTimeNotifier;
+  // final String nextPrayerName;
+  // final String time;
+  // final double remianingTimePercentage;
+  const NextPrayerWidget({
+    super.key,
+    required this.nextPrayerRemainingTimeNotifier,
+    // required this.nextPrayerName,
+    // required this.time,
+    // required this.remianingTimePercentage
+  });
+
+  @override
+  State<NextPrayerWidget> createState() => _NextPrayerWidgetState();
+}
+
+class _NextPrayerWidgetState extends State<NextPrayerWidget> {
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<ColorPalette>(builder: (context, palette, snapshot) {
+      return ValueListenableBuilder(
+          valueListenable: widget.nextPrayerRemainingTimeNotifier,
+          builder: (context, value, child) {
+            return Container(
+              padding: const EdgeInsets.all(10),
+              margin: const EdgeInsets.all(10),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                  color: palette.getSecC,
+                  borderRadius: const BorderRadius.all(Radius.circular(10))),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      Column(
+                        children: [
+                          Text(
+                            value['prayerName'],
+                            style: TextStyle(
+                                color: palette.getMainC, fontSize: 20),
+                          ),
+                          Text(
+                            value['time'],
+                            style: TextStyle(
+                                color: palette.getMainC, fontSize: 18),
+                          )
+                        ],
+                      ),
+                      Column(
+                        children: [
+                          CircularProgressIndicator(
+                            value: value['remainPercentage'],
+                            color: palette.getMainC,
+                          ),
+                          Text(value["timeLeft"],
+                              style: TextStyle(
+                                  color: palette.getMainC, fontSize: 18))
+                        ],
+                      )
+                    ],
+                  ),
+                ],
+              ),
+            );
+          });
+    });
   }
 }
 
@@ -348,9 +372,8 @@ class _PrayerDayWidgetState extends State<PrayerDayWidget> {
 
   List prayerDayWidgetBuilder() {
     List prayersWidgets = [];
-    List prayerNames = ["Fajr", "Sunrise", "Dhuhr", "Asr", "Maghrib", "Isha'a"];
-    for (int i = 0; i < prayerNames.length; i++) {
-      var prayer = prayerNames[i];
+    for (int i = 0; i < PrayerNames.prayerNames.length; i++) {
+      var prayer = PrayerNames.prayerNames[i];
       DateTime date = DateTime.parse("${widget.dateString} ${widget.times[i]}");
       if (date.difference(lastPrayerOfDay!).isNegative) {
         date = date.add(const Duration(days: 1));
@@ -382,6 +405,28 @@ class PrayerWidget extends StatefulWidget {
 }
 
 class _PrayerWidgetState extends State<PrayerWidget> {
+  Timer? timer;
+  Future? firstUpdate;
+  @override
+  void initState() {
+    firstUpdate =
+        Future.delayed(Duration(seconds: 60 - DateTime.now().second), () {
+      setState(() {});
+      timer = Timer.periodic(const Duration(minutes: 1), (timer) {
+        setState(() {});
+      });
+    }).catchError((e) {});
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    if (timer != null) {
+      timer!.cancel();
+    }
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     TimeOfDay timeOfDay = TimeOfDay.fromDateTime(widget.time);
@@ -396,7 +441,6 @@ class _PrayerWidgetState extends State<PrayerWidget> {
     if (difference.inHours >= 24 || difference.inHours <= -24) {
       diff = "";
     }
-    // take only the hours and minutes
 
     return Consumer<ColorPalette>(builder: (context, palette, c) {
       return InkWell(
@@ -535,113 +579,6 @@ Future<dynamic> getPrayerTime() async {
     }
   });
   return daysTime;
-}
-
-String numbersDateToText(String sdate) {
-  // converts a date from numbers to weekday, day month
-  DateTime dd = DateTime.parse(sdate);
-  String day = "";
-  int date = dd.day;
-
-  switch (dd.weekday) {
-    case 1:
-      day = "Monday";
-      break;
-    case 2:
-      day = "Tuesday";
-      break;
-    case 3:
-      day = "Wednesday";
-      break;
-    case 4:
-      day = "Thursday";
-      break;
-    case 5:
-      day = "Friday";
-      break;
-    case 6:
-      day = "Saturday";
-      break;
-    case 7:
-      day = "Sunday";
-      break;
-  }
-
-  var monthDict = {
-    1: "January",
-    2: "February",
-    3: "March",
-    4: "April",
-    5: "May",
-    6: "June",
-    7: "July",
-    8: "August",
-    9: "September",
-    10: "October",
-    11: "November",
-    12: "December"
-  };
-  String? month = monthDict[dd.month];
-
-  return "$day, $date $month";
-}
-
-String dateToString(DateTime date, bool toAmerican) {
-  // returns the normal or american date as a string
-  int day = date.day;
-  int month = date.month;
-  int year = date.year;
-
-  if (toAmerican) {
-    String monthPad = "$month".padLeft(2, "0");
-    String dayPad = "$day".padLeft(2, "0");
-    return "$year-$monthPad-$dayPad";
-  } else {
-    return "$day-$month-$year";
-  }
-}
-
-Future<List> getPosition(bool coordinates) async {
-  bool serviceEnabled;
-  LocationPermission permission;
-
-  serviceEnabled = await Geolocator.isLocationServiceEnabled();
-  if (!serviceEnabled) {
-    // return Future.error('Location services are disabled.');
-    return [];
-  }
-
-  permission = await Geolocator.checkPermission();
-  if (permission == LocationPermission.denied) {
-    permission = await Geolocator.requestPermission();
-    if (permission == LocationPermission.denied) {
-      // return Future.error('Location permissions are denied');
-      return [];
-    }
-  }
-
-  if (permission == LocationPermission.deniedForever) {
-    // return Future.error(
-    //     'Location permissions are permanently denied, we cannot request permissions.');
-    return [];
-  }
-  Position position = await Geolocator.getCurrentPosition();
-  if (coordinates) {
-    return [position.latitude, position.longitude];
-  }
-
-  List address = [];
-  try {
-    await placemarkFromCoordinates(position.latitude, position.longitude)
-        .then((data) {
-      address.add(data[0].toJson()['country']);
-      address.add(data[0].toJson()['administrativeArea']);
-    });
-  } catch (e) {
-    //
-  }
-
-  return address;
 }
 
 Map getNextPrayer(
