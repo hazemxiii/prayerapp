@@ -46,14 +46,16 @@ class _PrayerNotificationSettingsPageState
             PickTimeRowWidget(
               notifier: beforeAdhanTime,
               min: 0,
-              max: 30,
+              // max: 30,
+              max: 720,
               step: 1,
               text: "Before Adhan",
             ),
             PickTimeRowWidget(
               notifier: afterAdhanTime,
               min: 1,
-              max: 15,
+              // max: 15,
+              max: 720,
               step: 1,
               text: "After Adhan",
             ),

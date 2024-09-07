@@ -5,34 +5,34 @@ import "package:shared_preferences/shared_preferences.dart";
 
 class ColorPalette extends ChangeNotifier {
   /// The class is used to rebuild the pages when the color is changed
-  Color main = Colors.lightBlue;
-  Color second = Colors.white;
-  Color back = Colors.lightBlue[50]!;
+  Color _main = Colors.lightBlue;
+  Color _second = Colors.white;
+  Color _back = Colors.lightBlue[50]!;
 
   // getters
-  Color get getMainC => main;
-  Color get getSecC => second;
-  Color get getBackC => back;
+  Color get getMainC => _main;
+  Color get getSecC => _second;
+  Color get getBackC => _back;
 
   // setters
   void setMainC(Color c) {
-    main = c;
+    _main = c;
     // to update everything that uses this class
     notifyListeners();
   }
 
   void setSecC(Color c) {
-    second = c;
+    _second = c;
     notifyListeners();
   }
 
   void setBackC(Color c) {
-    back = c;
+    _back = c;
     notifyListeners();
   }
 }
 
-class PrayerNames {
+class Constants {
   static Map prayerNames = {
     0: "Fajr",
     1: "Sunrise",
@@ -41,9 +41,14 @@ class PrayerNames {
     4: "Maghrib",
     5: "Isha'a"
   };
+
+  static SharedPreferences? prefs;
+  static Future<void> initPrefs() async {
+    prefs = await SharedPreferences.getInstance();
+  }
 }
 
-String numbersDateToText(String sdate) {
+String getEnglishLanguageDate(String sdate) {
   // converts a date from numbers to weekday, day month
   DateTime dd = DateTime.parse(sdate);
   String day = "";
@@ -92,7 +97,7 @@ String numbersDateToText(String sdate) {
   return "$day, $date $month";
 }
 
-String dateToString(DateTime date, bool toAmerican) {
+String getShortDate(DateTime date, bool toAmerican) {
   // returns the normal or american date as a string
   int day = date.day;
   int month = date.month;
@@ -107,7 +112,7 @@ String dateToString(DateTime date, bool toAmerican) {
   }
 }
 
-Future<List> getPosition(bool coordinates) async {
+Future<List> getPosition(bool isCached) async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   bool serviceEnabled;
   LocationPermission permission;
@@ -133,12 +138,14 @@ Future<List> getPosition(bool coordinates) async {
     return [];
   }
   Position? position;
-  if (coordinates) {
+  // get cached position
+  if (isCached) {
     if (!prefs.containsKey("lo") || !prefs.containsKey("la")) {
       position = await Geolocator.getCurrentPosition();
       prefs.setDouble("lo", position.longitude);
       prefs.setDouble("la", position.latitude);
     } else {
+      // if there's a cached position, update it
       Geolocator.getCurrentPosition().then((updatePosition) {
         prefs.setDouble("lo", updatePosition.longitude);
         prefs.setDouble("la", updatePosition.latitude);
@@ -152,7 +159,7 @@ Future<List> getPosition(bool coordinates) async {
   try {
     double la = prefs.getDouble("la")!;
     double lo = prefs.getDouble("lo")!;
-    if (!coordinates) {
+    if (!isCached) {
       la = position!.latitude;
       lo = position.longitude;
     }
@@ -164,9 +171,18 @@ Future<List> getPosition(bool coordinates) async {
     //
   }
 
-  if (coordinates) {
+  if (isCached) {
     return [prefs.getDouble("la"), prefs.getDouble("lo"), address];
   }
-
   return address;
+}
+
+Future<void> setPrefs() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  if (!prefs.containsKey("nextPrayerName")) {
+    prefs.setString("nextPrayerName", "");
+  }
+  if (!prefs.containsKey("nextPrayerTime")) {
+    prefs.setString("nextPrayerTime", DateTime.now().toString());
+  }
 }

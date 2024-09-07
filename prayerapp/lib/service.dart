@@ -2,18 +2,17 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:ui';
 import 'package:prayerapp/global.dart';
+import 'package:prayerapp/main.dart';
 import "package:shared_preferences/shared_preferences.dart";
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
-void startBackgroundService() {
-  final service = FlutterBackgroundService();
+void startBackgroundService(FlutterBackgroundService service) {
   service.startService();
 }
 
-void stopBackgroundService() {
-  final service = FlutterBackgroundService();
+void stopBackgroundService(FlutterBackgroundService service) {
   service.invoke("stop");
 }
 
@@ -23,6 +22,7 @@ Future<void> initializeService() async {
   const AndroidNotificationChannel channel = AndroidNotificationChannel(
     "prayerNotifier", // id
     'prayerNotifier', // title
+
     description: "Notifies the user when it's time for prayers", // description
     importance: Importance.low, // importance must be at low or higher level
   );
@@ -68,41 +68,94 @@ Future<void> onStart(ServiceInstance service) async {
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-  service.on("stop").listen((event) {
+  if (service is AndroidServiceInstance) {
+    service.on('setAsForeground').listen((event) {
+      service.setAsForegroundService();
+    });
+
+    service.on('setAsBackground').listen((event) {
+      service.setAsBackgroundService();
+    });
+  }
+
+  service.on('stopService').listen((event) {
     service.stopSelf();
   });
 
-  service.on("start").listen((event) {});
+  try {
+    Timer.periodic(const Duration(minutes: 1), (timer) {
+      if (Constants.prefs!.containsKey("prayers")) {
+        // showNotification(service, flutterLocalNotificationsPlugin);
+        updateTime(service, flutterLocalNotificationsPlugin);
+      }
+    });
+  } catch (e) {
+    //
+  }
+}
 
-  showNotification(service, flutterLocalNotificationsPlugin);
+void updateTime(ServiceInstance service,
+    FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin) async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  DateTime nextPrayerTime = DateTime.parse(prefs.getString("nextPrayerTime")!);
+  String nextPrayerName = prefs.getString("nextPrayerName")!;
+  if (nextPrayerTime.isBefore(DateTime.now())) {
+    Map nextPrayerData = await getNextPrayer(true);
+    nextPrayerTime = nextPrayerData['time'];
+    nextPrayerName = nextPrayerData['name'];
+  }
+
+  if (service is AndroidServiceInstance) {
+    if (await service.isForegroundService()) {
+      TimeOfDay time = TimeOfDay.fromDateTime(nextPrayerTime);
+      String diff = nextPrayerTime.difference(DateTime.now()).toString();
+      flutterLocalNotificationsPlugin.show(
+        15,
+        nextPrayerName,
+        "${time.hourOfPeriod}:${time.minute} ${time.period == DayPeriod.am ? "AM" : "PM"} - ${diff.substring(0, 4)} Hours left",
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+              importance: Importance.low,
+              priority: Priority.low,
+              playSound: false,
+              "prayerNotifier2",
+              'Notification for prayers',
+              icon: 'notification_icon',
+              ongoing: true,
+              silent: true),
+        ),
+      );
+    }
+  }
 }
 
 void showNotification(ServiceInstance service,
     FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin) async {
   List prayerNotificationData = await getPrayerNotification();
-  Duration delay = prayerNotificationData[0];
+  // Duration delay = prayerNotificationData[0];
   String prayerName = prayerNotificationData[1];
 
-  Future.delayed(delay, () async {
-    if (service is AndroidServiceInstance) {
-      if (await service.isForegroundService()) {
-        flutterLocalNotificationsPlugin.show(
-          16,
-          prayerName,
-          '',
-          const NotificationDetails(
-            android: AndroidNotificationDetails(
-              "notificationChannelId",
-              'MY FOREGROUND SERVICE',
-              icon: 'ic_bg_service_small',
-              ongoing: false,
-            ),
+  if (service is AndroidServiceInstance) {
+    if (await service.isForegroundService()) {
+      flutterLocalNotificationsPlugin.show(
+        15,
+        prayerName,
+        DateTime.now().toString(),
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            importance: Importance.high,
+            priority: Priority.high,
+            fullScreenIntent: true,
+            playSound: true,
+            "prayerNotifier2",
+            'Notification for prayers',
+            icon: 'notification_icon',
+            ongoing: false,
           ),
-        );
-      }
+        ),
+      );
     }
-    showNotification(service, flutterLocalNotificationsPlugin);
-  });
+  }
 }
 
 Future<List> getPrayerNotification() async {
@@ -146,7 +199,7 @@ Future<List> getNextNotificationForADay(
   DateTime minDate = now.add(const Duration(days: 10));
   String minPrayer = "";
   for (int i = 0; i < 6; i++) {
-    String prayerName = PrayerNames.prayerNames[i];
+    String prayerName = Constants.prayerNames[i];
     String prayerTime = dayPrayers[i];
     DateTime prayerDate = DateTime.parse(
         "${day.toString().substring(0, day.toString().indexOf(" "))} $prayerTime");
