@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
 import 'global.dart';
 import 'package:provider/provider.dart';
 import "package:shared_preferences/shared_preferences.dart";
@@ -19,31 +20,28 @@ class _SettingsPageState extends State<SettingsPage> {
     super.initState();
   }
 
+  bool nextPrayerIsVisible =
+      Constants.prefs!.getBool("nextPrayerVisible") ?? true;
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       child: Consumer<ColorPalette>(builder: (context, palette, child) {
         return Column(
           children: [
-            InkWell(
+            SettingRowWidget(
               onTap: () {
                 Navigator.of(context).push(MaterialPageRoute(
                     builder: (context) => const VibrationSettingsPage()));
               },
-              child: SettingRowWidget(
-                  child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "Vibration",
-                    style: TextStyle(color: palette.getMainC),
-                  ),
-                  Icon(
-                    Icons.arrow_right,
-                    color: palette.getMainC,
-                  )
-                ],
-              )),
+              text: Text(
+                "Vibration",
+                style: TextStyle(color: palette.getMainC),
+              ),
+              icon: Icon(
+                Icons.arrow_right,
+                color: palette.getMainC,
+              ),
             ),
             ColorPickerRowWidget(
               name: "Main Color",
@@ -60,26 +58,41 @@ class _SettingsPageState extends State<SettingsPage> {
               pickerColor: palette.getBackC,
               colorKey: "backColor",
             ),
-            InkWell(
+            SettingRowWidget(
               onTap: () {
                 Navigator.of(context).push(MaterialPageRoute(
                     builder: (context) => const LocationSettingsPage()));
               },
-              child: SettingRowWidget(
-                  child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "Location",
-                    style: TextStyle(color: palette.getMainC),
-                  ),
-                  Icon(
-                    Icons.arrow_right,
-                    color: palette.getMainC,
-                  )
-                ],
-              )),
-            )
+              text: Text(
+                "Location",
+                style: TextStyle(color: palette.getMainC),
+              ),
+              icon: Icon(
+                Icons.arrow_right,
+                color: palette.getMainC,
+              ),
+            ),
+            SettingRowWidget(
+                text: Text(
+                  "Next Prayer Notification",
+                  style: TextStyle(color: palette.getMainC),
+                ),
+                icon: Switch(
+                  activeColor: palette.getMainC,
+                  value: nextPrayerIsVisible,
+                  onChanged: (v) {
+                    setState(() {
+                      nextPrayerIsVisible =
+                          toggleNextPrayerIsVisible(nextPrayerIsVisible);
+                    });
+                  },
+                ),
+                onTap: () {
+                  setState(() {
+                    nextPrayerIsVisible =
+                        toggleNextPrayerIsVisible(nextPrayerIsVisible);
+                  });
+                })
           ],
         );
       }),
@@ -88,11 +101,15 @@ class _SettingsPageState extends State<SettingsPage> {
 }
 
 class SettingRowWidget extends StatefulWidget {
-  final Widget child;
+  final Widget text;
+  final Widget icon;
+  final Function onTap;
 
   const SettingRowWidget({
     super.key,
-    required this.child,
+    required this.text,
+    required this.icon,
+    required this.onTap,
   });
 
   @override
@@ -103,14 +120,22 @@ class _SettingRowWidgetState extends State<SettingRowWidget> {
   @override
   Widget build(BuildContext context) {
     return Consumer<ColorPalette>(builder: (context, palette, child) {
-      return Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
-        margin: const EdgeInsets.all(3),
-        width: double.infinity,
-        decoration: BoxDecoration(
-            color: palette.getSecC,
-            borderRadius: const BorderRadius.all(Radius.circular(5))),
-        child: widget.child,
+      return InkWell(
+        onTap: () {
+          widget.onTap();
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
+          margin: const EdgeInsets.all(3),
+          width: double.infinity,
+          decoration: BoxDecoration(
+              color: palette.getSecC,
+              borderRadius: const BorderRadius.all(Radius.circular(5))),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [widget.text, widget.icon],
+          ),
+        ),
       );
     });
   }
@@ -198,23 +223,29 @@ class _ColorPickerRowWidgetState extends State<ColorPickerRowWidget> {
                 );
               });
         },
-        child: SettingRowWidget(
-            child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-              Text(
-                widget.name,
-                style: TextStyle(color: palette.getMainC),
-              ),
-              Container(
-                height: 20,
-                width: 20,
-                decoration: BoxDecoration(
-                    border: Border.all(color: palette.getMainC, width: 1),
-                    color: widget.pickerColor,
-                    borderRadius: const BorderRadius.all(Radius.circular(999))),
-              )
-            ])),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
+          margin: const EdgeInsets.all(3),
+          width: double.infinity,
+          decoration: BoxDecoration(
+              color: palette.getSecC,
+              borderRadius: const BorderRadius.all(Radius.circular(5))),
+          child:
+              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Text(
+              widget.name,
+              style: TextStyle(color: palette.getMainC),
+            ),
+            Container(
+              height: 20,
+              width: 20,
+              decoration: BoxDecoration(
+                  border: Border.all(color: palette.getMainC, width: 1),
+                  color: widget.pickerColor,
+                  borderRadius: const BorderRadius.all(Radius.circular(999))),
+            )
+          ]),
+        ),
       );
     });
   }
@@ -276,4 +307,14 @@ void saveColor(String color, String hex) async {
   await SharedPreferences.getInstance().then((prefs) {
     prefs.setString(color, hex);
   });
+}
+
+bool toggleNextPrayerIsVisible(bool visible) {
+  if (!Constants.prefs!.containsKey("nextPrayerVisible")) {
+    Constants.prefs!.setBool("nextPrayerVisible", !visible);
+  }
+  Constants.prefs!.setBool("nextPrayerVisible", !visible);
+  FlutterBackgroundService()
+      .invoke(visible ? "setAsBackground" : "setAsForeground");
+  return !visible;
 }

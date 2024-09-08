@@ -71,6 +71,7 @@ Future<void> onStart(ServiceInstance service) async {
   if (service is AndroidServiceInstance) {
     service.on('setAsForeground').listen((event) {
       service.setAsForegroundService();
+      updateTime(service, flutterLocalNotificationsPlugin);
     });
 
     service.on('setAsBackground').listen((event) {
@@ -83,6 +84,8 @@ Future<void> onStart(ServiceInstance service) async {
   });
 
   try {
+    await Constants.initPrefs();
+    updateTime(service, flutterLocalNotificationsPlugin);
     Timer.periodic(const Duration(minutes: 1), (timer) {
       if (Constants.prefs!.containsKey("prayers")) {
         // showNotification(service, flutterLocalNotificationsPlugin);
@@ -112,13 +115,13 @@ void updateTime(ServiceInstance service,
       flutterLocalNotificationsPlugin.show(
         15,
         nextPrayerName,
-        "${time.hourOfPeriod}:${time.minute} ${time.period == DayPeriod.am ? "AM" : "PM"} - ${diff.substring(0, 4)} Hours left",
+        "${time.hourOfPeriod}:${time.minute} ${time.period == DayPeriod.am ? "AM" : "PM"} - ${diff.substring(0, 4)} Time left",
         const NotificationDetails(
           android: AndroidNotificationDetails(
               importance: Importance.low,
               priority: Priority.low,
               playSound: false,
-              "prayerNotifier2",
+              "prayerNotifier",
               'Notification for prayers',
               icon: 'notification_icon',
               ongoing: true,
