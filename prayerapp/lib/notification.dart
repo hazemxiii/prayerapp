@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import "global.dart";
@@ -214,4 +215,6 @@ void saveNotificationTimes(String prayer, int before, int after) async {
 
   spref.setInt(keyBefore, before);
   spref.setInt(keyAfter, after);
+
+  FlutterBackgroundService().invoke("setAsForeground");
 }

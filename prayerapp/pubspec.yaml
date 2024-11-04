@@ -42,12 +42,12 @@ dependencies:
   vibration: ^1.8.4
   flutter_colorpicker: ^1.1.0
   provider: ^6.1.2
-  flutter_compass: ^0.8.0
+  # flutter_compass: ^0.8.0
   home_widget: ^0.6.0
   workmanager: ^0.5.2
   numberpicker: ^2.1.2
   location: ^6.0.2
-  flutter_local_notifications: ^17.1.2
+  flutter_local_notifications: ^18.0.0
   flutter_background_service: ^5.0.10
 
 dev_dependencies:

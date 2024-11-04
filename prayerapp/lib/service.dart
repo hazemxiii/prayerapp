@@ -86,9 +86,9 @@ Future<void> onStart(ServiceInstance service) async {
   try {
     await Constants.initPrefs();
     updateTime(service, flutterLocalNotificationsPlugin);
-    Timer.periodic(const Duration(minutes: 1), (timer) {
+    Timer.periodic(const Duration(seconds: 1), (timer) {
       if (Constants.prefs!.containsKey("prayers")) {
-        // showNotification(service, flutterLocalNotificationsPlugin);
+        showNotification(service, flutterLocalNotificationsPlugin);
         updateTime(service, flutterLocalNotificationsPlugin);
       }
     });
@@ -134,8 +134,9 @@ void updateTime(ServiceInstance service,
 
 void showNotification(ServiceInstance service,
     FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin) async {
+/*
   List prayerNotificationData = await getPrayerNotification();
-  // Duration delay = prayerNotificationData[0];
+  DateTime nextPrayerTime = prayerNotificationData[0];
   String prayerName = prayerNotificationData[1];
 
   if (service is AndroidServiceInstance) {
@@ -159,11 +160,11 @@ void showNotification(ServiceInstance service,
       );
     }
   }
+  */
 }
 
 Future<List> getPrayerNotification() async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  Map prayers = jsonDecode(prefs.getString("prayers")!);
+  Map prayers = jsonDecode(Constants.prefs!.getString("prayers")!);
   DateTime today = DateTime.now();
   DateTime yesterday = DateTime.now().subtract(const Duration(days: 1));
   DateTime tomorrow = DateTime.now().add(const Duration(days: 1));
@@ -175,10 +176,10 @@ Future<List> getPrayerNotification() async {
       "${yesterday.year}-${'${yesterday.month}'.padLeft(2, "0")}-${'${yesterday.day}'.padLeft(2, "0")}"];
 
   List minYesterday =
-      await getNextNotificationForADay(yesterday, yesterdayPrayers, prefs);
-  List minToday = await getNextNotificationForADay(today, todayPrayers, prefs);
+      await getNextNotificationForADay(yesterday, yesterdayPrayers);
+  List minToday = await getNextNotificationForADay(today, todayPrayers);
   List minTomorrow =
-      await getNextNotificationForADay(tomorrow, tomorrowPrayers, prefs);
+      await getNextNotificationForADay(tomorrow, tomorrowPrayers);
 
   DateTime min = minYesterday[0];
   String minPrayer = minYesterday[1];
@@ -193,11 +194,10 @@ Future<List> getPrayerNotification() async {
       minPrayer = "Jumu'a";
     }
   }
-  return [min.difference(DateTime.now()), minPrayer];
+  return [min, minPrayer];
 }
 
-Future<List> getNextNotificationForADay(
-    DateTime day, List dayPrayers, SharedPreferences prefs) async {
+Future<List> getNextNotificationForADay(DateTime day, List dayPrayers) async {
   DateTime now = DateTime.now();
   DateTime minDate = now.add(const Duration(days: 10));
   String minPrayer = "";
@@ -209,7 +209,7 @@ Future<List> getNextNotificationForADay(
     List notificationData = await getNotificationsData(prayerName);
     int before = notificationData[0];
     int after = notificationData[1];
-    if (before != -1) {
+    if (before > -1) {
       DateTime notificationBefore =
           prayerDate.subtract(Duration(minutes: before));
       if (!notificationBefore.isBefore(now) &&
@@ -218,7 +218,7 @@ Future<List> getNextNotificationForADay(
         minPrayer = prayerName;
       }
     }
-    if (after != -1) {
+    if (after > 0) {
       DateTime notificationAfter = prayerDate.add(Duration(minutes: after));
 
       if (!notificationAfter.isBefore(now) &&
@@ -232,18 +232,23 @@ Future<List> getNextNotificationForADay(
 }
 
 Future<List> getNotificationsData(String prayer) async {
-  SharedPreferences sprefs = await SharedPreferences.getInstance();
-
   String keyBefore = "${prayer}_notification_b";
   String keyAfter = "${prayer}_notification_a";
 
-  if (!sprefs.containsKey(keyBefore)) {
-    sprefs.setInt(keyBefore, -1);
+  if (!Constants.prefs!.containsKey(keyBefore)) {
+    Constants.prefs!.setInt(keyBefore, -1);
   }
 
-  if (!sprefs.containsKey(keyAfter)) {
-    sprefs.setInt(keyAfter, -1);
+  if (!Constants.prefs!.containsKey(keyAfter)) {
+    Constants.prefs!.setInt(keyAfter, -1);
+  }
+  if (prayer == "Fajr") {
+    print("before ${Constants.prefs!.getInt(keyBefore)}");
+    print((await SharedPreferences.getInstance()).getInt(keyBefore));
   }
 
-  return [sprefs.getInt(keyBefore), sprefs.getInt(keyAfter)];
+  return [
+    Constants.prefs!.getInt(keyBefore),
+    Constants.prefs!.getInt(keyAfter)
+  ];
 }

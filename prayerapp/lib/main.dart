@@ -56,7 +56,8 @@ class _MainPage extends State<MainPage> {
     pages = [
       const PrayerTimeWidget(),
       const TasbihPage(),
-      const QiblahPage(),
+      // const QiblahPage(),
+      const Placeholder(),
       const SettingsPage(),
     ];
 

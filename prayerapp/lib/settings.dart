@@ -185,7 +185,7 @@ class _ColorPickerRowWidgetState extends State<ColorPickerRowWidget> {
                   content: SingleChildScrollView(
                     child: ColorPicker(
                       displayThumbColor: true,
-                      hexInputColor: palette.getMainC,
+                      // hexInputColor: palette.getMainC,
                       enableAlpha: false,
                       labelTypes: const [],
                       hexInputBar: true,
