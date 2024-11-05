@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
 import "global.dart";
-import 'service.dart';
 
 class PrayerNotificationSettingsPage extends StatefulWidget {
   final String prayer;
@@ -23,11 +22,11 @@ class _PrayerNotificationSettingsPageState
   void initState() {
     super.initState();
 
-    getNotificationsData(widget.prayer).then((data) {
-      setState(() {
-        beforeAdhanTime = ValueNotifier(data[0]);
-        afterAdhanTime = ValueNotifier(data[1]);
-      });
+    List data = getNotificationsData(widget.prayer);
+
+    setState(() {
+      beforeAdhanTime = ValueNotifier(data[0]);
+      afterAdhanTime = ValueNotifier(data[1]);
     });
   }
 
@@ -207,14 +206,28 @@ class _NumberPickerWidgetState extends State<NumberPickerWidget> {
   }
 }
 
-void saveNotificationTimes(String prayer, int before, int after) async {
-  SharedPreferences spref = await SharedPreferences.getInstance();
-
+void saveNotificationTimes(String prayer, int before, int after) {
   String keyBefore = "${prayer}_notification_b";
   String keyAfter = "${prayer}_notification_a";
 
-  spref.setInt(keyBefore, before);
-  spref.setInt(keyAfter, after);
+  Prefs.prefs.setInt(keyBefore, before);
+  Prefs.prefs.setInt(keyAfter, after);
 
   FlutterBackgroundService().invoke("setAsForeground");
+}
+
+List getNotificationsData(String prayer) {
+  String keyBefore = "${prayer}_notification_b";
+  String keyAfter = "${prayer}_notification_a";
+
+  if (Prefs.prefs.containsKey(keyBefore)) {
+    Prefs.prefs.setInt(keyBefore, -1);
+  }
+
+  if (Prefs.prefs.containsKey(keyAfter)) {
+    Prefs.prefs.setInt(keyAfter, -1);
+  }
+  if (prayer == "Fajr") {}
+
+  return [Prefs.prefs.getInt(keyBefore), Prefs.prefs.getInt(keyAfter)];
 }

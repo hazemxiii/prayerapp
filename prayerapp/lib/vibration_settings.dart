@@ -1,6 +1,5 @@
 import "package:flutter/material.dart";
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'global.dart';
 
 class VibrationSettingsPage extends StatefulWidget {
@@ -16,12 +15,11 @@ class _VibrationSettingsPageState extends State<VibrationSettingsPage> {
   @override
   void initState() {
     vibrationController = TextEditingController();
-    getVibrationData().then((data) {
-      setState(() {
-        vibrationOn = data[0];
-        vibrationController.text = data[1];
-        vibrateRadio = data[2] ? "on" : "every";
-      });
+    List data = getVibrationData();
+    setState(() {
+      vibrationOn = data[0];
+      vibrationController.text = data[1];
+      vibrateRadio = data[2] ? "on" : "every";
     });
     super.initState();
   }
@@ -175,35 +173,29 @@ void onSave(
   updateVibrationCount(value, isOn);
 }
 
-Future<List> getVibrationData() async {
+List getVibrationData() {
   List data = [];
-  await SharedPreferences.getInstance().then((prefs) {
-    if (!prefs.containsKey("vibrationBool")) {
-      prefs.setBool("vibrationBool", true);
-    }
-    if (!prefs.containsKey("vibrationCount")) {
-      prefs.setString("vibrationCount", "33");
-    }
-    if (!prefs.containsKey("isOn")) {
-      prefs.setBool("isOn", false);
-    }
-    data.add(prefs.getBool("vibrationBool"));
-    data.add(prefs.getString("vibrationCount"));
-    data.add(prefs.getBool("isOn"));
-  });
+  if (!Prefs.prefs.containsKey("vibrationBool")) {
+    Prefs.prefs.setBool("vibrationBool", true);
+  }
+  if (!Prefs.prefs.containsKey("vibrationCount")) {
+    Prefs.prefs.setString("vibrationCount", "33");
+  }
+  if (!Prefs.prefs.containsKey("isOn")) {
+    Prefs.prefs.setBool("isOn", false);
+  }
+  data.add(Prefs.prefs.getBool("vibrationBool"));
+  data.add(Prefs.prefs.getString("vibrationCount"));
+  data.add(Prefs.prefs.getBool("isOn"));
 
   return data;
 }
 
-void allowVibration(bool allow) async {
-  await SharedPreferences.getInstance().then((prefs) {
-    prefs.setBool("vibrationBool", allow);
-  });
+void allowVibration(bool allow) {
+  Prefs.prefs.setBool("vibrationBool", allow);
 }
 
-void updateVibrationCount(String count, bool isOn) async {
-  await SharedPreferences.getInstance().then((prefs) {
-    prefs.setString("vibrationCount", count);
-    prefs.setBool("isOn", isOn);
-  });
+void updateVibrationCount(String count, bool isOn) {
+  Prefs.prefs.setString("vibrationCount", count);
+  Prefs.prefs.setBool("isOn", isOn);
 }

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:prayerapp/service.dart';
 import 'global.dart';
 import 'package:provider/provider.dart';
-import "package:shared_preferences/shared_preferences.dart";
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'location.dart';
 import 'vibration_settings.dart';
@@ -15,13 +14,12 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  late bool nextPrayerIsVisible;
   @override
   void initState() {
+    nextPrayerIsVisible = Prefs.prefs.getBool("nextPrayerVisible") ?? true;
     super.initState();
   }
-
-  bool nextPrayerIsVisible =
-      Constants.prefs!.getBool("nextPrayerVisible") ?? true;
 
   @override
   Widget build(BuildContext context) {
@@ -251,23 +249,21 @@ class _ColorPickerRowWidgetState extends State<ColorPickerRowWidget> {
   }
 }
 
-Future<List> getColors() async {
+List getColors() {
   List colors = [];
-  await SharedPreferences.getInstance().then((prefs) {
-    if (!prefs.containsKey("primaryColor")) {
-      prefs.setString("primaryColor", Colors.lightBlue.toHexString());
-    }
-    if (!prefs.containsKey("secondaryColor")) {
-      prefs.setString("secondaryColor", Colors.white.toHexString());
-    }
-    if (!prefs.containsKey("backColor")) {
-      prefs.setString("backColor", Colors.lightBlue[50]!.toHexString());
-    }
+  if (!Prefs.prefs.containsKey("primaryColor")) {
+    Prefs.prefs.setString("primaryColor", Colors.lightBlue.toHexString());
+  }
+  if (!Prefs.prefs.containsKey("secondaryColor")) {
+    Prefs.prefs.setString("secondaryColor", Colors.white.toHexString());
+  }
+  if (!Prefs.prefs.containsKey("backColor")) {
+    Prefs.prefs.setString("backColor", Colors.lightBlue[50]!.toHexString());
+  }
 
-    colors.add(prefs.getString("primaryColor"));
-    colors.add(prefs.getString("secondaryColor"));
-    colors.add(prefs.getString("backColor"));
-  });
+  colors.add(Prefs.prefs.getString("primaryColor"));
+  colors.add(Prefs.prefs.getString("secondaryColor"));
+  colors.add(Prefs.prefs.getString("backColor"));
 
   return colors;
 }
@@ -303,18 +299,19 @@ int rgbFromHex(String c) {
   return toNum[c[0]] * 16 + toNum[c[1]];
 }
 
-void saveColor(String color, String hex) async {
-  await SharedPreferences.getInstance().then((prefs) {
-    prefs.setString(color, hex);
-  });
+void saveColor(String color, String hex) {
+  Prefs.prefs.setString(color, hex);
 }
 
 bool toggleNextPrayerIsVisible(bool visible) {
-  if (!Constants.prefs!.containsKey("nextPrayerVisible")) {
-    Constants.prefs!.setBool("nextPrayerVisible", !visible);
+  if (!Prefs.prefs.containsKey("nextPrayerVisible")) {
+    Prefs.prefs.setBool("nextPrayerVisible", !visible);
   }
-  Constants.prefs!.setBool("nextPrayerVisible", !visible);
-  FlutterBackgroundService()
-      .invoke(visible ? "setAsBackground" : "setAsForeground");
+  Prefs.prefs.setBool("nextPrayerVisible", !visible);
+  if (visible) {
+    stopBackgroundService();
+  } else {
+    startBackgroundService();
+  }
   return !visible;
 }

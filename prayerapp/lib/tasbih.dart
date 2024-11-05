@@ -102,8 +102,8 @@ class _Tasbih extends State<TasbihPage> with TickerProviderStateMixin {
                                         style: TextStyle(
                                             fontSize: 20,
                                             color: palette.getSecC)))),
-                            onTap: () async {
-                              await Provider.of<TasbihNotifier>(context,
+                            onTap: () {
+                              Provider.of<TasbihNotifier>(context,
                                       listen: false)
                                   .changeTasbih(true);
                               try {

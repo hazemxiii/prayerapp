@@ -1,6 +1,5 @@
 import "package:flutter/material.dart";
-import "package:geocoding/geocoding.dart";
-import "package:geolocator/geolocator.dart";
+import "package:prayerapp/settings.dart";
 import "package:shared_preferences/shared_preferences.dart";
 
 class ColorPalette extends ChangeNotifier {
@@ -13,6 +12,13 @@ class ColorPalette extends ChangeNotifier {
   Color get getMainC => _main;
   Color get getSecC => _second;
   Color get getBackC => _back;
+
+  void initPalette() {
+    List colors = getColors();
+    _main = hexToColor(colors[0]);
+    _second = hexToColor(colors[1]);
+    _back = hexToColor(colors[2]);
+  }
 
   // setters
   void setMainC(Color c) {
@@ -42,10 +48,10 @@ class Constants {
     5: "Isha'a"
   };
 
-  static SharedPreferences? prefs;
-  static Future<void> initPrefs() async {
-    prefs = await SharedPreferences.getInstance();
-  }
+  // static SharedPreferences? prefs;
+  // static Future<void> initPrefs() async {
+  //   prefs = await SharedPreferences.getInstance();
+  // }
 }
 
 String getEnglishLanguageDate(String sdate) {
@@ -112,70 +118,70 @@ String getShortDate(DateTime date, bool toAmerican) {
   }
 }
 
-Future<List> getPosition(bool isCached) async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  bool serviceEnabled;
-  LocationPermission permission;
+// Future<List> getPosition(bool isCached) async {
+//   bool serviceEnabled;
+//   LocationPermission permission;
 
-  serviceEnabled = await Geolocator.isLocationServiceEnabled();
-  if (!serviceEnabled) {
-    // return Future.error('Location services are disabled.');
-    return [];
-  }
+//   serviceEnabled = await Geolocator.isLocationServiceEnabled();
+//   if (!serviceEnabled) {
+//     // return Future.error('Location services are disabled.');
+//     return [];
+//   }
 
-  permission = await Geolocator.checkPermission();
-  if (permission == LocationPermission.denied) {
-    permission = await Geolocator.requestPermission();
-    if (permission == LocationPermission.denied) {
-      // return Future.error('Location permissions are denied');
-      return [];
-    }
-  }
+//   permission = await Geolocator.checkPermission();
+//   if (permission == LocationPermission.denied) {
+//     permission = await Geolocator.requestPermission();
+//     if (permission == LocationPermission.denied) {
+//       // return Future.error('Location permissions are denied');
+//       return [];
+//     }
+//   }
 
-  if (permission == LocationPermission.deniedForever) {
-    // return Future.error(
-    //     'Location permissions are permanently denied, we cannot request permissions.');
-    return [];
-  }
-  Position? position;
-  // get cached position
-  if (isCached) {
-    if (!prefs.containsKey("lo") || !prefs.containsKey("la")) {
-      position = await Geolocator.getCurrentPosition();
-      prefs.setDouble("lo", position.longitude);
-      prefs.setDouble("la", position.latitude);
-    } else {
-      // if there's a cached position, update it
-      Geolocator.getCurrentPosition().then((updatePosition) {
-        prefs.setDouble("lo", updatePosition.longitude);
-        prefs.setDouble("la", updatePosition.latitude);
-      });
-    }
-  } else {
-    position = await Geolocator.getCurrentPosition();
-  }
+//   if (permission == LocationPermission.deniedForever) {
+//     // return Future.error(
+//     //     'Location permissions are permanently denied, we cannot request permissions.');
+//     return [];
+//   }
+//   Position? position;
+//   // get cached position
 
-  List address = [];
-  try {
-    double la = prefs.getDouble("la")!;
-    double lo = prefs.getDouble("lo")!;
-    if (!isCached) {
-      la = position!.latitude;
-      lo = position.longitude;
-    }
-    var addressData = await placemarkFromCoordinates(la, lo);
-    address.add(addressData[0].toJson()['country']);
-    address.add(addressData[0].toJson()['administrativeArea']);
-    address.add(addressData[0].toJson()['subAdministrativeArea']);
-  } catch (e) {
-    //
-  }
+//   if (isCached) {
+//     if (!Prefs.prefs.containsKey("lo") || !Prefs.prefs.containsKey("la")) {
+//       position = await Geolocator.getCurrentPosition();
+//       Prefs.prefs.setDouble("lo", position.longitude);
+//       Prefs.prefs.setDouble("la", position.latitude);
+//     } else {
+//       // if there's a cached position, update it
+//       Geolocator.getCurrentPosition().then((updatePosition) {
+//         Prefs.prefs.setDouble("lo", updatePosition.longitude);
+//         Prefs.prefs.setDouble("la", updatePosition.latitude);
+//       });
+//     }
+//   } else {
+//     position = await Geolocator.getCurrentPosition();
+//   }
 
-  if (isCached) {
-    return [prefs.getDouble("la"), prefs.getDouble("lo"), address];
-  }
-  return address;
-}
+//   List address = [];
+//   try {
+//     double la = Prefs.prefs.getDouble("la")!;
+//     double lo = Prefs.prefs.getDouble("lo")!;
+//     if (!isCached) {
+//       la = position!.latitude;
+//       lo = position.longitude;
+//     }
+//     var addressData = await placemarkFromCoordinates(la, lo);
+//     address.add(addressData[0].toJson()['country']);
+//     address.add(addressData[0].toJson()['administrativeArea']);
+//     address.add(addressData[0].toJson()['subAdministrativeArea']);
+//   } catch (e) {
+//     //
+//   }
+
+//   if (isCached) {
+//     return [Prefs.prefs.getDouble("la"), Prefs.prefs.getDouble("lo"), address];
+//   }
+//   return address;
+// }
 
 Future<void> setPrefs() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -184,5 +190,39 @@ Future<void> setPrefs() async {
   }
   if (!prefs.containsKey("nextPrayerTime")) {
     prefs.setString("nextPrayerTime", DateTime.now().toString());
+  }
+  if (!prefs.containsKey("isServiceOn")) {
+    prefs.setBool("isServiceOn", true);
+  }
+}
+
+class Prefs {
+  static late SharedPreferences prefs;
+  static Future<void> initPrefs() async {
+    prefs = await SharedPreferences.getInstance();
+    if (!prefs.containsKey("nextPrayerName")) {
+      prefs.setString("nextPrayerName", "");
+    }
+    if (!prefs.containsKey("nextPrayerTime")) {
+      prefs.setString("nextPrayerTime", DateTime.now().toString());
+    }
+    if (!prefs.containsKey("isServiceOn")) {
+      prefs.setBool("isServiceOn", true);
+    }
+    if (!prefs.containsKey("city")) {
+      prefs.setString("city", "");
+    }
+    if (!prefs.containsKey("country")) {
+      prefs.setString("country", "");
+    }
+  }
+
+  void printPrefs() {
+    List keys = prefs.getKeys().toList();
+    debugPrint(keys.toString());
+    for (int i = 0; i < keys.length; i++) {
+      String key = keys[i];
+      debugPrint("$key: ${prefs.get(key).toString()}");
+    }
   }
 }

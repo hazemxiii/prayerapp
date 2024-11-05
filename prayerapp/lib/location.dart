@@ -1,6 +1,9 @@
+// ignore_for_file: use_build_context_synchronously
+import "dart:convert";
+
 import "package:flutter/material.dart";
+import "package:prayerapp/location_class/location_class.dart";
 import "package:provider/provider.dart";
-import "package:shared_preferences/shared_preferences.dart";
 import "global.dart";
 
 class LocationSettingsPage extends StatefulWidget {
@@ -19,14 +22,8 @@ class _LocationSettingsPageState extends State<LocationSettingsPage> {
     cityController = TextEditingController();
     countryController = TextEditingController();
 
-    getPositionFromPrefs().then((data) {
-      if (data.isNotEmpty) {
-        setState(() {
-          cityController.text = data[0];
-          countryController.text = data[1];
-        });
-      }
-    });
+    countryController.text = LocationHandler.location.country;
+    cityController.text = LocationHandler.location.city;
     super.initState();
   }
 
@@ -38,14 +35,11 @@ class _LocationSettingsPageState extends State<LocationSettingsPage> {
         appBar: AppBar(
           actions: [
             IconButton(
-                onPressed: () {
-                  getPosition(false).then((data) {
-                    setState(() {
-                      if (data.isNotEmpty) {
-                        countryController.text = data[0];
-                        cityController.text = data[1];
-                      }
-                    });
+                onPressed: () async {
+                  await LocationHandler.location.getFromGps(context);
+                  setState(() {
+                    countryController.text = LocationHandler.location.country;
+                    cityController.text = LocationHandler.location.city;
                   });
                 },
                 icon: const Icon(Icons.gps_fixed))
@@ -87,10 +81,7 @@ class _LocationSettingsPageState extends State<LocationSettingsPage> {
                   ),
                   MaterialButton(
                     color: palette.getMainC,
-                    onPressed: () {
-                      saveLocation(context, countryController.text,
-                          cityController.text, palette.getMainC);
-                    },
+                    onPressed: onSave,
                     child:
                         Text("Save", style: TextStyle(color: palette.getSecC)),
                   )
@@ -101,6 +92,13 @@ class _LocationSettingsPageState extends State<LocationSettingsPage> {
         ),
       );
     });
+  }
+
+  void onSave() {
+    LocationHandler.location
+        .userEnteredAddress(countryController.text, cityController.text);
+    Prefs.prefs.setString("prayers", jsonEncode({}));
+    Navigator.of(context).pop();
   }
 }
 
@@ -141,29 +139,4 @@ class _LocationInputWidgetState extends State<LocationInputWidget> {
       ),
     );
   }
-}
-
-Future<List> getPositionFromPrefs() async {
-  List position = [];
-
-  await SharedPreferences.getInstance().then((prefs) {
-    if (prefs.containsKey("city") & prefs.containsKey("country")) {
-      position.add(prefs.getString("city"));
-      position.add(prefs.getString("country"));
-    }
-  });
-
-  return position;
-}
-
-void saveLocation(
-    BuildContext context, String country, String city, Color c) async {
-  await SharedPreferences.getInstance().then((prefs) {
-    prefs.remove("prayers");
-    prefs.setString("city", city);
-    prefs.setString("country", country);
-    // we need to update the main page to get prayer times again
-    Provider.of<ColorPalette>(context, listen: false).setMainC(c);
-    Navigator.of(context).pop();
-  });
 }
