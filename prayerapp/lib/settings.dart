@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:prayerapp/service.dart';
-import 'global.dart';
+import 'package:prayerapp/color_notifier.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'location.dart';
@@ -14,17 +13,15 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  late bool nextPrayerIsVisible;
   @override
   void initState() {
-    nextPrayerIsVisible = Prefs.prefs.getBool("nextPrayerVisible") ?? true;
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      child: Consumer<ColorPalette>(builder: (context, palette, child) {
+      child: Consumer<ColorNotifier>(builder: (context, palette, child) {
         return Column(
           children: [
             SettingRowWidget(
@@ -77,19 +74,13 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 icon: Switch(
                   activeColor: palette.getMainC,
-                  value: nextPrayerIsVisible,
+                  value: true,
                   onChanged: (v) {
-                    setState(() {
-                      nextPrayerIsVisible =
-                          toggleNextPrayerIsVisible(nextPrayerIsVisible);
-                    });
+                    setState(() {});
                   },
                 ),
                 onTap: () {
-                  setState(() {
-                    nextPrayerIsVisible =
-                        toggleNextPrayerIsVisible(nextPrayerIsVisible);
-                  });
+                  setState(() {});
                 })
           ],
         );
@@ -117,7 +108,7 @@ class SettingRowWidget extends StatefulWidget {
 class _SettingRowWidgetState extends State<SettingRowWidget> {
   @override
   Widget build(BuildContext context) {
-    return Consumer<ColorPalette>(builder: (context, palette, child) {
+    return Consumer<ColorNotifier>(builder: (context, palette, child) {
       return InkWell(
         onTap: () {
           widget.onTap();
@@ -166,7 +157,7 @@ class _ColorPickerRowWidgetState extends State<ColorPickerRowWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ColorPalette>(builder: (context, palette, child) {
+    return Consumer<ColorNotifier>(builder: (context, palette, child) {
       return InkWell(
         splashColor: Colors.transparent,
         onTap: () {
@@ -199,19 +190,18 @@ class _ColorPickerRowWidgetState extends State<ColorPickerRowWidget> {
                           Navigator.of(context).pop();
                           switch (widget.colorKey) {
                             case "primaryColor":
-                              Provider.of<ColorPalette>(context, listen: false)
+                              Provider.of<ColorNotifier>(context, listen: false)
                                   .setMainC(color!);
                               break;
                             case "secondaryColor":
-                              Provider.of<ColorPalette>(context, listen: false)
+                              Provider.of<ColorNotifier>(context, listen: false)
                                   .setSecC(color!);
                               break;
                             case "backColor":
-                              Provider.of<ColorPalette>(context, listen: false)
+                              Provider.of<ColorNotifier>(context, listen: false)
                                   .setBackC(color!);
                               break;
                           }
-                          saveColor(widget.colorKey, color!.toHexString());
                         },
                         child: Text(
                           "save",
@@ -247,71 +237,4 @@ class _ColorPickerRowWidgetState extends State<ColorPickerRowWidget> {
       );
     });
   }
-}
-
-List getColors() {
-  List colors = [];
-  if (!Prefs.prefs.containsKey("primaryColor")) {
-    Prefs.prefs.setString("primaryColor", Colors.lightBlue.toHexString());
-  }
-  if (!Prefs.prefs.containsKey("secondaryColor")) {
-    Prefs.prefs.setString("secondaryColor", Colors.white.toHexString());
-  }
-  if (!Prefs.prefs.containsKey("backColor")) {
-    Prefs.prefs.setString("backColor", Colors.lightBlue[50]!.toHexString());
-  }
-
-  colors.add(Prefs.prefs.getString("primaryColor"));
-  colors.add(Prefs.prefs.getString("secondaryColor"));
-  colors.add(Prefs.prefs.getString("backColor"));
-
-  return colors;
-}
-
-Color hexToColor(String hex) {
-  String red;
-  String green;
-  String blue;
-
-  red = hex.substring(2, 4);
-  green = hex.substring(4, 6);
-  blue = hex.substring(6, 8);
-
-  int r = rgbFromHex(red);
-  int g = rgbFromHex(green);
-  int b = rgbFromHex(blue);
-
-  return Color.fromRGBO(r, g, b, 1);
-}
-
-int rgbFromHex(String c) {
-  Map toNum = {};
-  for (int i = 0; i < 10; i++) {
-    toNum["$i"] = i;
-  }
-  toNum["A"] = 10;
-  toNum["B"] = 11;
-  toNum["C"] = 12;
-  toNum["D"] = 13;
-  toNum["E"] = 14;
-  toNum["F"] = 15;
-
-  return toNum[c[0]] * 16 + toNum[c[1]];
-}
-
-void saveColor(String color, String hex) {
-  Prefs.prefs.setString(color, hex);
-}
-
-bool toggleNextPrayerIsVisible(bool visible) {
-  if (!Prefs.prefs.containsKey("nextPrayerVisible")) {
-    Prefs.prefs.setBool("nextPrayerVisible", !visible);
-  }
-  Prefs.prefs.setBool("nextPrayerVisible", !visible);
-  if (visible) {
-    stopBackgroundService();
-  } else {
-    startBackgroundService();
-  }
-  return !visible;
 }

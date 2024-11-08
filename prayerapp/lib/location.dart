@@ -2,6 +2,7 @@
 import "dart:convert";
 
 import "package:flutter/material.dart";
+import "package:prayerapp/color_notifier.dart";
 import "package:prayerapp/location_class/location_class.dart";
 import "package:provider/provider.dart";
 import "global.dart";
@@ -29,7 +30,7 @@ class _LocationSettingsPageState extends State<LocationSettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ColorPalette>(builder: (context, palette, child) {
+    return Consumer<ColorNotifier>(builder: (context, palette, child) {
       return Scaffold(
         backgroundColor: palette.getSecC,
         appBar: AppBar(
@@ -97,7 +98,7 @@ class _LocationSettingsPageState extends State<LocationSettingsPage> {
   void onSave() {
     LocationHandler.location
         .userEnteredAddress(countryController.text, cityController.text);
-    Prefs.prefs.setString("prayers", jsonEncode({}));
+    Prefs.prefs.setString(PrefsKeys.prayers, jsonEncode({}));
     Navigator.of(context).pop();
   }
 }

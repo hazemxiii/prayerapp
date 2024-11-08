@@ -1,11 +1,9 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:prayerapp/global.dart';
 import 'package:prayerapp/location.dart';
-import 'package:prayerapp/settings.dart';
 
 class LocationHandler {
   static Location location = Location();
@@ -19,17 +17,17 @@ class Location {
 
   void saveToPrefs() {
     if (_la != null && _lo != null) {
-      Prefs.prefs.setDouble("la", _la!);
-      Prefs.prefs.setDouble("lo", _lo!);
+      Prefs.prefs.setDouble(PrefsKeys.la, _la!);
+      Prefs.prefs.setDouble(PrefsKeys.lo, _lo!);
     }
-    Prefs.prefs.setString("city", _city);
-    Prefs.prefs.setString("country", _country);
+    Prefs.prefs.setString(PrefsKeys.city, _city);
+    Prefs.prefs.setString(PrefsKeys.country, _country);
   }
 
   void userEnteredAddress(String country, String city) {
     _country = country;
     _city = city;
-    Prefs.prefs.setString("prayers", jsonEncode({}));
+    Prefs.prefs.setString(PrefsKeys.prayers, jsonEncode({}));
     saveToPrefs();
   }
 
@@ -87,7 +85,7 @@ class Location {
   }
 
   void askForManualInput(BuildContext context) {
-    Color c = hexToColor(Prefs.prefs.getString("primaryColor")!);
+    Color c = Color(Prefs.prefs.getInt(PrefsKeys.primaryColor)!);
     showDialog(
         context: context,
         builder: (_) {
@@ -133,10 +131,10 @@ class Location {
   }
 
   void initFromPrefs() {
-    _la = Prefs.prefs.getDouble("la");
-    _lo = Prefs.prefs.getDouble("lo");
-    _city = Prefs.prefs.getString("city") ?? "";
-    _country = Prefs.prefs.getString("country") ?? "";
+    _la = Prefs.prefs.getDouble(PrefsKeys.la);
+    _lo = Prefs.prefs.getDouble(PrefsKeys.lo);
+    _city = Prefs.prefs.getString(PrefsKeys.city) ?? "";
+    _country = Prefs.prefs.getString(PrefsKeys.country) ?? "";
   }
 
   String get city => _city;

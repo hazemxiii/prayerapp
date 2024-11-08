@@ -1,8 +1,8 @@
 import 'dart:math';
+import 'package:prayerapp/color_notifier.dart';
 import 'package:prayerapp/tasbih_notifier.dart';
 import "package:flutter/material.dart";
 import 'package:vibration/vibration.dart';
-import 'global.dart';
 import 'package:provider/provider.dart';
 
 class TasbihPage extends StatefulWidget {
@@ -12,7 +12,6 @@ class TasbihPage extends StatefulWidget {
 }
 
 class _Tasbih extends State<TasbihPage> with TickerProviderStateMixin {
-  // controllers and the animations
   late AnimationController shrinkController;
   late Animation<double> shrinkAnimation;
 
@@ -68,7 +67,8 @@ class _Tasbih extends State<TasbihPage> with TickerProviderStateMixin {
         Column(
           children: [
             Expanded(
-              child: Consumer<ColorPalette>(builder: (context, palette, child) {
+              child:
+                  Consumer<ColorNotifier>(builder: (context, palette, child) {
                 return Consumer<TasbihNotifier>(
                     builder: (context, tasbihNot, child) {
                   return Column(
@@ -160,7 +160,7 @@ class _Tasbih extends State<TasbihPage> with TickerProviderStateMixin {
             )
           ],
         ),
-        Consumer<ColorPalette>(builder: (context, palette, child) {
+        Consumer<ColorNotifier>(builder: (context, palette, child) {
           return TasbihInfo(
             backC: palette.getMainC,
             textC: palette.getSecC,
@@ -178,7 +178,7 @@ class SmallButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ColorPalette>(builder: (context, palette, child) {
+    return Consumer<ColorNotifier>(builder: (context, palette, child) {
       return InkWell(
         borderRadius: const BorderRadius.all(Radius.circular(1000)),
         onTap: () {

@@ -12,63 +12,37 @@ class TasbihNotifier extends ChangeNotifier {
   List _vibrateNums = [];
 
   void setData() {
-// gets the total in the button before resetting it
-    if (!Prefs.prefs.containsKey("totalTasbih")) {
-      Prefs.prefs.setInt("totalTasbih", 0);
-    }
-    if (!Prefs.prefs.containsKey("totalTasbihToday")) {
-      Prefs.prefs.setInt("totalTasbihToday", 0);
-    }
-    if (!Prefs.prefs.containsKey("tasbihNow")) {
-      Prefs.prefs.setInt("tasbihNow", 0);
-    }
-    if (!Prefs.prefs.containsKey("tasbihDate")) {
-      String date = DateTime.now().toString();
-      date = date.substring(0, date.indexOf(" "));
-
-      Prefs.prefs.setString("tasbihDate", date);
-    }
-
     // if the date changed, reset the total of the day to 0
     String today = DateTime.now().toString();
     today = today.substring(0, today.indexOf(" "));
 
-    String? date = Prefs.prefs.getString("tasbihDate");
+    String? date = Prefs.prefs.getString(PrefsKeys.tasbihDate);
 
     if (today != date) {
-      Prefs.prefs.setInt("totalTasbihToday", 0);
-      Prefs.prefs.setString("tasbihDate", today);
+      Prefs.prefs.setInt(PrefsKeys.totalTasbihToday, 0);
+      Prefs.prefs.setString(PrefsKeys.tasbihDate, today);
     }
 
-    _now = Prefs.prefs.getInt("tasbihNow")!;
+    _now = Prefs.prefs.getInt(PrefsKeys.tasbihNow)!;
 
-    if (!Prefs.prefs.containsKey("totalTasbih")) {
-      Prefs.prefs.setInt("totalTasbih", 0);
+    if (!Prefs.prefs.containsKey(PrefsKeys.totalTasbih)) {
+      Prefs.prefs.setInt(PrefsKeys.totalTasbih, 0);
     }
-    if (!Prefs.prefs.containsKey("totalTasbihToday")) {
-      Prefs.prefs.setInt("totalTasbihToday", 0);
+    if (!Prefs.prefs.containsKey(PrefsKeys.totalTasbihToday)) {
+      Prefs.prefs.setInt(PrefsKeys.totalTasbihToday, 0);
     }
-    _total = Prefs.prefs.getInt("totalTasbih")!;
-    _today = Prefs.prefs.getInt("totalTasbihToday")!;
+    _total = Prefs.prefs.getInt(PrefsKeys.totalTasbih)!;
+    _today = Prefs.prefs.getInt(PrefsKeys.totalTasbihToday)!;
 
-    if (!Prefs.prefs.containsKey("vibrationBool")) {
-      Prefs.prefs.setBool("vibrationBool", true);
-    }
-    if (!Prefs.prefs.containsKey("vibrationCount")) {
-      Prefs.prefs.setString("vibrationCount", "33");
-    }
-    if (!Prefs.prefs.containsKey("isOn")) {
-      Prefs.prefs.setBool("isOn", false);
-    }
-    _vibrate = Prefs.prefs.getBool("vibrationBool")!;
-    _vibrateOn = Prefs.prefs.getString("vibrationCount")!;
-    _isOn = Prefs.prefs.getBool("isOn")!;
+    _vibrate = Prefs.prefs.getBool(PrefsKeys.isVibrateOn)!;
+    _vibrateOn = Prefs.prefs.getString(PrefsKeys.vibrateNumber)!;
+    _isOn = Prefs.prefs.getBool(PrefsKeys.isVibrationModeAt)!;
     _vibrateNums = _vibrateOn.split(",");
     // notifyListeners();
   }
 
   void clearTasbihNow() {
-    Prefs.prefs.setInt("tasbihNow", 0);
+    Prefs.prefs.setInt(PrefsKeys.tasbihNow, 0);
     _now = 0;
     notifyListeners();
   }
@@ -80,13 +54,13 @@ class TasbihNotifier extends ChangeNotifier {
       return;
     }
     _total = total + number;
-    Prefs.prefs.setInt("totalTasbih", _total);
+    Prefs.prefs.setInt(PrefsKeys.totalTasbih, _total);
 
     _today = today + number;
-    Prefs.prefs.setInt("totalTasbihToday", today);
+    Prefs.prefs.setInt(PrefsKeys.totalTasbihToday, today);
 
     _now = _now + number;
-    Prefs.prefs.setInt("tasbihNow", now);
+    Prefs.prefs.setInt(PrefsKeys.tasbihNow, now);
 
     notifyListeners();
   }
@@ -95,8 +69,8 @@ class TasbihNotifier extends ChangeNotifier {
     // clears the tasbih total
     _today = 0;
     _total = 0;
-    Prefs.prefs.setInt("totalTasbihToday", 0);
-    Prefs.prefs.setInt("totalTasbih", 0);
+    Prefs.prefs.setInt(PrefsKeys.totalTasbihToday, 0);
+    Prefs.prefs.setInt(PrefsKeys.totalTasbih, 0);
     clearTasbihNow();
   }
 

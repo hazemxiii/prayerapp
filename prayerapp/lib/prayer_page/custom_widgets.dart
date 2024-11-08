@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:prayerapp/global.dart';
+import 'package:prayerapp/color_notifier.dart';
 import 'package:prayerapp/prayer_page/prayers_widgets.dart';
 import 'package:provider/provider.dart';
 
@@ -66,7 +66,7 @@ class NextPrayerWidget extends StatefulWidget {
 class _NextPrayerWidgetState extends State<NextPrayerWidget> {
   @override
   Widget build(BuildContext context) {
-    return Consumer<ColorPalette>(builder: (context, palette, snapshot) {
+    return Consumer<ColorNotifier>(builder: (context, palette, snapshot) {
       return ValueListenableBuilder(
           valueListenable: widget.nextPrayerRemainingTimeNotifier,
           builder: (context, value, child) {

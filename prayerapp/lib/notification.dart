@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:prayerapp/color_notifier.dart';
 import 'package:provider/provider.dart';
 // import 'package:shared_preferences/shared_preferences.dart';
 import "global.dart";
@@ -32,7 +33,7 @@ class _PrayerNotificationSettingsPageState
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ColorPalette>(builder: (context, palette, child) {
+    return Consumer<ColorNotifier>(builder: (context, palette, child) {
       return Scaffold(
         backgroundColor: palette.getSecC,
         appBar: AppBar(
@@ -108,7 +109,7 @@ class PickTimeRowWidget extends StatefulWidget {
 class _PickTimeRowWidgetState extends State<PickTimeRowWidget> {
   @override
   Widget build(BuildContext context) {
-    return Consumer<ColorPalette>(builder: (context, palette, child) {
+    return Consumer<ColorNotifier>(builder: (context, palette, child) {
       return InkWell(
           onTap: () {
             showDialog(
@@ -182,7 +183,7 @@ class _NumberPickerWidgetState extends State<NumberPickerWidget> {
   @override
   Widget build(BuildContext context) {
     int count = ((widget.max - widget.min) / widget.step).floor() + 2;
-    return Consumer<ColorPalette>(builder: (context, palette, child) {
+    return Consumer<ColorNotifier>(builder: (context, palette, child) {
       return Container(
           decoration: BoxDecoration(
               borderRadius: const BorderRadius.all(Radius.circular(20)),

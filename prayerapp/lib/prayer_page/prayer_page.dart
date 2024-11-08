@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:prayerapp/color_notifier.dart';
 import 'package:prayerapp/global.dart';
 import 'package:prayerapp/location_class/location_class.dart';
 import 'package:prayerapp/prayer_page/custom_widgets.dart';
@@ -37,7 +38,7 @@ class PrayerTimePageState extends State<PrayerTimePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ColorPalette>(builder: (context, palette, child) {
+    return Consumer<ColorNotifier>(builder: (context, palette, child) {
       return FutureBuilder(
           future: getPrayerTime(context),
           builder: (context, snapshot) {
@@ -105,8 +106,8 @@ class PrayerTimePageState extends State<PrayerTimePage> {
   Uri getApiUri(String normalDateAsString) {
     return Uri.https(
         "api.aladhan.com", "/v1/timingsByCity/$normalDateAsString", {
-      "city": Prefs.prefs.getString("city"),
-      "country": Prefs.prefs.getString("country")
+      "city": Prefs.prefs.getString(PrefsKeys.city),
+      "country": Prefs.prefs.getString(PrefsKeys.country)
     });
   }
 
@@ -121,7 +122,7 @@ class PrayerTimePageState extends State<PrayerTimePage> {
       allPrayers[americanDateAsString] = dayWrap;
       allPrayers = removePrayerDayFromPrefs(allPrayers, americanDateAsString);
 
-      Prefs.prefs.setString("prayers", jsonEncode(allPrayers));
+      Prefs.prefs.setString(PrefsKeys.prayers, jsonEncode(allPrayers));
       daysTime.add(dayWrap);
     } catch (e) {
       debugPrint("Error: ${e.toString()}");
@@ -169,10 +170,7 @@ class PrayerTimePageState extends State<PrayerTimePage> {
   }
 
   Map getAllPrayersFromPrefs() {
-    if (!Prefs.prefs.containsKey("prayers")) {
-      Prefs.prefs.setString("prayers", jsonEncode({}));
-    }
-    return jsonDecode(Prefs.prefs.getString("prayers")!);
+    return jsonDecode(Prefs.prefs.getString(PrefsKeys.prayers)!);
   }
 
   void startNextPrayerTimer(dynamic data) {
@@ -208,10 +206,11 @@ class PrayerTimePageState extends State<PrayerTimePage> {
 }
 
 Map getNextPrayer(bool onlyDateAndName) {
-  if (!Prefs.prefs.containsKey("prayers")) {
+  Map prayers = jsonDecode(Prefs.prefs.getString(PrefsKeys.prayers)!);
+
+  if (prayers.isEmpty) {
     return {};
   }
-  Map prayers = jsonDecode(Prefs.prefs.getString("prayers")!);
 
   String todayDate = getShortDate(DateTime.now(), true);
   String yesterdayDate =
@@ -248,8 +247,8 @@ Map getNextPrayer(bool onlyDateAndName) {
     }
   }
   if (onlyDateAndName) {
-    Prefs.prefs.setString("nextPrayerTime", nextPrayer.toString());
-    Prefs.prefs.setString("nextPrayerName", nextPrayerName);
+    Prefs.prefs.setString(PrefsKeys.nextPrayerTime, nextPrayer.toString());
+    Prefs.prefs.setString(PrefsKeys.nextPrayerName, nextPrayerName);
     return {"name": nextPrayerName, "time": nextPrayer};
   }
   Duration diff = nextPrayer.difference(now);
@@ -275,4 +274,19 @@ Map getNextPrayer(bool onlyDateAndName) {
     "percentageLeft": percentageTimeRemain,
     "time": "$hour:$minute $period"
   };
+}
+
+String getShortDate(DateTime date, bool toAmerican) {
+  // returns the normal or american date as a string
+  int day = date.day;
+  int month = date.month;
+  int year = date.year;
+
+  if (toAmerican) {
+    String monthPad = "$month".padLeft(2, "0");
+    String dayPad = "$day".padLeft(2, "0");
+    return "$year-$monthPad-$dayPad";
+  } else {
+    return "$day-$month-$year";
+  }
 }

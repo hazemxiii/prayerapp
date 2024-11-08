@@ -1,4 +1,5 @@
 import "package:flutter/material.dart";
+import 'package:prayerapp/color_notifier.dart';
 import 'package:provider/provider.dart';
 import 'global.dart';
 
@@ -28,7 +29,7 @@ class _VibrationSettingsPageState extends State<VibrationSettingsPage> {
   bool vibrationOn = true;
   @override
   Widget build(BuildContext context) {
-    return Consumer<ColorPalette>(builder: (context, palette, child) {
+    return Consumer<ColorNotifier>(builder: (context, palette, child) {
       return Scaffold(
         backgroundColor: palette.getSecC,
         appBar: AppBar(

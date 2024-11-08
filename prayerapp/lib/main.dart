@@ -1,6 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 import "dart:io";
 import "package:flutter/material.dart";
+import "package:prayerapp/color_notifier.dart";
 import "package:prayerapp/location_class/location_class.dart";
 import "package:prayerapp/prayer_page/prayer_page.dart";
 import "package:prayerapp/tasbih_notifier.dart";
@@ -13,7 +14,6 @@ import "service.dart";
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // await setPrefs();
   await Prefs.initPrefs();
 
   LocationHandler.location.initFromPrefs();
@@ -26,10 +26,9 @@ void main() async {
   } catch (e) {
     //
   }
-  // await Constants.initPrefs();
   runApp(MultiProvider(
     providers: [
-      ChangeNotifierProvider(create: (context) => ColorPalette()),
+      ChangeNotifierProvider(create: (context) => ColorNotifier()),
       ChangeNotifierProvider(create: (context) => TasbihNotifier())
     ],
     child: const App(),
@@ -52,14 +51,11 @@ class MainPage extends StatefulWidget {
 
 class _MainPage extends State<MainPage> {
   int activePage = 0;
-  // the pages controlled by the bottom nav bar
   late List<Widget> pages;
   late List pagesAppBars;
   @override
   void initState() {
     super.initState();
-
-    // the pages controlled by the bottom navbar
     pages = [
       const PrayerTimePage(),
       const TasbihPage(),
@@ -74,7 +70,7 @@ class _MainPage extends State<MainPage> {
       null,
       {"title": "Settings"},
     ];
-    Provider.of<ColorPalette>(context, listen: false).initPalette();
+    Provider.of<ColorNotifier>(context, listen: false).initPalette();
   }
 
   @override
@@ -84,9 +80,7 @@ class _MainPage extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Prefs().printPrefs();
-    // Location().getFromGps(context);
-    return Consumer<ColorPalette>(builder: (context, palette, child) {
+    return Consumer<ColorNotifier>(builder: (context, palette, child) {
       return Scaffold(
           appBar: pagesAppBars[activePage] != null
               ? AppBar(

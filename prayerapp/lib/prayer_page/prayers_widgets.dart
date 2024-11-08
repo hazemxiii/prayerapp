@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:prayerapp/color_notifier.dart';
 import 'package:prayerapp/global.dart';
 import 'package:prayerapp/notification.dart';
 import 'package:provider/provider.dart';
@@ -27,7 +28,7 @@ class _PrayerDayWidgetState extends State<PrayerDayWidget> {
     return SingleChildScrollView(
       child: Container(
         padding: const EdgeInsets.fromLTRB(0, 10, 0, 0),
-        child: Consumer<ColorPalette>(builder: (context, palette, child) {
+        child: Consumer<ColorNotifier>(builder: (context, palette, child) {
           return Column(children: [
             // format the american date to Weekday, day month
             Text(getEnglishLanguageDate(widget.dateString),
@@ -42,6 +43,55 @@ class _PrayerDayWidgetState extends State<PrayerDayWidget> {
         }),
       ),
     );
+  }
+
+  String getEnglishLanguageDate(String sdate) {
+    // converts a date from numbers to weekday, day month
+    DateTime dd = DateTime.parse(sdate);
+    String day = "";
+    int date = dd.day;
+
+    switch (dd.weekday) {
+      case 1:
+        day = "Monday";
+        break;
+      case 2:
+        day = "Tuesday";
+        break;
+      case 3:
+        day = "Wednesday";
+        break;
+      case 4:
+        day = "Thursday";
+        break;
+      case 5:
+        day = "Friday";
+        break;
+      case 6:
+        day = "Saturday";
+        break;
+      case 7:
+        day = "Sunday";
+        break;
+    }
+
+    var monthDict = {
+      1: "January",
+      2: "February",
+      3: "March",
+      4: "April",
+      5: "May",
+      6: "June",
+      7: "July",
+      8: "August",
+      9: "September",
+      10: "October",
+      11: "November",
+      12: "December"
+    };
+    String? month = monthDict[dd.month];
+
+    return "$day, $date $month";
   }
 
   List prayerDayWidgetBuilder() {
@@ -116,7 +166,7 @@ class _PrayerWidgetState extends State<PrayerWidget> {
       diff = "";
     }
 
-    return Consumer<ColorPalette>(builder: (context, palette, c) {
+    return Consumer<ColorNotifier>(builder: (context, palette, c) {
       return InkWell(
         onLongPress: () {
           Navigator.of(context).push(MaterialPageRoute(
