@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:prayerapp/global.dart';
 import 'package:prayerapp/location_class/location_class.dart';
-import 'package:prayerapp/prayer_page/prayers_widgets.dart';
+import 'package:prayerapp/prayer_page/custom_widgets.dart';
 import 'package:provider/provider.dart';
 
 class PrayerTimePage extends StatefulWidget {
@@ -44,10 +44,7 @@ class PrayerTimePageState extends State<PrayerTimePage> {
             if (snapshot.connectionState == ConnectionState.done &&
                 snapshot.hasData) {
               if (snapshot.data!.length > 0) {
-                updateNextPrayerTime(snapshot.data);
-                timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-                  updateNextPrayerTime(snapshot.data);
-                });
+                startNextPrayerTimer(snapshot.data);
 
                 return Column(
                   children: [
@@ -62,18 +59,8 @@ class PrayerTimePageState extends State<PrayerTimePage> {
                   ],
                 );
               } else {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Icon(Icons.warning, size: 40, color: palette.getMainC),
-                      Text(
-                        "No Internet Connection",
-                        style: TextStyle(color: palette.getMainC),
-                      )
-                    ],
-                  ),
+                return NoInternetWidget(
+                  color: palette.getMainC,
                 );
               }
             } else {
@@ -84,6 +71,114 @@ class PrayerTimePageState extends State<PrayerTimePage> {
               );
             }
           });
+    });
+  }
+
+  Future<dynamic> getPrayerTime(BuildContext context) async {
+    List daysTime = [];
+    if (LocationHandler.location.isLocationEmpty()) {
+      await LocationHandler.location.getFromGps(context);
+    }
+    if (LocationHandler.location.isLocationEmpty()) {
+      // ignore: use_build_context_synchronously
+      LocationHandler.location.askForManualInput(context);
+      return [];
+    }
+    for (int daysToAdd = 0; daysToAdd < 30; daysToAdd++) {
+      DateTime date = DateTime.now().add(Duration(days: daysToAdd - 1));
+
+      String normalDateAsString = getShortDate(date, false);
+      String americanDateAsString = getShortDate(date, true);
+
+      Map allPrayers = getAllPrayersFromPrefs();
+
+      if (allPrayers.containsKey(americanDateAsString)) {
+        daysTime.add(allPrayers[americanDateAsString]);
+      } else {
+        daysTime += (await fetchPrayerTimesFromApi(
+            allPrayers, americanDateAsString, normalDateAsString));
+      }
+    }
+    return daysTime;
+  }
+
+  Uri getApiUri(String normalDateAsString) {
+    return Uri.https(
+        "api.aladhan.com", "/v1/timingsByCity/$normalDateAsString", {
+      "city": Prefs.prefs.getString("city"),
+      "country": Prefs.prefs.getString("country")
+    });
+  }
+
+  Future<List> fetchPrayerTimesFromApi(Map allPrayers,
+      String americanDateAsString, String normalDateAsString) async {
+    List daysTime = [];
+    Uri url = getApiUri(normalDateAsString);
+
+    try {
+      List dayWrap = await sendApiRequest(url, americanDateAsString);
+
+      allPrayers[americanDateAsString] = dayWrap;
+      allPrayers = removePrayerDayFromPrefs(allPrayers, americanDateAsString);
+
+      Prefs.prefs.setString("prayers", jsonEncode(allPrayers));
+      daysTime.add(dayWrap);
+    } catch (e) {
+      debugPrint("Error: ${e.toString()}");
+    }
+    return daysTime;
+  }
+
+  Future<List> sendApiRequest(Uri url, String americanDateAsString) async {
+    var r = await http.get(url);
+    if (r.statusCode == 200) {
+      var data = jsonDecode(r.body)['data'];
+      var timings = data['timings'];
+      var hijri = data['date']['hijri'];
+      var hirjiDay = hijri['day'];
+      var hijriMonth = hijri['month']['en'];
+      var hijriYear = hijri['year'];
+      var hijriDate = "$hirjiDay - $hijriMonth - $hijriYear";
+
+      List dayWrap = [
+        timings['Fajr'],
+        timings['Sunrise'],
+        timings['Dhuhr'],
+        timings['Asr'],
+        timings['Maghrib'],
+        timings['Isha'],
+        hijriDate,
+        americanDateAsString
+      ];
+      return dayWrap;
+    } else {
+      throw "Failed To Send Request";
+    }
+  }
+
+  Map removePrayerDayFromPrefs(Map allPrayers, String americanDateAsString) {
+    String dateToRemove = getShortDate(
+        DateTime.parse(americanDateAsString).subtract(const Duration(days: 30)),
+        true);
+
+    if (allPrayers.containsKey(dateToRemove)) {
+      allPrayers.remove(dateToRemove);
+    }
+
+    return allPrayers;
+  }
+
+  Map getAllPrayersFromPrefs() {
+    if (!Prefs.prefs.containsKey("prayers")) {
+      Prefs.prefs.setString("prayers", jsonEncode({}));
+    }
+    return jsonDecode(Prefs.prefs.getString("prayers")!);
+  }
+
+  void startNextPrayerTimer(dynamic data) {
+    updateNextPrayerTime(data);
+    timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      updateNextPrayerTime(data);
     });
   }
 
@@ -110,200 +205,6 @@ class PrayerTimePageState extends State<PrayerTimePage> {
       "remainPercentage": 0
     });
   }
-}
-
-class PrayersScrollWidget extends StatelessWidget {
-  final Color color;
-  final List prayersData;
-  const PrayersScrollWidget(
-      {super.key, required this.color, required this.prayersData});
-
-  @override
-  Widget build(BuildContext context) {
-    PageController pageViewCont = PageController(initialPage: 1);
-    return Expanded(
-      child: Container(
-        color: color,
-        width: double.infinity,
-        child: PageView.builder(
-            controller: pageViewCont,
-            itemCount: prayersData.length,
-            itemBuilder: (context, i) {
-              int americanDateIndex = 7;
-              return PrayerDayWidget(
-                  dateString: prayersData[i][americanDateIndex],
-                  times: prayersData[i]);
-            }),
-      ),
-    );
-  }
-}
-
-class NextPrayerWidget extends StatefulWidget {
-  final ValueNotifier nextPrayerRemainingTimeNotifier;
-  const NextPrayerWidget({
-    super.key,
-    required this.nextPrayerRemainingTimeNotifier,
-  });
-
-  @override
-  State<NextPrayerWidget> createState() => _NextPrayerWidgetState();
-}
-
-// TODO: clean this file
-class _NextPrayerWidgetState extends State<NextPrayerWidget> {
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<ColorPalette>(builder: (context, palette, snapshot) {
-      return ValueListenableBuilder(
-          valueListenable: widget.nextPrayerRemainingTimeNotifier,
-          builder: (context, value, child) {
-            return Container(
-              padding: const EdgeInsets.all(10),
-              margin: const EdgeInsets.all(10),
-              width: double.infinity,
-              decoration: BoxDecoration(
-                  color: palette.getSecC,
-                  borderRadius: const BorderRadius.all(Radius.circular(10))),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      Column(
-                        children: [
-                          Text(
-                            value['prayerName'],
-                            style: TextStyle(
-                                color: palette.getMainC, fontSize: 20),
-                          ),
-                          Text(
-                            value['time'],
-                            style: TextStyle(
-                                color: palette.getMainC, fontSize: 18),
-                          )
-                        ],
-                      ),
-                      Column(
-                        children: [
-                          CircularProgressIndicator(
-                            value: value['remainPercentage'].toDouble(),
-                            color: palette.getMainC,
-                          ),
-                          Text(value["timeLeft"],
-                              style: TextStyle(
-                                  color: palette.getMainC, fontSize: 18))
-                        ],
-                      )
-                    ],
-                  ),
-                ],
-              ),
-            );
-          });
-    });
-  }
-}
-
-// functions
-Future<dynamic> getPrayerTime(BuildContext context) async {
-  List daysTime = [];
-  if (LocationHandler.location.isLocationEmpty()) {
-    await LocationHandler.location.getFromGps(context);
-  }
-  if (LocationHandler.location.isLocationEmpty()) {
-    // ignore: use_build_context_synchronously
-    LocationHandler.location.askForManualInput(context);
-    return [];
-  }
-  for (int daysToAdd = 0; daysToAdd < 30; daysToAdd++) {
-    DateTime date = DateTime.now().add(Duration(days: daysToAdd - 1));
-
-    // get the american and normal dates
-    String normalDateAsString = getShortDate(date, false);
-    String americanDateAsString = getShortDate(date, true);
-
-    // ignore: use_build_context_synchronously
-
-    Map allPrayers = getAllPrayersFromPrefs();
-
-    // if the date is saved on the device, add it to be returned later, else, get it from the API
-    if (allPrayers.containsKey(americanDateAsString)) {
-      daysTime.add(allPrayers[americanDateAsString]);
-    } else {
-      daysTime = await fetchPrayerTimesFromApi(
-          allPrayers, americanDateAsString, normalDateAsString);
-    }
-  }
-  return daysTime;
-}
-
-Map getAllPrayersFromPrefs() {
-  if (!Prefs.prefs.containsKey("prayers")) {
-    Prefs.prefs.setString("prayers", jsonEncode({}));
-  }
-  return jsonDecode(Prefs.prefs.getString("prayers")!);
-}
-
-Future<List> fetchPrayerTimesFromApi(Map allPrayers,
-    String americanDateAsString, String normalDateAsString) async {
-  List daysTime = [];
-  var url =
-      Uri.https("api.aladhan.com", "/v1/timingsByCity/$normalDateAsString", {
-    "city": Prefs.prefs.getString("city"),
-    "country": Prefs.prefs.getString("country")
-  });
-
-  try {
-    var r = await http.get(url);
-    if (r.statusCode == 200) {
-      var data = jsonDecode(r.body)['data'];
-      var timings = data['timings'];
-      var hijri = data['date']['hijri'];
-      var hirjiDay = hijri['day'];
-      var hijriMonth = hijri['month']['en'];
-      var hijriYear = hijri['year'];
-      var hijriDate = "$hirjiDay - $hijriMonth - $hijriYear";
-
-      List dayWrap = [
-        timings['Fajr'],
-        timings['Sunrise'],
-        timings['Dhuhr'],
-        timings['Asr'],
-        timings['Maghrib'],
-        timings['Isha'],
-        hijriDate,
-        americanDateAsString
-      ];
-
-      allPrayers[americanDateAsString] = dayWrap;
-      allPrayers = removePrayerDayFromPrefs(allPrayers, americanDateAsString);
-
-      Prefs.prefs.setString("prayers", jsonEncode(allPrayers));
-      daysTime.add(dayWrap);
-    }
-  } catch (e) {
-    // print(e);
-  }
-  return daysTime;
-}
-
-Map removePrayerDayFromPrefs(Map allPrayers, String americanDateAsString) {
-  String dateToRemove = getShortDate(
-      DateTime.parse(americanDateAsString).subtract(const Duration(days: 30)),
-      true);
-
-  if (allPrayers.containsKey(dateToRemove)) {
-    allPrayers.remove(dateToRemove);
-  }
-
-  return allPrayers;
-}
-
-void setAddressInPrefs(String country, String city) {
-  Prefs.prefs.setString("city", city);
-  Prefs.prefs.setString("country", country);
 }
 
 Map getNextPrayer(bool onlyDateAndName) {
