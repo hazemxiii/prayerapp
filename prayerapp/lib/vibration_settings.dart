@@ -16,11 +16,12 @@ class _VibrationSettingsPageState extends State<VibrationSettingsPage> {
   @override
   void initState() {
     vibrationController = TextEditingController();
-    List data = getVibrationData();
     setState(() {
-      vibrationOn = data[0];
-      vibrationController.text = data[1];
-      vibrateRadio = data[2] ? "on" : "every";
+      vibrationOn = Prefs.prefs.getBool(PrefsKeys.isVibrateOn)!;
+      vibrationController.text =
+          Prefs.prefs.getString(PrefsKeys.vibrateNumber)!;
+      vibrateRadio =
+          Prefs.prefs.getBool(PrefsKeys.isVibrationModeAt)! ? "on" : "every";
     });
     super.initState();
   }
@@ -174,29 +175,11 @@ void onSave(
   updateVibrationCount(value, isOn);
 }
 
-List getVibrationData() {
-  List data = [];
-  if (!Prefs.prefs.containsKey("vibrationBool")) {
-    Prefs.prefs.setBool("vibrationBool", true);
-  }
-  if (!Prefs.prefs.containsKey("vibrationCount")) {
-    Prefs.prefs.setString("vibrationCount", "33");
-  }
-  if (!Prefs.prefs.containsKey("isOn")) {
-    Prefs.prefs.setBool("isOn", false);
-  }
-  data.add(Prefs.prefs.getBool("vibrationBool"));
-  data.add(Prefs.prefs.getString("vibrationCount"));
-  data.add(Prefs.prefs.getBool("isOn"));
-
-  return data;
-}
-
 void allowVibration(bool allow) {
-  Prefs.prefs.setBool("vibrationBool", allow);
+  Prefs.prefs.setBool(PrefsKeys.isVibrateOn, allow);
 }
 
 void updateVibrationCount(String count, bool isOn) {
-  Prefs.prefs.setString("vibrationCount", count);
-  Prefs.prefs.setBool("isOn", isOn);
+  Prefs.prefs.setString(PrefsKeys.vibrateNumber, count);
+  Prefs.prefs.setBool(PrefsKeys.isVibrationModeAt, isOn);
 }

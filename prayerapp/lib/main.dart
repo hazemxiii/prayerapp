@@ -4,9 +4,9 @@ import "package:flutter/material.dart";
 import "package:prayerapp/color_notifier.dart";
 import "package:prayerapp/location_class/location_class.dart";
 import "package:prayerapp/prayer_page/prayer_page.dart";
-import "package:prayerapp/tasbih_notifier.dart";
+import "package:prayerapp/tasbih_page/tasbih_notifier.dart";
 // import "qiblah.dart";
-import "tasbih.dart";
+import "tasbih_page/tasbih_page.dart";
 import "settings.dart";
 import 'package:provider/provider.dart';
 import "global.dart";
@@ -17,7 +17,6 @@ void main() async {
   await Prefs.initPrefs();
 
   LocationHandler.location.initFromPrefs();
-  LocationHandler.location.printLocation();
 
   try {
     if (Platform.isAndroid) {

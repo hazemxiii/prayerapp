@@ -1,44 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:prayerapp/global.dart';
+import 'package:vibration/vibration.dart';
 
 class TasbihNotifier extends ChangeNotifier {
   int _total = 0;
   int _now = 0;
   int _today = 0;
 
-  bool _vibrate = false;
-  String _vibrateOn = "-1";
-  bool _isOn = true;
+  bool _isVibrateOn = false;
+  String _vibrateNumsString = "-1";
+  bool _isVibrationModeAt = true;
   List _vibrateNums = [];
 
   void setData() {
-    // if the date changed, reset the total of the day to 0
+    resetTasbihOnDayChange();
+
+    _now = Prefs.prefs.getInt(PrefsKeys.tasbihNow)!;
+    _total = Prefs.prefs.getInt(PrefsKeys.totalTasbih)!;
+    _today = Prefs.prefs.getInt(PrefsKeys.totalTasbihToday)!;
+
+    _isVibrateOn = Prefs.prefs.getBool(PrefsKeys.isVibrateOn)!;
+    _vibrateNumsString = Prefs.prefs.getString(PrefsKeys.vibrateNumber)!;
+    _isVibrationModeAt = Prefs.prefs.getBool(PrefsKeys.isVibrationModeAt)!;
+    _vibrateNums = _vibrateNumsString.split(",");
+  }
+
+  void resetTasbihOnDayChange() {
     String today = DateTime.now().toString();
     today = today.substring(0, today.indexOf(" "));
 
-    String? date = Prefs.prefs.getString(PrefsKeys.tasbihDate);
+    String date = Prefs.prefs.getString(PrefsKeys.tasbihDate)!;
 
     if (today != date) {
       Prefs.prefs.setInt(PrefsKeys.totalTasbihToday, 0);
       Prefs.prefs.setString(PrefsKeys.tasbihDate, today);
     }
-
-    _now = Prefs.prefs.getInt(PrefsKeys.tasbihNow)!;
-
-    if (!Prefs.prefs.containsKey(PrefsKeys.totalTasbih)) {
-      Prefs.prefs.setInt(PrefsKeys.totalTasbih, 0);
-    }
-    if (!Prefs.prefs.containsKey(PrefsKeys.totalTasbihToday)) {
-      Prefs.prefs.setInt(PrefsKeys.totalTasbihToday, 0);
-    }
-    _total = Prefs.prefs.getInt(PrefsKeys.totalTasbih)!;
-    _today = Prefs.prefs.getInt(PrefsKeys.totalTasbihToday)!;
-
-    _vibrate = Prefs.prefs.getBool(PrefsKeys.isVibrateOn)!;
-    _vibrateOn = Prefs.prefs.getString(PrefsKeys.vibrateNumber)!;
-    _isOn = Prefs.prefs.getBool(PrefsKeys.isVibrationModeAt)!;
-    _vibrateNums = _vibrateOn.split(",");
-    // notifyListeners();
   }
 
   void clearTasbihNow() {
@@ -62,11 +58,29 @@ class TasbihNotifier extends ChangeNotifier {
     _now = _now + number;
     Prefs.prefs.setInt(PrefsKeys.tasbihNow, now);
 
+    if (increase) {
+      vibrateIfNeeded();
+    }
+
     notifyListeners();
   }
 
+  void vibrateIfNeeded() {
+    try {
+      if (_isVibrateOn) {
+        if (_isVibrationModeAt && _vibrateNums.contains(_now)) {
+          Vibration.vibrate(duration: 1000);
+        } else if (!_isVibrationModeAt &&
+            _now % int.parse(_vibrateNumsString) == 0) {
+          Vibration.vibrate(duration: 1000);
+        }
+      }
+    } catch (e) {
+      //
+    }
+  }
+
   void clearTasbih() {
-    // clears the tasbih total
     _today = 0;
     _total = 0;
     Prefs.prefs.setInt(PrefsKeys.totalTasbihToday, 0);
@@ -78,8 +92,8 @@ class TasbihNotifier extends ChangeNotifier {
   int get now => _now;
   int get today => _today;
 
-  bool get vibrate => _vibrate;
-  String get vibrateOn => _vibrateOn;
-  bool get isOn => _isOn;
+  bool get isVibrateOn => _isVibrateOn;
+  String get vibrateNumsString => _vibrateNumsString;
+  bool get isVibrationModeAt => _isVibrationModeAt;
   List get vibrateNums => _vibrateNums;
 }
