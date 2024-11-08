@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:prayerapp/global.dart';
-import 'package:prayerapp/location.dart';
+import 'package:prayerapp/location_settings_page.dart';
 
 class LocationHandler {
   static Location location = Location();

@@ -7,7 +7,7 @@ import "package:prayerapp/prayer_page/prayer_page.dart";
 import "package:prayerapp/tasbih_page/tasbih_notifier.dart";
 // import "qiblah.dart";
 import "tasbih_page/tasbih_page.dart";
-import "settings.dart";
+import "settings_page/settings.dart";
 import 'package:provider/provider.dart';
 import "global.dart";
 import "service.dart";

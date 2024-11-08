@@ -8,6 +8,8 @@ import 'package:prayerapp/location_class/location_class.dart';
 import 'package:prayerapp/prayer_page/custom_widgets.dart';
 import 'package:provider/provider.dart';
 
+// TODO: store prayers in sqlite
+
 class PrayerTimePage extends StatefulWidget {
   const PrayerTimePage({super.key});
 

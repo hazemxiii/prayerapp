@@ -59,25 +59,29 @@ class TasbihNotifier extends ChangeNotifier {
     Prefs.prefs.setInt(PrefsKeys.tasbihNow, now);
 
     if (increase) {
-      vibrateIfNeeded();
+      vibrate();
     }
 
     notifyListeners();
   }
 
-  void vibrateIfNeeded() {
-    try {
-      if (_isVibrateOn) {
-        if (_isVibrationModeAt && _vibrateNums.contains(_now)) {
-          Vibration.vibrate(duration: 1000);
-        } else if (!_isVibrationModeAt &&
-            _now % int.parse(_vibrateNumsString) == 0) {
-          Vibration.vibrate(duration: 1000);
-        }
-      }
-    } catch (e) {
-      //
+  void vibrate() {
+    if (isVibrationNeeded()) {
+      Vibration.vibrate(duration: 1000).catchError((e) {
+        debugPrint("Couldn't vibrate ${e.toString()}");
+      });
     }
+  }
+
+  bool isVibrationNeeded() {
+    if (!_isVibrateOn) {
+      return false;
+    }
+    if ((_isVibrationModeAt && _vibrateNums.contains(_now)) ||
+        !_isVibrationModeAt && _now % int.parse(_vibrateNumsString) == 0) {
+      return true;
+    }
+    return false;
   }
 
   void clearTasbih() {
