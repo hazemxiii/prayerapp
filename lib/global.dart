@@ -14,6 +14,36 @@ class Constants {
   };
 }
 
+class CustomDateFormat {
+  static String getShortDate(DateTime date, bool toAmerican) {
+    // returns the normal or american date as a string
+    int day = date.day;
+    int month = date.month;
+    int year = date.year;
+
+    if (toAmerican) {
+      String monthPad = "$month".padLeft(2, "0");
+      String dayPad = "$day".padLeft(2, "0");
+      return "$year-$monthPad-$dayPad";
+    } else {
+      return "$day-$month-$year";
+    }
+  }
+
+  static String timeToString(TimeOfDay time) {
+    return "${time.hour.toString().padLeft(2, "0")}:${time.minute.toString().padLeft(2, "0")}";
+  }
+
+  static String formatTimeAs12HourFromDate(DateTime time) {
+    TimeOfDay t = TimeOfDay.fromDateTime(time);
+    return "${t.hourOfPeriod.toString().padLeft(2, "0")}:${t.minute.toString().padLeft(2, "0")} ${t.period == DayPeriod.am ? "AM" : "PM"}";
+  }
+
+  static String formatTimeAs12Hour(TimeOfDay time) {
+    return "${time.hourOfPeriod.toString().padLeft(2, "0")}:${time.minute.toString().padLeft(2, "0")} ${time.period == DayPeriod.am ? "AM" : "PM"}";
+  }
+}
+
 class PrefsKeys {
   static const String nextPrayerName = "nextPrayerName";
   static const String nextPrayerTime = "nextPrayerTime";
@@ -78,7 +108,6 @@ class Prefs {
     if (!Prefs.prefs.containsKey(PrefsKeys.tasbihDate)) {
       String date = DateTime.now().toString();
       date = date.substring(0, date.indexOf(" "));
-
       Prefs.prefs.setString(PrefsKeys.tasbihDate, date);
     }
     if (!Prefs.prefs.containsKey(PrefsKeys.isVibrateOn)) {

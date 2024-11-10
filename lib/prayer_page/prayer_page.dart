@@ -6,9 +6,8 @@ import 'package:prayerapp/color_notifier.dart';
 import 'package:prayerapp/global.dart';
 import 'package:prayerapp/location_class/location_class.dart';
 import 'package:prayerapp/prayer_page/custom_widgets.dart';
+import 'package:prayerapp/sqlite.dart';
 import 'package:provider/provider.dart';
-
-// TODO: store prayers in sqlite
 
 class PrayerTimePage extends StatefulWidget {
   const PrayerTimePage({super.key});
@@ -42,7 +41,7 @@ class PrayerTimePageState extends State<PrayerTimePage> {
   Widget build(BuildContext context) {
     return Consumer<ColorNotifier>(builder: (context, palette, child) {
       return FutureBuilder(
-          future: getPrayerTime(context),
+          future: loadPrayerTime(context),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.done &&
                 snapshot.hasData) {
@@ -77,7 +76,7 @@ class PrayerTimePageState extends State<PrayerTimePage> {
     });
   }
 
-  Future<dynamic> getPrayerTime(BuildContext context) async {
+  Future<dynamic> loadPrayerTime(BuildContext context) async {
     List daysTime = [];
     if (LocationHandler.location.isLocationEmpty()) {
       await LocationHandler.location.getFromGps(context);
@@ -89,23 +88,24 @@ class PrayerTimePageState extends State<PrayerTimePage> {
     }
     for (int daysToAdd = 0; daysToAdd < 30; daysToAdd++) {
       DateTime date = DateTime.now().add(Duration(days: daysToAdd - 1));
+      List<Map> prayersOfDay = await Db().getPrayersOfDay(date);
 
-      String normalDateAsString = getShortDate(date, false);
-      String americanDateAsString = getShortDate(date, true);
-
-      Map allPrayers = getAllPrayersFromPrefs();
-
-      if (allPrayers.containsKey(americanDateAsString)) {
-        daysTime.add(allPrayers[americanDateAsString]);
+      if (prayersOfDay.isNotEmpty) {
+        List day = [];
+        for (int i = 0; i < prayersOfDay.length; i++) {
+          day.add(prayersOfDay[i]['time']);
+        }
+        day.add("");
+        day.add(prayersOfDay[0]["displayDate"]);
+        daysTime.add(day);
       } else {
-        daysTime += (await fetchPrayerTimesFromApi(
-            allPrayers, americanDateAsString, normalDateAsString));
+        daysTime += (await _fetchPrayerTimesFromApi(date));
       }
     }
     return daysTime;
   }
 
-  Uri getApiUri(String normalDateAsString) {
+  Uri _getApiUri(String normalDateAsString) {
     return Uri.https(
         "api.aladhan.com", "/v1/timingsByCity/$normalDateAsString", {
       "city": Prefs.prefs.getString(PrefsKeys.city),
@@ -113,18 +113,16 @@ class PrayerTimePageState extends State<PrayerTimePage> {
     });
   }
 
-  Future<List> fetchPrayerTimesFromApi(Map allPrayers,
-      String americanDateAsString, String normalDateAsString) async {
+  Future<List> _fetchPrayerTimesFromApi(DateTime date) async {
+    String americanDateAsString = CustomDateFormat.getShortDate(date, true);
+    String normalDateAsString = CustomDateFormat.getShortDate(date, false);
     List daysTime = [];
-    Uri url = getApiUri(normalDateAsString);
+    Uri url = _getApiUri(normalDateAsString);
 
     try {
-      List dayWrap = await sendApiRequest(url, americanDateAsString);
+      List dayWrap = await _sendApiRequest(url, americanDateAsString);
+      Db().insertPrayerDay(dayWrap);
 
-      allPrayers[americanDateAsString] = dayWrap;
-      allPrayers = removePrayerDayFromPrefs(allPrayers, americanDateAsString);
-
-      Prefs.prefs.setString(PrefsKeys.prayers, jsonEncode(allPrayers));
       daysTime.add(dayWrap);
     } catch (e) {
       debugPrint("Error: ${e.toString()}");
@@ -132,16 +130,16 @@ class PrayerTimePageState extends State<PrayerTimePage> {
     return daysTime;
   }
 
-  Future<List> sendApiRequest(Uri url, String americanDateAsString) async {
+  Future<List> _sendApiRequest(Uri url, String americanDateAsString) async {
     var r = await http.get(url);
     if (r.statusCode == 200) {
       var data = jsonDecode(r.body)['data'];
       var timings = data['timings'];
-      var hijri = data['date']['hijri'];
-      var hirjiDay = hijri['day'];
-      var hijriMonth = hijri['month']['en'];
-      var hijriYear = hijri['year'];
-      var hijriDate = "$hirjiDay - $hijriMonth - $hijriYear";
+      // var hijri = data['date']['hijri'];
+      // var hirjiDay = hijri['day'];
+      // var hijriMonth = hijri['month']['en'];
+      // var hijriYear = hijri['year'];
+      // var hijriDate = "$hirjiDay - $hijriMonth - $hijriYear";
 
       List dayWrap = [
         timings['Fajr'],
@@ -150,29 +148,13 @@ class PrayerTimePageState extends State<PrayerTimePage> {
         timings['Asr'],
         timings['Maghrib'],
         timings['Isha'],
-        hijriDate,
+        "",
         americanDateAsString
       ];
       return dayWrap;
     } else {
       throw "Failed To Send Request";
     }
-  }
-
-  Map removePrayerDayFromPrefs(Map allPrayers, String americanDateAsString) {
-    String dateToRemove = getShortDate(
-        DateTime.parse(americanDateAsString).subtract(const Duration(days: 30)),
-        true);
-
-    if (allPrayers.containsKey(dateToRemove)) {
-      allPrayers.remove(dateToRemove);
-    }
-
-    return allPrayers;
-  }
-
-  Map getAllPrayersFromPrefs() {
-    return jsonDecode(Prefs.prefs.getString(PrefsKeys.prayers)!);
   }
 
   void startNextPrayerTimer(dynamic data) {
@@ -183,12 +165,11 @@ class PrayerTimePageState extends State<PrayerTimePage> {
   }
 
   void updateNextPrayerTime(data) async {
-    Map nextPrayerData = getNextPrayer(false);
-
-    String nextPrayerName = nextPrayerData["name"];
-    String timeLeft = nextPrayerData["timeLeft"];
-    String nextPrayerTime = nextPrayerData["time"];
-    double remianingTimePercentage = nextPrayerData["percentageLeft"];
+    Map nextPrayerData = await Db().getNextPrayer();
+    String nextPrayerName = nextPrayerData["name"] ?? "";
+    String timeLeft = nextPrayerData["timeLeft"] ?? "";
+    String nextPrayerTime = nextPrayerData["time"] ?? "";
+    double remianingTimePercentage = nextPrayerData["percentageLeft"] ?? 0;
     nextPrayerRemainingTimeNotifier.value = {
       "timeLeft": timeLeft,
       "prayerName": nextPrayerName,
@@ -204,91 +185,5 @@ class PrayerTimePageState extends State<PrayerTimePage> {
       "time": "",
       "remainPercentage": 0
     });
-  }
-}
-
-Map getNextPrayer(bool onlyDateAndName) {
-  Map prayers = jsonDecode(Prefs.prefs.getString(PrefsKeys.prayers)!);
-
-  if (prayers.isEmpty) {
-    return {};
-  }
-
-  String todayDate = getShortDate(DateTime.now(), true);
-  String yesterdayDate =
-      getShortDate(DateTime.now().subtract(const Duration(days: 1)), true);
-  String tomorrowDate =
-      getShortDate(DateTime.now().add(const Duration(days: 1)), true);
-
-  List yesterdayPrayers = prayers[yesterdayDate];
-  List todayPrayers = prayers[todayDate];
-  List tomorrowPrayers = prayers[tomorrowDate];
-
-// initialise the next prayer as tomorrow's fajr and the last prayer as today's Isha'a
-  DateTime nextPrayer = DateTime.parse("$tomorrowDate ${tomorrowPrayers[0]}");
-
-  String nextPrayerName = Constants.prayerNames[0];
-
-  DateTime lastPrayer = DateTime.parse("$todayDate ${todayPrayers[5]}");
-
-  DateTime now = DateTime.now();
-  for (int i = 0; i < todayPrayers.length - 2; i++) {
-    DateTime prayer = DateTime.parse("$todayDate ${todayPrayers[i]}");
-    if (!prayer.difference(now).isNegative) {
-      nextPrayer = prayer;
-      nextPrayerName =
-          Constants.prayerNames[i] == "Dhuhr" && nextPrayer.weekday == 5
-              ? "Jumu'a"
-              : Constants.prayerNames[i];
-      if (i != 0) {
-        lastPrayer = DateTime.parse("$todayDate ${todayPrayers[i - 1]}");
-      } else {
-        lastPrayer = DateTime.parse("$yesterdayDate ${yesterdayPrayers[5]}");
-      }
-      break;
-    }
-  }
-  if (onlyDateAndName) {
-    Prefs.prefs.setString(PrefsKeys.nextPrayerTime, nextPrayer.toString());
-    Prefs.prefs.setString(PrefsKeys.nextPrayerName, nextPrayerName);
-    return {"name": nextPrayerName, "time": nextPrayer};
-  }
-  Duration diff = nextPrayer.difference(now);
-  int dHour = diff.inHours;
-  int dMinute = diff.inMinutes - dHour * 60;
-  int dSecond = diff.inSeconds - dHour * 60 * 60 - dMinute * 60;
-
-  String timeLeft =
-      "${'$dHour'.padLeft(2, "0")}:${'$dMinute'.padLeft(2, "0")}:${'$dSecond'.padLeft(2, "0")}";
-
-  int totalTimeBetweenPrayers = nextPrayer.difference(lastPrayer).inSeconds;
-
-  double percentageTimeRemain = diff.inSeconds / totalTimeBetweenPrayers;
-
-  TimeOfDay time = TimeOfDay.fromDateTime(nextPrayer);
-  String hour = "${time.hourOfPeriod}".padLeft(2, "0");
-  String minute = "${time.minute}".padLeft(2, "0");
-  String period = time.period == DayPeriod.pm ? "PM" : "AM";
-
-  return {
-    "timeLeft": timeLeft,
-    "name": nextPrayerName,
-    "percentageLeft": percentageTimeRemain,
-    "time": "$hour:$minute $period"
-  };
-}
-
-String getShortDate(DateTime date, bool toAmerican) {
-  // returns the normal or american date as a string
-  int day = date.day;
-  int month = date.month;
-  int year = date.year;
-
-  if (toAmerican) {
-    String monthPad = "$month".padLeft(2, "0");
-    String dayPad = "$day".padLeft(2, "0");
-    return "$year-$monthPad-$dayPad";
-  } else {
-    return "$day-$month-$year";
   }
 }

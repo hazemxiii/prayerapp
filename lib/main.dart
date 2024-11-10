@@ -4,6 +4,7 @@ import "package:flutter/material.dart";
 import "package:prayerapp/color_notifier.dart";
 import "package:prayerapp/location_class/location_class.dart";
 import "package:prayerapp/prayer_page/prayer_page.dart";
+import "package:prayerapp/sqlite.dart";
 import "package:prayerapp/tasbih_page/tasbih_notifier.dart";
 // import "qiblah.dart";
 import "tasbih_page/tasbih_page.dart";
@@ -17,6 +18,8 @@ void main() async {
   await Prefs.initPrefs();
 
   LocationHandler.location.initFromPrefs();
+
+  await Db().init();
 
   try {
     if (Platform.isAndroid) {
