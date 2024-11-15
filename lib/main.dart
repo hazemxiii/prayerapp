@@ -41,7 +41,12 @@ class App extends StatelessWidget {
   const App({super.key});
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(home: MainPage());
+    return Consumer<ColorNotifier>(builder: (context, clrs, _) {
+      return MaterialApp(
+          theme: ThemeData(
+              colorScheme: ColorScheme.fromSeed(seedColor: clrs.getMainC)),
+          home: const MainPage());
+    });
   }
 }
 

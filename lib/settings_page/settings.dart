@@ -14,11 +14,6 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       child: Consumer<ColorNotifier>(builder: (context, palette, child) {
@@ -67,6 +62,13 @@ class _SettingsPageState extends State<SettingsPage> {
                 Icons.arrow_right,
                 color: palette.getMainC,
               ),
+            ),
+            SettingRowWidget(
+              text: Text(
+                "Hijri Calibration",
+                style: TextStyle(color: palette.getMainC),
+              ),
+              icon: const HijriCalibrationWidget(),
             ),
             SettingRowWidget(
                 text: Text(

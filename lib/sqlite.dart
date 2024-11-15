@@ -22,10 +22,32 @@ class Db {
     }
     await database.execute(
         "CREATE TABLE IF NOT EXISTS prayers(prayerName text,`date` date,`time` time,displayDate date)");
+
+    await database.execute(
+        "CREATE TABLE IF NOT EXISTS hijriDate(`date` date, hijri text)");
   }
 
   Future<void> deleteDb() async {
     await deleteDatabase(path);
+  }
+
+  void _insertHijriDate(DateTime date, String hijriDate) async {
+    String dateString = CustomDateFormat.getShortDate(date, true);
+    await database
+        .rawDelete("DELETE FROM hijriDate WHERE `date` = '$dateString'");
+    await database.rawInsert("INSERT INTO hijriDate(`date`,hijri) VALUES(?,?)",
+        [dateString, hijriDate]);
+  }
+
+  Future<String> getHijriDate(DateTime date) async {
+    final r = await database.rawQuery(
+        "SELECT hijri FROM hijriDate WHERE `date` = '${CustomDateFormat.getShortDate(date, true)}'");
+
+    if (r.isEmpty) {
+      return "";
+    }
+
+    return r[0]['hijri'] as String;
   }
 
   void _insertPrayer(Transaction tr, List values) {
@@ -41,6 +63,7 @@ class Db {
   void insertPrayerDay(List prayerDay) async {
     int americanDateIndex = 7;
     List rows = [];
+    DateTime date = DateTime.parse(prayerDay[americanDateIndex]);
     DateTime lastPrayerOfDayDate =
         DateTime.parse("${prayerDay[americanDateIndex]} ${prayerDay[0]}");
     for (int i = 0; i < Constants.prayerNames.length; i++) {
@@ -66,6 +89,7 @@ class Db {
         _insertPrayer(tr, rows[i]);
       }
     });
+    _insertHijriDate(date, prayerDay[6]);
     _deletePrayerDaysBefore(
         lastPrayerOfDayDate.subtract(const Duration(days: 29)));
   }
@@ -141,67 +165,3 @@ class Db {
     database.rawDelete("DELETE FROM prayers WHERE displayDate < '$dateText'");
   }
 }
-
-// class NewDb {
-//   static late Database database;
-//   static String path = "";
-//   Future<void> init() async {
-//     sqfliteFfiInit();
-//     path = await getDatabasesPath();
-//     path = "$path/db.db";
-//     database = await openDatabase(path, version: 1, onCreate: (db, v) async {
-//       await db.execute(
-//           "CREATE TABLE IF NOT EXISTS prayers(prayerName text,`date` date,`time` time,displayDate date)");
-//       debugPrint("Created table prayers");
-//     });
-//   }
-
-//   Future<void> deleteDb() async {
-//     await deleteDatabase(path);
-//   }
-
-//   void insertPrayer(Transaction tr, List values) {
-//     try {
-//       tr.rawInsert(
-//           "INSERT INTO prayers(prayerName,date,time,displayDate) VALUES(?,?,?,?)",
-//           values);
-//     } catch (e) {
-//       debugPrint("Error inserting data: ${e.toString()}");
-//     }
-//   }
-
-//   void insertPrayerDay(List prayerDay) async {
-//     int americanDateIndex = 7;
-//     List rows = [];
-//     DateTime lastPrayerDate = DateTime.parse(prayerDay[americanDateIndex]);
-//     for (int i = 0; i < Constants.prayerNames.length; i++) {
-//       String prayerName = Constants.prayerNames[i];
-//       DateTime prayerDate =
-//           DateTime.parse("${prayerDay[americanDateIndex]} ${prayerDay[i]}");
-
-//       DateTime displayDate = prayerDate;
-
-//       if (prayerDate.isBefore(lastPrayerDate)) {
-//         prayerDate.add(const Duration(days: 1));
-//       }
-//       lastPrayerDate = prayerDate;
-//       rows.add([
-//         prayerName,
-//         CustomDateFormat.getShortDate(prayerDate, true),
-//         CustomDateFormat.timeToString(TimeOfDay.fromDateTime(prayerDate)),
-//         CustomDateFormat.getShortDate(displayDate, true),
-//       ]);
-//     }
-//     database.transaction((tr) async {
-//       for (int i = 0; i < rows.length; i++) {
-//         insertPrayer(tr, rows[i]);
-//       }
-//     });
-//   }
-
-//   Future<bool> isDateSaved(DateTime date) async {
-//     return (await database.rawQuery(
-//             "SELECT displayDate FROM prayers WHERE displayDate == '${CustomDateFormat.getShortDate(date, true)}'"))
-//         .isNotEmpty;
-//   }
-// }

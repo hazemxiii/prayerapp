@@ -94,7 +94,7 @@ class PrayerTimePageState extends State<PrayerTimePage> {
         for (int i = 0; i < prayersOfDay.length; i++) {
           day.add(prayersOfDay[i]['time']);
         }
-        day.add("");
+        day.add(await Db().getHijriDate(date));
         day.add(prayersOfDay[0]["displayDate"]);
         daysTime.add(day);
       } else {
@@ -108,7 +108,8 @@ class PrayerTimePageState extends State<PrayerTimePage> {
     return Uri.https(
         "api.aladhan.com", "/v1/timingsByCity/$normalDateAsString", {
       "city": Prefs.prefs.getString(PrefsKeys.city),
-      "country": Prefs.prefs.getString(PrefsKeys.country)
+      "country": Prefs.prefs.getString(PrefsKeys.country),
+      "adjustment": Prefs.prefs.getInt(PrefsKeys.adjustment).toString()
     });
   }
 
@@ -134,11 +135,7 @@ class PrayerTimePageState extends State<PrayerTimePage> {
     if (r.statusCode == 200) {
       var data = jsonDecode(r.body)['data'];
       var timings = data['timings'];
-      // var hijri = data['date']['hijri'];
-      // var hirjiDay = hijri['day'];
-      // var hijriMonth = hijri['month']['en'];
-      // var hijriYear = hijri['year'];
-      // var hijriDate = "$hirjiDay - $hijriMonth - $hijriYear";
+      String hijriDate = _constructHijriDate(data['date']['hijri']);
 
       List dayWrap = [
         timings['Fajr'],
@@ -147,13 +144,20 @@ class PrayerTimePageState extends State<PrayerTimePage> {
         timings['Asr'],
         timings['Maghrib'],
         timings['Isha'],
-        "",
+        hijriDate,
         americanDateAsString
       ];
       return dayWrap;
     } else {
       throw "Failed To Send Request";
     }
+  }
+
+  String _constructHijriDate(Map hijriDate) {
+    String day = hijriDate['day'];
+    String month = hijriDate['month']['en'];
+    String year = hijriDate['year'];
+    return "$day - $month - $year";
   }
 
   void startNextPrayerTimer(dynamic data) {

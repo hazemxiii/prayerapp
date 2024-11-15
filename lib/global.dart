@@ -63,6 +63,7 @@ class PrefsKeys {
   static const String isVibrateOn = "isVibrateOn";
   static const String vibrateNumber = "vibrateNumber";
   static const String isVibrationModeAt = "isVibrationModeAt";
+  static const String adjustment = "adjustment";
 }
 
 class Prefs {
@@ -118,6 +119,9 @@ class Prefs {
     }
     if (!Prefs.prefs.containsKey(PrefsKeys.isVibrationModeAt)) {
       Prefs.prefs.setBool(PrefsKeys.isVibrationModeAt, false);
+    }
+    if (!Prefs.prefs.containsKey(PrefsKeys.adjustment)) {
+      Prefs.prefs.setInt(PrefsKeys.adjustment, 0);
     }
   }
 

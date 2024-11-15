@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:prayerapp/color_notifier.dart';
+import 'package:prayerapp/global.dart';
+import 'package:prayerapp/sqlite.dart';
 import 'package:provider/provider.dart';
 
 class SettingRowWidget extends StatefulWidget {
   final Widget text;
   final Widget icon;
-  final Function onTap;
+  final Function()? onTap;
 
   const SettingRowWidget({
     super.key,
     required this.text,
     required this.icon,
-    required this.onTap,
+    this.onTap,
   });
 
   @override
@@ -24,9 +26,7 @@ class _SettingRowWidgetState extends State<SettingRowWidget> {
   Widget build(BuildContext context) {
     return Consumer<ColorNotifier>(builder: (context, palette, child) {
       return InkWell(
-        onTap: () {
-          widget.onTap();
-        },
+        onTap: widget.onTap,
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
           margin: const EdgeInsets.all(3),
@@ -149,6 +149,90 @@ class _ColorPickerRowWidgetState extends State<ColorPickerRowWidget> {
           ]),
         ),
       );
+    });
+  }
+}
+
+class HijriCalibrationWidget extends StatefulWidget {
+  const HijriCalibrationWidget({super.key});
+
+  @override
+  State<HijriCalibrationWidget> createState() => _HijriCalibrationWidgetState();
+}
+
+class _HijriCalibrationWidgetState extends State<HijriCalibrationWidget> {
+  int _oldValue = Prefs.prefs.getInt(PrefsKeys.adjustment)!;
+  late int _adjustment;
+  @override
+  void initState() {
+    _adjustment = _oldValue;
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<ColorNotifier>(builder: (context, clrs, _) {
+      return Column(
+        children: [
+          Row(
+            children: [
+              IconButton(
+                  color: clrs.getMainC,
+                  onPressed: () {
+                    _changeAdjustment(false);
+                  },
+                  icon: const Icon(Icons.arrow_left)),
+              Text(
+                  style: TextStyle(color: clrs.getMainC),
+                  textAlign: TextAlign.center,
+                  _adjustment.toString()),
+              IconButton(
+                  color: clrs.getMainC,
+                  onPressed: () {
+                    _changeAdjustment(true);
+                  },
+                  icon: const Icon(Icons.arrow_right)),
+            ],
+          ),
+          Visibility(
+              visible: _adjustment != _oldValue,
+              child: Row(
+                children: [
+                  TextButton(
+                      onPressed: _resetAdjustment, child: const Text("Cancel")),
+                  TextButton(
+                      style: ButtonStyle(
+                          backgroundColor:
+                              WidgetStatePropertyAll(clrs.getMainC)),
+                      onPressed: _saveAdjustment,
+                      child: Text(
+                        "Save",
+                        style: TextStyle(color: clrs.getSecC),
+                      ))
+                ],
+              ))
+        ],
+      );
+    });
+  }
+
+  void _saveAdjustment() {
+    setState(() {
+      Prefs.prefs.setInt(PrefsKeys.adjustment, _adjustment);
+      _oldValue = _adjustment;
+    });
+    Db().deletePrayers();
+  }
+
+  void _resetAdjustment() {
+    setState(() {
+      _adjustment = _oldValue;
+    });
+  }
+
+  void _changeAdjustment(bool increase) {
+    setState(() {
+      _adjustment = _adjustment + (increase ? 1 : -1);
     });
   }
 }
