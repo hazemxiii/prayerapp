@@ -1,11 +1,9 @@
 // ignore_for_file: use_build_context_synchronously
-import "dart:convert";
-
 import "package:flutter/material.dart";
 import "package:prayerapp/color_notifier.dart";
 import "package:prayerapp/location_class/location_class.dart";
+import "package:prayerapp/sqlite.dart";
 import "package:provider/provider.dart";
-import "global.dart";
 
 class LocationSettingsPage extends StatefulWidget {
   const LocationSettingsPage({super.key});
@@ -98,7 +96,7 @@ class _LocationSettingsPageState extends State<LocationSettingsPage> {
   void onSave() {
     LocationHandler.location
         .userEnteredAddress(countryController.text, cityController.text);
-    Prefs.prefs.setString(PrefsKeys.prayers, jsonEncode({}));
+    Db().deletePrayers();
     Navigator.of(context).pop();
   }
 }

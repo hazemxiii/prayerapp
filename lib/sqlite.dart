@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:prayerapp/global.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -8,11 +10,16 @@ class Db {
   static late Database database;
   static String path = "";
   Future<void> init() async {
-    sqfliteFfiInit();
-    var databaseFactory = databaseFactoryFfi;
-    path = join(
-        (await getApplicationDocumentsDirectory()).path, "prayerapp", "db.db");
-    database = await databaseFactory.openDatabase(path);
+    if (Platform.isWindows) {
+      sqfliteFfiInit();
+      var databaseFactory = databaseFactoryFfi;
+      path = join((await getApplicationDocumentsDirectory()).path, "prayerapp",
+          "db.db");
+      database = await databaseFactory.openDatabase(path);
+    } else {
+      path = join(await getDatabasesPath(), "db.db");
+      database = await openDatabase(path);
+    }
     await database.execute(
         "CREATE TABLE IF NOT EXISTS prayers(prayerName text,`date` date,`time` time,displayDate date)");
   }
@@ -21,7 +28,7 @@ class Db {
     await deleteDatabase(path);
   }
 
-  void insertPrayer(Transaction tr, List values) {
+  void _insertPrayer(Transaction tr, List values) {
     try {
       tr.rawInsert(
           "INSERT INTO prayers(prayerName,date,time,displayDate) VALUES(?,?,?,?)",
@@ -31,11 +38,10 @@ class Db {
     }
   }
 
-// TODO: shorten
   void insertPrayerDay(List prayerDay) async {
     int americanDateIndex = 7;
     List rows = [];
-    DateTime lastPrayerDate =
+    DateTime lastPrayerOfDayDate =
         DateTime.parse("${prayerDay[americanDateIndex]} ${prayerDay[0]}");
     for (int i = 0; i < Constants.prayerNames.length; i++) {
       String prayerName = Constants.prayerNames[i];
@@ -44,10 +50,10 @@ class Db {
 
       DateTime displayDate = prayerDate;
 
-      if (prayerDate.isBefore(lastPrayerDate)) {
+      if (prayerDate.isBefore(lastPrayerOfDayDate)) {
         prayerDate = prayerDate.add(const Duration(days: 1));
       }
-      lastPrayerDate = prayerDate;
+      lastPrayerOfDayDate = prayerDate;
       rows.add([
         prayerName,
         CustomDateFormat.getShortDate(prayerDate, true),
@@ -57,10 +63,11 @@ class Db {
     }
     database.transaction((tr) async {
       for (int i = 0; i < rows.length; i++) {
-        insertPrayer(tr, rows[i]);
+        _insertPrayer(tr, rows[i]);
       }
     });
-    _deletePrayerDaysBefore(lastPrayerDate);
+    _deletePrayerDaysBefore(
+        lastPrayerOfDayDate.subtract(const Duration(days: 29)));
   }
 
   Future<List<Map>> getPrayersOfDay(DateTime date) async {
@@ -70,7 +77,7 @@ class Db {
 
   Future<Map> _getNextPrayerData(String date, String time) async {
     List data = await database.rawQuery(
-        "SELECT * FROM prayers WHERE (date == '$date' and time > '$time' or date>'$date') limit 1");
+        "SELECT * FROM prayers WHERE (date == '$date' and time > '$time' or date>'$date') order by date limit 1");
     if (data.isEmpty) {
       return {};
     }
@@ -84,6 +91,10 @@ class Db {
       return {};
     }
     return data[0];
+  }
+
+  Future<void> deletePrayers() async {
+    await database.rawDelete("DELETE FROM prayers");
   }
 
   Future<Map> getNextPrayer() async {

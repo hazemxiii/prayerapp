@@ -89,7 +89,6 @@ class PrayerTimePageState extends State<PrayerTimePage> {
     for (int daysToAdd = 0; daysToAdd < 30; daysToAdd++) {
       DateTime date = DateTime.now().add(Duration(days: daysToAdd - 1));
       List<Map> prayersOfDay = await Db().getPrayersOfDay(date);
-
       if (prayersOfDay.isNotEmpty) {
         List day = [];
         for (int i = 0; i < prayersOfDay.length; i++) {
