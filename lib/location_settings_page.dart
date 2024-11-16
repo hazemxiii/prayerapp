@@ -31,17 +31,6 @@ class _LocationSettingsPageState extends State<LocationSettingsPage> {
     return Scaffold(
       backgroundColor: palette.secColor,
       appBar: AppBar(
-        actions: [
-          IconButton(
-              onPressed: () async {
-                await LocationHandler.location.getFromGps(context);
-                setState(() {
-                  countryController.text = LocationHandler.location.country;
-                  cityController.text = LocationHandler.location.city;
-                });
-              },
-              icon: const Icon(Icons.gps_fixed))
-        ],
         backgroundColor: palette.mainColor,
         foregroundColor: palette.secColor,
         title: const Text(
@@ -51,10 +40,28 @@ class _LocationSettingsPageState extends State<LocationSettingsPage> {
         centerTitle: true,
       ),
       body: Container(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 30),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text(
+              "Location Settings",
+              style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: palette.mainColor),
+            ),
+            Text(
+              "Set Your Location Manually Or Let The GPS Find You",
+              style: TextStyle(
+                  fontSize: 14,
+                  color: Color.lerp(palette.mainColor, palette.secColor, 0.4)),
+            ),
+            const SizedBox(
+              height: 20,
+            ),
             LocationInputWidget(
                 text: "City",
                 color: palette.mainColor,
@@ -63,25 +70,41 @@ class _LocationSettingsPageState extends State<LocationSettingsPage> {
                 text: "Country",
                 color: palette.mainColor,
                 controller: countryController),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            Column(
               children: [
                 MaterialButton(
                   color: palette.secColor,
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: Text("Cancel",
-                      style: TextStyle(color: palette.mainColor)),
+                  onPressed: _getLocationFromGPS,
+                  child: Container(
+                    padding: const EdgeInsets.all(5),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.location_on_outlined,
+                          color: palette.mainColor,
+                        ),
+                        Text("Get Location From GPS",
+                            style: TextStyle(color: palette.mainColor)),
+                      ],
+                    ),
+                  ),
                 ),
                 const SizedBox(
-                  width: 10,
+                  height: 10,
                 ),
                 MaterialButton(
                   color: palette.mainColor,
                   onPressed: onSave,
-                  child:
-                      Text("Save", style: TextStyle(color: palette.secColor)),
+                  child: Container(
+                    padding: const EdgeInsets.all(5),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text("Save", style: TextStyle(color: palette.secColor)),
+                      ],
+                    ),
+                  ),
                 )
               ],
             )
@@ -89,6 +112,14 @@ class _LocationSettingsPageState extends State<LocationSettingsPage> {
         ),
       ),
     );
+  }
+
+  void _getLocationFromGPS() async {
+    await LocationHandler.location.getFromGps(context);
+    setState(() {
+      countryController.text = LocationHandler.location.country;
+      cityController.text = LocationHandler.location.city;
+    });
   }
 
   void onSave() {
