@@ -94,6 +94,8 @@ flutter:
     - images/masjid.jpeg
     - images/moon.jpg
     - images/back.jpg
+    - images/sunrise.png
+    - images/sunset.png
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

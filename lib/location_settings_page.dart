@@ -1,9 +1,8 @@
 // ignore_for_file: use_build_context_synchronously
 import "package:flutter/material.dart";
-import "package:prayerapp/color_notifier.dart";
 import "package:prayerapp/location_class/location_class.dart";
+import "package:prayerapp/main.dart";
 import "package:prayerapp/sqlite.dart";
-import "package:provider/provider.dart";
 
 class LocationSettingsPage extends StatefulWidget {
   const LocationSettingsPage({super.key});
@@ -28,69 +27,68 @@ class _LocationSettingsPageState extends State<LocationSettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ColorNotifier>(builder: (context, palette, child) {
-      return Scaffold(
-        backgroundColor: palette.getSecC,
-        appBar: AppBar(
-          actions: [
-            IconButton(
-                onPressed: () async {
-                  await LocationHandler.location.getFromGps(context);
-                  setState(() {
-                    countryController.text = LocationHandler.location.country;
-                    cityController.text = LocationHandler.location.city;
-                  });
-                },
-                icon: const Icon(Icons.gps_fixed))
+    final palette = Palette.of(context);
+    return Scaffold(
+      backgroundColor: palette.secColor,
+      appBar: AppBar(
+        actions: [
+          IconButton(
+              onPressed: () async {
+                await LocationHandler.location.getFromGps(context);
+                setState(() {
+                  countryController.text = LocationHandler.location.country;
+                  cityController.text = LocationHandler.location.city;
+                });
+              },
+              icon: const Icon(Icons.gps_fixed))
+        ],
+        backgroundColor: palette.mainColor,
+        foregroundColor: palette.secColor,
+        title: const Text(
+          "Location settings",
+          style: TextStyle(fontSize: 20),
+        ),
+        centerTitle: true,
+      ),
+      body: Container(
+        padding: const EdgeInsets.all(10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            LocationInputWidget(
+                text: "City",
+                color: palette.mainColor,
+                controller: cityController),
+            LocationInputWidget(
+                text: "Country",
+                color: palette.mainColor,
+                controller: countryController),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                MaterialButton(
+                  color: palette.secColor,
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text("Cancel",
+                      style: TextStyle(color: palette.mainColor)),
+                ),
+                const SizedBox(
+                  width: 10,
+                ),
+                MaterialButton(
+                  color: palette.mainColor,
+                  onPressed: onSave,
+                  child:
+                      Text("Save", style: TextStyle(color: palette.secColor)),
+                )
+              ],
+            )
           ],
-          backgroundColor: palette.getMainC,
-          foregroundColor: palette.getSecC,
-          title: const Text(
-            "Location settings",
-            style: TextStyle(fontSize: 20),
-          ),
-          centerTitle: true,
         ),
-        body: Container(
-          padding: const EdgeInsets.all(10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              LocationInputWidget(
-                  text: "City",
-                  color: palette.getMainC,
-                  controller: cityController),
-              LocationInputWidget(
-                  text: "Country",
-                  color: palette.getMainC,
-                  controller: countryController),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  MaterialButton(
-                    color: palette.getSecC,
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: Text("Cancel",
-                        style: TextStyle(color: palette.getMainC)),
-                  ),
-                  const SizedBox(
-                    width: 10,
-                  ),
-                  MaterialButton(
-                    color: palette.getMainC,
-                    onPressed: onSave,
-                    child:
-                        Text("Save", style: TextStyle(color: palette.getSecC)),
-                  )
-                ],
-              )
-            ],
-          ),
-        ),
-      );
-    });
+      ),
+    );
   }
 
   void onSave() {

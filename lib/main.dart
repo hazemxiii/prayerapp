@@ -3,6 +3,7 @@ import "dart:io";
 import "package:flutter/material.dart";
 import "package:prayerapp/color_notifier.dart";
 import "package:prayerapp/location_class/location_class.dart";
+import "package:prayerapp/prayer_page/next_prayer_notifier.dart";
 import "package:prayerapp/prayer_page/prayer_page.dart";
 import "package:prayerapp/sqlite.dart";
 import "package:prayerapp/tasbih_page/tasbih_notifier.dart";
@@ -31,7 +32,8 @@ void main() async {
   runApp(MultiProvider(
     providers: [
       ChangeNotifierProvider(create: (context) => ColorNotifier()),
-      ChangeNotifierProvider(create: (context) => TasbihNotifier())
+      ChangeNotifierProvider(create: (context) => TasbihNotifier()),
+      ChangeNotifierProvider(create: (context) => NextPrayerNot())
     ],
     child: const App(),
   ));
@@ -41,11 +43,16 @@ class App extends StatelessWidget {
   const App({super.key});
   @override
   Widget build(BuildContext context) {
-    return Consumer<ColorNotifier>(builder: (context, clrs, _) {
+    Provider.of<ColorNotifier>(context, listen: false).initPalette();
+    return Consumer<ColorNotifier>(builder: (context, palette, _) {
       return MaterialApp(
           theme: ThemeData(
-              colorScheme: ColorScheme.fromSeed(seedColor: clrs.getMainC)),
-          home: const MainPage());
+              colorScheme: ColorScheme.fromSeed(seedColor: palette.getMainC)),
+          home: Palette(
+              mainColor: palette.getMainC,
+              secColor: palette.getSecC,
+              backColor: palette.getBackC,
+              child: const MainPage()));
     });
   }
 }
@@ -77,7 +84,6 @@ class _MainPage extends State<MainPage> {
       null,
       {"title": "Settings"},
     ];
-    Provider.of<ColorNotifier>(context, listen: false).initPalette();
   }
 
   @override
@@ -114,19 +120,19 @@ class _MainPage extends State<MainPage> {
               },
               items: [
                 BottomNavigationBarItem(
-                    icon: const Icon(Icons.alarm),
+                    icon: const Icon(Icons.alarm_outlined),
                     label: "Prayer Times",
                     backgroundColor: palette.getSecC),
                 BottomNavigationBarItem(
-                    icon: const Icon(Icons.circle),
+                    icon: const Icon(Icons.circle_outlined),
                     label: "Tasbih",
                     backgroundColor: palette.getSecC),
                 BottomNavigationBarItem(
-                    icon: const Icon(Icons.mosque),
+                    icon: const Icon(Icons.mosque_outlined),
                     label: "Qiblah",
                     backgroundColor: palette.getSecC),
                 BottomNavigationBarItem(
-                    icon: const Icon(Icons.settings),
+                    icon: const Icon(Icons.settings_outlined),
                     label: "Settings",
                     backgroundColor: palette.getSecC)
               ],
@@ -136,4 +142,34 @@ class _MainPage extends State<MainPage> {
           body: SafeArea(child: pages[activePage]));
     });
   }
+}
+
+class Palette extends InheritedWidget {
+  const Palette({
+    required this.mainColor,
+    required this.secColor,
+    super.key,
+    required this.backColor,
+    required super.child,
+  });
+
+  final Color backColor;
+  final Color mainColor;
+  final Color secColor;
+
+  static Palette? maybeOf(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<Palette>();
+  }
+
+  static Palette of(BuildContext context) {
+    final Palette? result = maybeOf(context);
+    assert(result != null, 'No Inherited Widget found in context');
+    return result!;
+  }
+
+  @override
+  bool updateShouldNotify(Palette oldWidget) =>
+      backColor != oldWidget.backColor ||
+      mainColor != oldWidget.mainColor ||
+      secColor != oldWidget.secColor;
 }

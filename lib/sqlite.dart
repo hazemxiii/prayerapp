@@ -141,7 +141,8 @@ class Db {
       "timeLeft": _formatTimeLeft(timeTillNextPrayer),
       "time": CustomDateFormat.formatTimeAs12HourFromDate(nextPrayerDate),
       "percentageLeft":
-          _getPercentageOfTimeLeft(totalDifference, timeTillNextPrayer)
+          _getPercentageOfTimeLeft(totalDifference, timeTillNextPrayer),
+      "date": nextPrayer['date']
     };
   }
 

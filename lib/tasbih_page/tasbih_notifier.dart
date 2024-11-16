@@ -44,7 +44,6 @@ class TasbihNotifier extends ChangeNotifier {
   }
 
   void changeTasbih(bool increase) {
-    // increases all tasbih totals by 1
     int number = increase ? 1 : -1;
     if (number == -1 && now == 0) {
       return;

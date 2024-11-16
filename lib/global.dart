@@ -12,6 +12,14 @@ class Constants {
     4: "Maghrib",
     5: "Isha'a"
   };
+  static Map prayerIcons = {
+    0: Icons.wb_sunny_outlined,
+    1: Icons.wb_sunny_outlined,
+    2: Icons.wb_sunny_outlined,
+    3: Icons.wb_sunny_outlined,
+    4: Icons.nights_stay_outlined,
+    5: Icons.nights_stay_outlined
+  };
 }
 
 class CustomDateFormat {
@@ -64,6 +72,7 @@ class PrefsKeys {
   static const String vibrateNumber = "vibrateNumber";
   static const String isVibrationModeAt = "isVibrationModeAt";
   static const String adjustment = "adjustment";
+  static const String tasbihDailyProgress = "tasbihDailyProgress";
 }
 
 class Prefs {
@@ -122,6 +131,9 @@ class Prefs {
     }
     if (!Prefs.prefs.containsKey(PrefsKeys.adjustment)) {
       Prefs.prefs.setInt(PrefsKeys.adjustment, 0);
+    }
+    if (!Prefs.prefs.containsKey(PrefsKeys.tasbihDailyProgress)) {
+      Prefs.prefs.setInt(PrefsKeys.tasbihDailyProgress, 100);
     }
   }
 
