@@ -2,12 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
-import 'package:prayerapp/color_notifier.dart';
 import 'package:prayerapp/global.dart';
 import 'package:prayerapp/location_class/location_class.dart';
+import 'package:prayerapp/main.dart';
 import 'package:prayerapp/prayer_page/custom_widgets.dart';
 import 'package:prayerapp/sqlite.dart';
-import 'package:provider/provider.dart';
+
+// TODO: new icons
 
 class PrayerTimePage extends StatefulWidget {
   const PrayerTimePage({super.key});
@@ -18,66 +19,57 @@ class PrayerTimePage extends StatefulWidget {
 
 class PrayerTimePageState extends State<PrayerTimePage> {
   late PageController pageViewCont;
-  late ValueNotifier nextPrayerRemainingTimeNotifier;
-  Timer? timer;
 
   @override
   void initState() {
     super.initState();
     pageViewCont = PageController(initialPage: 1);
-    nextPrayerRemainingTimeNotifier = initNextPrayerNotifier();
   }
 
   @override
   void dispose() {
     super.dispose();
     pageViewCont.dispose();
-    if (timer != null) {
-      timer!.cancel();
-    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ColorNotifier>(builder: (context, palette, child) {
-      return FutureBuilder(
-          future: loadPrayerTime(context),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.done &&
-                snapshot.hasData) {
-              if (snapshot.data!.length > 0) {
-                startNextPrayerTimer(snapshot.data);
+    return FutureBuilder(
+        future: loadPrayerTime(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done &&
+              snapshot.hasData) {
+            List prayerTimes = snapshot.data!['times'];
 
-                return Column(
-                  children: [
-                    NextPrayerWidget(
-                      nextPrayerRemainingTimeNotifier:
-                          nextPrayerRemainingTimeNotifier,
-                    ),
-                    PrayersScrollWidget(
-                      color: palette.getBackC,
-                      prayersData: snapshot.data!,
-                    ),
-                  ],
-                );
-              } else {
-                return NoInternetWidget(
-                  color: palette.getMainC,
-                );
-              }
-            } else {
-              return Center(
-                child: CircularProgressIndicator(
-                  color: palette.getSecC,
-                ),
+            if (prayerTimes.isNotEmpty) {
+              return Column(
+                children: [
+                  PrayersScrollWidget(
+                    displayDates: snapshot.data!['dateStrings'],
+                    hijriDates: snapshot.data!['hijriDates'],
+                    realDates: snapshot.data!['realDates'],
+                    prayerTimes: prayerTimes,
+                  ),
+                ],
               );
+            } else {
+              return const NoInternetWidget();
             }
-          });
-    });
+          } else {
+            return Center(
+              child: CircularProgressIndicator(
+                color: Palette.of(context).secColor,
+              ),
+            );
+          }
+        });
   }
 
-  Future<dynamic> loadPrayerTime(BuildContext context) async {
-    List daysTime = [];
+  Future<dynamic> loadPrayerTime() async {
+    List timesForAllDays = [];
+    List realDates = [];
+    List displayDates = [];
+    List hijriDates = [];
     if (LocationHandler.location.isLocationEmpty()) {
       await LocationHandler.location.getFromGps(context);
     }
@@ -89,19 +81,29 @@ class PrayerTimePageState extends State<PrayerTimePage> {
     for (int daysToAdd = 0; daysToAdd < 30; daysToAdd++) {
       DateTime date = DateTime.now().add(Duration(days: daysToAdd - 1));
       List<Map> prayersOfDay = await Db().getPrayersOfDay(date);
-      if (prayersOfDay.isNotEmpty) {
-        List day = [];
-        for (int i = 0; i < prayersOfDay.length; i++) {
-          day.add(prayersOfDay[i]['time']);
-        }
-        day.add(await Db().getHijriDate(date));
-        day.add(prayersOfDay[0]["displayDate"]);
-        daysTime.add(day);
-      } else {
-        daysTime += (await _fetchPrayerTimesFromApi(date));
+      if (prayersOfDay.isEmpty) {
+        await _fetchPrayerTimesFromApi(date);
+        prayersOfDay = await Db().getPrayersOfDay(date);
       }
+      List dayTime = [];
+      List oneDayRealDates = [];
+      for (int i = 0; i < prayersOfDay.length; i++) {
+        dayTime.add(prayersOfDay[i]['time']);
+        oneDayRealDates.add(prayersOfDay[i]['date']);
+      }
+      realDates.add(oneDayRealDates);
+      hijriDates.add(await Db().getHijriDate(date));
+      displayDates.add(prayersOfDay[0]["displayDate"]);
+      timesForAllDays.add(dayTime);
     }
-    return daysTime;
+
+    final r = {
+      "times": timesForAllDays,
+      "dateStrings": displayDates,
+      "hijriDates": hijriDates,
+      "realDates": realDates
+    };
+    return r;
   }
 
   Uri _getApiUri(String normalDateAsString) {
@@ -158,35 +160,5 @@ class PrayerTimePageState extends State<PrayerTimePage> {
     String month = hijriDate['month']['en'];
     String year = hijriDate['year'];
     return "$day - $month - $year";
-  }
-
-  void startNextPrayerTimer(dynamic data) {
-    updateNextPrayerTime(data);
-    timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      updateNextPrayerTime(data);
-    });
-  }
-
-  void updateNextPrayerTime(data) async {
-    Map nextPrayerData = await Db().getNextPrayer();
-    String nextPrayerName = nextPrayerData["name"] ?? "";
-    String timeLeft = nextPrayerData["timeLeft"] ?? "";
-    String nextPrayerTime = nextPrayerData["time"] ?? "";
-    double remianingTimePercentage = nextPrayerData["percentageLeft"] ?? 0;
-    nextPrayerRemainingTimeNotifier.value = {
-      "timeLeft": timeLeft,
-      "prayerName": nextPrayerName,
-      "time": nextPrayerTime,
-      "remainPercentage": remianingTimePercentage
-    };
-  }
-
-  ValueNotifier initNextPrayerNotifier() {
-    return ValueNotifier({
-      "timeLeft": DateTime.now().toString(),
-      "prayerName": "",
-      "time": "",
-      "remainPercentage": 0
-    });
   }
 }

@@ -1,18 +1,22 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:prayerapp/color_notifier.dart';
 import 'package:prayerapp/global.dart';
+import 'package:prayerapp/main.dart';
 import 'package:prayerapp/notification.dart';
+import 'package:prayerapp/prayer_page/next_prayer_notifier.dart';
 import 'package:provider/provider.dart';
 
 class PrayerDayWidget extends StatefulWidget {
-  // date as a string
-  final String dateString;
+  final String displayDateString;
   final List times;
+  final List realDates;
+  final String hijriDate;
   const PrayerDayWidget({
     super.key,
-    required this.dateString,
+    required this.displayDateString,
     required this.times,
+    required this.realDates,
+    required this.hijriDate,
   });
 
   @override
@@ -20,27 +24,31 @@ class PrayerDayWidget extends StatefulWidget {
 }
 
 class _PrayerDayWidgetState extends State<PrayerDayWidget> {
-  DateTime? lastPrayerOfDay;
   @override
   Widget build(BuildContext context) {
-    lastPrayerOfDay = DateTime.parse("${widget.dateString} ${widget.times[0]}");
-
     return SingleChildScrollView(
       child: Container(
         padding: const EdgeInsets.fromLTRB(0, 10, 0, 0),
-        child: Consumer<ColorNotifier>(builder: (context, palette, child) {
-          return Column(children: [
-            // format the american date to Weekday, day month
-            Text(getEnglishLanguageDate(widget.dateString),
-                style: TextStyle(color: palette.getSecC)),
-            // hijri date is at index 6
-            Text(
-              widget.times[6],
-              style: TextStyle(color: palette.getSecC),
-            ),
-            ...prayerDayWidgetBuilder()
-          ]);
-        }),
+        child: Column(children: [
+          Text(getEnglishLanguageDate(widget.displayDateString),
+              style: TextStyle(
+                  color: Palette.of(context).mainColor,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold)),
+          const SizedBox(
+            height: 10,
+          ),
+          Text(
+            widget.hijriDate,
+            style: TextStyle(
+                color: Color.lerp(Palette.of(context).mainColor,
+                    Palette.of(context).backColor, 0.5)),
+          ),
+          const SizedBox(
+            height: 20,
+          ),
+          ...prayerDayWidgetBuilder()
+        ]),
       ),
     );
   }
@@ -97,17 +105,17 @@ class _PrayerDayWidgetState extends State<PrayerDayWidget> {
   List prayerDayWidgetBuilder() {
     List prayersWidgets = [];
     for (int i = 0; i < Constants.prayerNames.length; i++) {
-      var prayer = Constants.prayerNames[i];
-      DateTime date = DateTime.parse("${widget.dateString} ${widget.times[i]}");
-      if (date.difference(lastPrayerOfDay!).isNegative) {
-        date = date.add(const Duration(days: 1));
-      }
+      String prayer = Constants.prayerNames[i];
+      DateTime displayDate =
+          DateTime.parse("${widget.displayDateString} ${widget.times[i]}");
 
-      lastPrayerOfDay = date;
+      DateTime realDate =
+          DateTime.parse("${widget.realDates[i]} ${widget.times[i]}");
 
       prayersWidgets.add(PrayerWidget(
-        name: prayer == "Dhuhr" && date.weekday == 5 ? "Jumu'a" : prayer,
-        time: date,
+        realDate: realDate,
+        icon: Constants.prayerIcons[i],
+        name: prayer == "Dhuhr" && displayDate.weekday == 5 ? "Jumu'a" : prayer,
       ));
     }
     return prayersWidgets;
@@ -116,12 +124,14 @@ class _PrayerDayWidgetState extends State<PrayerDayWidget> {
 
 class PrayerWidget extends StatefulWidget {
   final String name;
-  final DateTime time;
+  final IconData icon;
+  final DateTime realDate;
 
   const PrayerWidget({
     super.key,
     required this.name,
-    required this.time,
+    required this.icon,
+    required this.realDate,
   });
 
   @override
@@ -130,16 +140,17 @@ class PrayerWidget extends StatefulWidget {
 
 class _PrayerWidgetState extends State<PrayerWidget> {
   Timer? timer;
-  Future? firstUpdate;
+  // Future? firstUpdate;
+
+  late TimeOfDay _timeOfDay;
+  late int _hour;
+  late int _minutes;
+  late String _dayPeriod;
+  late Duration _difference;
+  late String _diff;
   @override
   void initState() {
-    firstUpdate =
-        Future.delayed(Duration(seconds: 60 - DateTime.now().second), () {
-      setState(() {});
-      timer = Timer.periodic(const Duration(minutes: 1), (timer) {
-        setState(() {});
-      });
-    }).catchError((e) {});
+    startTimer();
     super.initState();
   }
 
@@ -153,65 +164,102 @@ class _PrayerWidgetState extends State<PrayerWidget> {
 
   @override
   Widget build(BuildContext context) {
-    TimeOfDay timeOfDay = TimeOfDay.fromDateTime(widget.time);
-    int hour = timeOfDay.hourOfPeriod;
-    int minutes = timeOfDay.minute;
-    String dayPeriod = timeOfDay.period == DayPeriod.am ? "AM" : "PM";
-
-    // get time left for the prayer
-    Duration difference = widget.time.difference(DateTime.now());
-    String diff = difference.toString();
-    diff = diff.substring(0, diff.lastIndexOf(":"));
-    if (difference.inHours >= 24 || difference.inHours <= -24) {
-      diff = "";
-    }
-
-    return Consumer<ColorNotifier>(builder: (context, palette, c) {
-      return InkWell(
-        onLongPress: () {
-          Navigator.of(context).push(MaterialPageRoute(
-              builder: (context) =>
-                  PrayerNotificationSettingsPage(prayer: widget.name)));
-        },
-        child: Column(
+    final palette = Palette.of(context);
+    return InkWell(
+      onLongPress: () {
+        Navigator.of(context).push(MaterialPageRoute(
+            builder: (context) =>
+                PrayerNotificationSettingsPage(prayer: widget.name)));
+      },
+      child: Consumer<NextPrayerNot>(builder: (context, nextPrayerNot, _) {
+        bool isNext = nextPrayerNot.name == widget.name &&
+            CustomDateFormat.getShortDate(widget.realDate, true) ==
+                nextPrayerNot.date;
+        initTime(isNext);
+        Color backC = isNext ? palette.mainColor : palette.secColor;
+        Color textC = isNext ? palette.secColor : palette.mainColor;
+        return Column(
           children: [
             Container(
               padding: const EdgeInsets.all(10),
-              margin: const EdgeInsets.all(5),
+              margin: const EdgeInsets.symmetric(horizontal: 10),
               decoration: BoxDecoration(
-                  color: palette.getSecC,
-                  borderRadius: const BorderRadius.all(Radius.circular(10))),
+                  color: backC,
+                  borderRadius: const BorderRadius.all(Radius.circular(5))),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Row(
                     children: [
-                      Container(
-                        width: 3,
-                        height: 20,
-                        color: palette.getMainC,
-                        margin: const EdgeInsets.fromLTRB(0, 0, 10, 0),
+                      Icon(
+                        widget.icon,
+                        color: textC,
+                      ),
+                      const VerticalDivider(
+                        width: 5,
                       ),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             widget.name,
-                            style: TextStyle(color: palette.getMainC),
+                            style: TextStyle(color: textC),
                           ),
-                          Text("$hour:${"$minutes".padLeft(2, "0")} $dayPeriod",
-                              style: TextStyle(color: palette.getMainC))
+                          Text(
+                              "$_hour:${"$_minutes".padLeft(2, "0")} $_dayPeriod",
+                              style: TextStyle(color: textC))
                         ],
                       ),
                     ],
                   ),
-                  Text(diff, style: TextStyle(color: palette.getMainC))
+                  Text(_diff, style: TextStyle(color: textC))
                 ],
               ),
             ),
+            Container(
+              margin: const EdgeInsets.only(bottom: 10, right: 12, left: 12),
+              child: isNext
+                  ? LinearProgressIndicator(
+                      borderRadius: const BorderRadius.all(Radius.circular(10)),
+                      value: 1 - nextPrayerNot.percentageLeft,
+                      backgroundColor: palette.secColor,
+                      color: palette.mainColor,
+                    )
+                  : null,
+            )
           ],
-        ),
-      );
+        );
+      }),
+    );
+  }
+
+  void initTime(bool isNext) {
+    _timeOfDay = TimeOfDay.fromDateTime(widget.realDate);
+    _hour = _timeOfDay.hourOfPeriod;
+    _minutes = _timeOfDay.minute;
+    _dayPeriod = _timeOfDay.period == DayPeriod.am ? "AM" : "PM";
+
+    _difference = widget.realDate.difference(DateTime.now());
+    _diff = _difference.toString();
+    _diff = _diff.substring(0, _diff.lastIndexOf(isNext ? "." : ":"));
+    if (_difference.inHours >= 24 || _difference.inHours <= -24) {
+      _diff = "";
+    }
+  }
+
+  void startTimer() {
+    Provider.of<NextPrayerNot>(context, listen: false).updateNextPrayer();
+    // firstUpdate =
+    //     Future.delayed(Duration(seconds: 60 - DateTime.now().second), () {
+    //   if (mounted) {
+    //     Provider.of<NextPrayerNot>(context, listen: false).updateNextPrayer();
+    //   }
+    //   setState(() {});
+
+    // }).catchError((e) {});
+    timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      Provider.of<NextPrayerNot>(context, listen: false).updateNextPrayer();
+      setState(() {});
     });
   }
 }
