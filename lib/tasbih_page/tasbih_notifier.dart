@@ -76,7 +76,7 @@ class TasbihNotifier extends ChangeNotifier {
     if (!_isVibrateOn) {
       return false;
     }
-    if ((_isVibrationModeAt && _vibrateNums.contains(_now)) ||
+    if ((_isVibrationModeAt && _vibrateNums.contains(_now.toString())) ||
         !_isVibrationModeAt && _now % int.parse(_vibrateNumsString) == 0) {
       return true;
     }

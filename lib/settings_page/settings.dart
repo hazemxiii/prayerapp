@@ -5,7 +5,7 @@ import 'package:prayerapp/settings_page/settings_rows.dart';
 import 'package:prayerapp/sqlite.dart';
 import 'package:prayerapp/widgets/section.dart';
 import '../location_settings_page.dart';
-import '../vibration_settings.dart';
+import '../tasbih_settings/tasbih_settings.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -45,7 +45,7 @@ class _MoreSettingsSectionState extends State<MoreSettingsSection> {
       content: [
         MoreSettingWidget(
             onTap: () {
-              goToPage(const VibrationSettingsPage());
+              goToPage(const TasbihSettingsPage());
             },
             text: "Tasbih Settings",
             icon: Icon(
