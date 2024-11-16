@@ -6,12 +6,12 @@ import 'package:prayerapp/main.dart';
 import 'package:prayerapp/sqlite.dart';
 import 'package:provider/provider.dart';
 
-class SettingRowWidget extends StatefulWidget {
-  final Widget text;
+class MoreSettingWidget extends StatefulWidget {
+  final String text;
   final Widget icon;
   final Function()? onTap;
 
-  const SettingRowWidget({
+  const MoreSettingWidget({
     super.key,
     required this.text,
     required this.icon,
@@ -19,24 +19,32 @@ class SettingRowWidget extends StatefulWidget {
   });
 
   @override
-  State<SettingRowWidget> createState() => _SettingRowWidgetState();
+  State<MoreSettingWidget> createState() => _MoreSettingWidgetState();
 }
 
-class _SettingRowWidgetState extends State<SettingRowWidget> {
+class _MoreSettingWidgetState extends State<MoreSettingWidget> {
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: widget.onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
+        padding: const EdgeInsets.all(5),
         margin: const EdgeInsets.all(3),
         width: double.infinity,
         decoration: BoxDecoration(
+            border: Border.fromBorderSide(
+                BorderSide(color: Palette.of(context).backColor, width: 1)),
             color: Palette.of(context).secColor,
             borderRadius: const BorderRadius.all(Radius.circular(5))),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [widget.text, widget.icon],
+          children: [
+            Text(
+              widget.text,
+              style: TextStyle(color: Palette.of(context).mainColor),
+            ),
+            widget.icon
+          ],
         ),
       ),
     );
@@ -103,17 +111,7 @@ class _ColorPickerRowWidgetState extends State<ColorPickerRowWidget> {
                         final provider =
                             Provider.of<ColorNotifier>(context, listen: false);
                         Navigator.of(context).pop();
-                        switch (widget.colorKey) {
-                          case "primaryColor":
-                            provider.setMainC(color!);
-                            break;
-                          case "secondaryColor":
-                            provider.setSecC(color!);
-                            break;
-                          case "backColor":
-                            provider.setBackC(color!);
-                            break;
-                        }
+                        provider.setColor(widget.colorKey, color);
                       },
                       child: Text(
                         "save",
@@ -126,25 +124,51 @@ class _ColorPickerRowWidgetState extends State<ColorPickerRowWidget> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
         margin: const EdgeInsets.all(3),
-        width: double.infinity,
         decoration: BoxDecoration(
             color: palette.secColor,
             borderRadius: const BorderRadius.all(Radius.circular(5))),
-        child:
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text(
-            widget.name,
-            style: TextStyle(color: palette.mainColor),
-          ),
-          Container(
-            height: 20,
-            width: 20,
-            decoration: BoxDecoration(
-                border: Border.all(color: palette.mainColor, width: 1),
-                color: widget.pickerColor,
-                borderRadius: const BorderRadius.all(Radius.circular(999))),
-          )
-        ]),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.name,
+              style: TextStyle(
+                  color: palette.mainColor, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(
+              height: 5,
+            ),
+            Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Container(
+                    height: 30,
+                    width: 30,
+                    decoration: BoxDecoration(
+                        border: Border.all(color: palette.mainColor, width: 1),
+                        color: widget.pickerColor,
+                        borderRadius:
+                            const BorderRadius.all(Radius.circular(5))),
+                  ),
+                  const VerticalDivider(
+                    width: 10,
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(5),
+                    decoration: BoxDecoration(
+                        borderRadius:
+                            const BorderRadius.all(Radius.circular(5)),
+                        border: Border.fromBorderSide(
+                            BorderSide(color: palette.backColor))),
+                    child: Text(
+                      "#${widget.pickerColor.toHexString()}",
+                      style: TextStyle(color: palette.mainColor),
+                    ),
+                  ),
+                ]),
+          ],
+        ),
       ),
     );
   }

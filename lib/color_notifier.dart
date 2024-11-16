@@ -25,6 +25,21 @@ class ColorNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setColor(String colorKey, Color? c) {
+    if (c == null) {
+      return;
+    }
+    if (colorKey == PrefsKeys.primaryColor) {
+      _main = c;
+    } else if (colorKey == PrefsKeys.secondaryColor) {
+      _second = c;
+    } else {
+      _back = c;
+    }
+    Prefs.prefs.setInt(colorKey, c.value);
+    notifyListeners();
+  }
+
   void setSecC(Color c) {
     _second = c;
     Prefs.prefs.setInt(PrefsKeys.secondaryColor, c.value);

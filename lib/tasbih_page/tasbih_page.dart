@@ -4,6 +4,7 @@ import 'package:prayerapp/main.dart';
 import 'package:prayerapp/tasbih_page/tasbih_notifier.dart';
 import "package:flutter/material.dart";
 import 'package:prayerapp/tasbih_page/tasbih_buttons.dart';
+import 'package:prayerapp/widgets/section.dart';
 import 'package:provider/provider.dart';
 
 class TasbihPage extends StatefulWidget {
@@ -74,9 +75,7 @@ class TasbihDailyProgressWidget extends StatelessWidget {
     int tasbihDailyProgress =
         Prefs.prefs.getInt(PrefsKeys.tasbihDailyProgress)!;
     return Consumer<TasbihNotifier>(builder: (context, tasbihNot, _) {
-      return TasbihPageSection(
-        backC: Palette.of(context).secColor,
-        textC: Palette.of(context).mainColor,
+      return Section(
         title: "Daily Progress",
         icon: Icon(
           Icons.today,
@@ -111,9 +110,7 @@ class OverallTasbihProgressWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Consumer<TasbihNotifier>(builder: (context, tasbihNot, _) {
-      return TasbihPageSection(
-        backC: Palette.of(context).secColor,
-        textC: Palette.of(context).mainColor,
+      return Section(
         title: "Total Tasbih",
         icon: IconButton(
             color: Colors.red,
@@ -139,48 +136,5 @@ class OverallTasbihProgressWidget extends StatelessWidget {
         ],
       );
     });
-  }
-}
-
-class TasbihPageSection extends StatelessWidget {
-  final List<Widget> content;
-  final String title;
-  final Widget icon;
-  final Color backC;
-  final Color textC;
-  const TasbihPageSection(
-      {super.key,
-      required this.content,
-      required this.title,
-      required this.icon,
-      required this.backC,
-      required this.textC});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-      margin: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-          color: backC,
-          borderRadius: const BorderRadius.all(Radius.circular(5))),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                    color: textC, fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              icon
-            ],
-          ),
-          ...content
-        ],
-      ),
-    );
   }
 }

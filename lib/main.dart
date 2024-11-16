@@ -45,14 +45,15 @@ class App extends StatelessWidget {
   Widget build(BuildContext context) {
     Provider.of<ColorNotifier>(context, listen: false).initPalette();
     return Consumer<ColorNotifier>(builder: (context, palette, _) {
-      return MaterialApp(
-          theme: ThemeData(
-              colorScheme: ColorScheme.fromSeed(seedColor: palette.getMainC)),
-          home: Palette(
-              mainColor: palette.getMainC,
-              secColor: palette.getSecC,
-              backColor: palette.getBackC,
-              child: const MainPage()));
+      return Palette(
+        mainColor: palette.getMainC,
+        secColor: palette.getSecC,
+        backColor: palette.getBackC,
+        child: MaterialApp(
+            theme: ThemeData(
+                colorScheme: ColorScheme.fromSeed(seedColor: palette.getMainC)),
+            home: const MainPage()),
+      );
     });
   }
 }
@@ -98,7 +99,7 @@ class _MainPage extends State<MainPage> {
           appBar: pagesAppBars[activePage] != null
               ? AppBar(
                   backgroundColor: palette.getBackC,
-                  foregroundColor: palette.getSecC,
+                  foregroundColor: palette.getMainC,
                   title: Text(pagesAppBars[activePage]["title"]),
                   centerTitle: true,
                 )
