@@ -1,9 +1,7 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_background_service/flutter_background_service.dart';
-import 'package:prayerapp/color_notifier.dart';
-import 'package:provider/provider.dart';
-// import 'package:shared_preferences/shared_preferences.dart';
-import "global.dart";
+import 'package:prayerapp/main.dart';
+// import 'package:flutter/cupertino.dart';
 
 class PrayerNotificationSettingsPage extends StatefulWidget {
   final String prayer;
@@ -16,219 +14,170 @@ class PrayerNotificationSettingsPage extends StatefulWidget {
 
 class _PrayerNotificationSettingsPageState
     extends State<PrayerNotificationSettingsPage> {
-  ValueNotifier beforeAdhanTime = ValueNotifier(-1);
-  ValueNotifier afterAdhanTime = ValueNotifier(-1);
-
+  late List beforeChoices;
+  late List afterChoices;
   @override
   void initState() {
+    beforeChoices = _getChoices();
+    afterChoices = beforeChoices;
+    afterChoices.remove(0);
     super.initState();
-
-    List data = getNotificationsData(widget.prayer);
-
-    setState(() {
-      beforeAdhanTime = ValueNotifier(data[0]);
-      afterAdhanTime = ValueNotifier(data[1]);
-    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ColorNotifier>(builder: (context, palette, child) {
-      return Scaffold(
-        backgroundColor: palette.getSecC,
-        appBar: AppBar(
-          foregroundColor: palette.getSecC,
-          backgroundColor: palette.getMainC,
-          title: Text("${widget.prayer} Notification"),
-          centerTitle: true,
-        ),
-        body: Column(
+    final palette = Palette.of(context);
+    return Scaffold(
+      backgroundColor: palette.secColor,
+      appBar: AppBar(
+        centerTitle: true,
+        backgroundColor: palette.mainColor,
+        foregroundColor: palette.secColor,
+        title: Text("${widget.prayer} Notification"),
+      ),
+      body: Container(
+        padding: const EdgeInsets.all(30),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            PickTimeRowWidget(
-              notifier: beforeAdhanTime,
-              min: 0,
-              // max: 30,
-              max: 720,
-              step: 1,
-              text: "Before Adhan",
+            Text(
+              "Choose When You Want To Be Notified Before And After Each Adhan",
+              style: TextStyle(color: palette.mainColor),
             ),
-            PickTimeRowWidget(
-              notifier: afterAdhanTime,
-              min: 1,
-              // max: 15,
-              max: 720,
-              step: 1,
-              text: "After Adhan",
+            const SizedBox(
+              height: 20,
             ),
-            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              MaterialButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  color: palette.getSecC,
-                  textColor: palette.getMainC,
-                  child: const Text("Cancel")),
-              const SizedBox(
-                width: 10,
-              ),
-              MaterialButton(
-                  onPressed: () {
-                    saveNotificationTimes(widget.prayer, beforeAdhanTime.value,
-                        afterAdhanTime.value);
-                    Navigator.of(context).pop();
-                  },
-                  color: palette.getMainC,
-                  textColor: palette.getSecC,
-                  child: const Text("Save"))
-            ])
+            NumberPicker(title: "Before", choices: beforeChoices),
+            const SizedBox(
+              height: 15,
+            ),
+            NumberPicker(title: "After", choices: afterChoices),
           ],
         ),
-      );
+      ),
+    );
+  }
+
+  List _getChoices() {
+    return List.generate(62, (i) {
+      return i - 1;
     });
   }
 }
 
-class PickTimeRowWidget extends StatefulWidget {
-  final ValueNotifier notifier;
-  final int min;
-  final int max;
-  final int step;
-  final String text;
-  const PickTimeRowWidget(
-      {super.key,
-      required this.notifier,
-      required this.min,
-      required this.max,
-      required this.step,
-      required this.text});
+// TODO: save this in the database
+class NumberPicker extends StatefulWidget {
+  final List choices;
+  final String title;
+  const NumberPicker({super.key, required this.choices, required this.title});
 
   @override
-  State<PickTimeRowWidget> createState() => _PickTimeRowWidgetState();
+  State<NumberPicker> createState() => _NumberPickerState();
 }
 
-class _PickTimeRowWidgetState extends State<PickTimeRowWidget> {
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<ColorNotifier>(builder: (context, palette, child) {
-      return InkWell(
-          onTap: () {
-            showDialog(
-                context: context,
-                builder: (context) {
-                  return Dialog(
-                    child: ValueListenableBuilder(
-                        valueListenable: widget.notifier,
-                        builder: (context, value, child) {
-                          return NumberPickerWidget(
-                            min: widget.min,
-                            max: widget.max,
-                            step: widget.step,
-                            value: widget.notifier,
-                          );
-                        }),
-                  );
-                });
-          },
-          child: Container(
-            padding: const EdgeInsets.all(10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  widget.text,
-                  style: TextStyle(color: palette.getMainC),
-                ),
-                ValueListenableBuilder(
-                    valueListenable: widget.notifier,
-                    builder: (context, value, child) {
-                      return Text(
-                        value >= widget.min ? "$value" : "OFF",
-                        style: TextStyle(color: palette.getMainC),
-                      );
-                    }),
-              ],
-            ),
-          ));
-    });
-  }
-}
-
-class NumberPickerWidget extends StatefulWidget {
-  final int min;
-  final int max;
-  final int step;
-  final ValueNotifier value;
-  const NumberPickerWidget(
-      {super.key,
-      required this.min,
-      required this.max,
-      required this.step,
-      required this.value});
-
-  @override
-  State<NumberPickerWidget> createState() => _NumberPickerWidgetState();
-}
-
-class _NumberPickerWidgetState extends State<NumberPickerWidget> {
-  late PageController controller;
+class _NumberPickerState extends State<NumberPicker> {
+  int active = 0;
 
   @override
   void initState() {
     super.initState();
-    controller = PageController(
-        initialPage:
-            ((widget.value.value - widget.min) / widget.step).floor() + 1);
   }
 
   @override
   Widget build(BuildContext context) {
-    int count = ((widget.max - widget.min) / widget.step).floor() + 2;
-    return Consumer<ColorNotifier>(builder: (context, palette, child) {
-      return Container(
-          decoration: BoxDecoration(
-              borderRadius: const BorderRadius.all(Radius.circular(20)),
-              color: palette.getMainC),
-          height: 40,
-          width: 40,
-          child: PageView.builder(
-              scrollDirection: Axis.vertical,
-              controller: controller,
-              onPageChanged: (i) {
-                widget.value.value = (i - 1) * widget.step + widget.min;
-              },
-              itemCount: count,
-              itemBuilder: (context, i) => Center(
-                    child: Text(
-                      i != 0 ? "${(i - 1) * widget.step + widget.min}" : "OFF",
-                      style: TextStyle(color: palette.getSecC),
-                    ),
-                  )));
+    final palette = Palette.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Notify ${widget.title}",
+          style:
+              TextStyle(color: palette.mainColor, fontWeight: FontWeight.bold),
+        ),
+        _numberInput(),
+        Text(
+          active == 0
+              ? "You Won't Receive Notifications ${widget.title} The Adhan"
+              : "You Will Receive Notification ${widget.title} The Adhan By ${widget.choices[active]} Minute(s)",
+          style: TextStyle(
+              color: Color.lerp(palette.mainColor, palette.secColor, 0.3)),
+        )
+      ],
+    );
+  }
+
+  Widget _numberInput() {
+    int choice = widget.choices[active];
+    return Row(
+      children: [
+        IconButton(
+            color: Palette.of(context).mainColor,
+            onPressed: active != 0
+                ? () {
+                    changeActive(false);
+                  }
+                : null,
+            icon: const Icon(Icons.remove)),
+        InkWell(
+          onTap: _showPicker,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+                border: Border.fromBorderSide(
+                    BorderSide(color: Palette.of(context).backColor)),
+                borderRadius: const BorderRadius.all(Radius.circular(5))),
+            child: Text(
+              choice < 0 ? "OFF" : "${choice.toString()} Minute(s)",
+              style: TextStyle(color: Palette.of(context).mainColor),
+            ),
+          ),
+        ),
+        IconButton(
+            color: Palette.of(context).mainColor,
+            onPressed: active < widget.choices.length - 1
+                ? () {
+                    changeActive(true);
+                  }
+                : null,
+            icon: const Icon(Icons.add)),
+      ],
+    );
+  }
+
+  void changeActive(bool increase) {
+    setState(() {
+      active += (increase ? 1 : -1);
+    });
+  }
+
+  void _showPicker() {
+    showCupertinoModalPopup(
+        context: context,
+        builder: (_) {
+          return Container(
+            color: Palette.of(context).secColor,
+            height: 300,
+            child: CupertinoPicker(
+              onSelectedItemChanged: _setActive,
+              itemExtent: 50,
+              children: [
+                ...widget.choices.map((e) {
+                  return Text(
+                    e == -1 ? "OFF" : e.toString(),
+                    style: TextStyle(color: Palette.of(context).mainColor),
+                  );
+                })
+              ],
+            ),
+          );
+        });
+  }
+
+  void _setActive(int v) {
+    setState(() {
+      active = v;
     });
   }
 }
 
-void saveNotificationTimes(String prayer, int before, int after) {
-  String keyBefore = "${prayer}_notification_b";
-  String keyAfter = "${prayer}_notification_a";
-
-  Prefs.prefs.setInt(keyBefore, before);
-  Prefs.prefs.setInt(keyAfter, after);
-
-  FlutterBackgroundService().invoke("setAsForeground");
-}
-
-List getNotificationsData(String prayer) {
-  String keyBefore = "${prayer}_notification_b";
-  String keyAfter = "${prayer}_notification_a";
-
-  if (Prefs.prefs.containsKey(keyBefore)) {
-    Prefs.prefs.setInt(keyBefore, -1);
-  }
-
-  if (Prefs.prefs.containsKey(keyAfter)) {
-    Prefs.prefs.setInt(keyAfter, -1);
-  }
-  if (prayer == "Fajr") {}
-
-  return [Prefs.prefs.getInt(keyBefore), Prefs.prefs.getInt(keyAfter)];
-}
+class NotificationSettingsModel {}
