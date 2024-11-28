@@ -84,6 +84,9 @@ class PrayerTimePageState extends State<PrayerTimePage> {
       if (prayersOfDay.isEmpty) {
         await _fetchPrayerTimesFromApi(date);
         prayersOfDay = await Db().getPrayersOfDay(date);
+        if (prayersOfDay.isEmpty) {
+          continue;
+        }
       }
       List dayTime = [];
       List oneDayRealDates = [];
@@ -115,21 +118,17 @@ class PrayerTimePageState extends State<PrayerTimePage> {
     });
   }
 
-  Future<List> _fetchPrayerTimesFromApi(DateTime date) async {
+  Future<void> _fetchPrayerTimesFromApi(DateTime date) async {
     String americanDateAsString = CustomDateFormat.getShortDate(date, true);
     String normalDateAsString = CustomDateFormat.getShortDate(date, false);
-    List daysTime = [];
     Uri url = _getApiUri(normalDateAsString);
 
     try {
       List dayWrap = await _sendApiRequest(url, americanDateAsString);
       Db().insertPrayerDay(dayWrap);
-
-      daysTime.add(dayWrap);
     } catch (e) {
       debugPrint("Error: ${e.toString()}");
     }
-    return daysTime;
   }
 
   Future<List> _sendApiRequest(Uri url, String americanDateAsString) async {
