@@ -17,7 +17,8 @@ class VibrationSection extends StatefulWidget {
 class _VibrationSectionState extends State<VibrationSection> {
   @override
   void initState() {
-    vibrateRadio = TasbihSettingsModel.isModeAt ? "on" : "every";
+    TasbihSettingsModel.init();
+    vibrateRadio = TasbihSettingsModel.isModeAt! ? "on" : "every";
     super.initState();
   }
 
@@ -46,7 +47,7 @@ class _VibrationSectionState extends State<VibrationSection> {
                   activeColor: palette.mainColor,
                   inactiveThumbColor: palette.mainColor,
                   inactiveTrackColor: palette.secColor,
-                  value: TasbihSettingsModel.isEnabled,
+                  value: TasbihSettingsModel.isEnabled!,
                   onChanged: _toggleVibration),
             ),
           ],
@@ -91,7 +92,9 @@ class _VibrationSectionState extends State<VibrationSection> {
       ],
       icon: Icon(
         Icons.vibration_outlined,
-        color: Palette.of(context).mainColor,
+        color: TasbihSettingsModel.isEnabled!
+            ? Palette.of(context).mainColor
+            : Palette.of(context).backColor,
       ),
     );
   }

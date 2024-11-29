@@ -77,8 +77,8 @@ class _TasbihSettingsPageState extends State<TasbihSettingsPage> {
   void updateSettings() {
     Prefs.prefs.setString(PrefsKeys.vibrateNumber, vibrationController.text);
     Prefs.prefs
-        .setBool(PrefsKeys.isVibrationModeAt, TasbihSettingsModel.isModeAt);
-    Prefs.prefs.setBool(PrefsKeys.isVibrateOn, TasbihSettingsModel.isEnabled);
+        .setBool(PrefsKeys.isVibrationModeAt, TasbihSettingsModel.isModeAt!);
+    Prefs.prefs.setBool(PrefsKeys.isVibrateOn, TasbihSettingsModel.isEnabled!);
     Prefs.prefs.setInt(
         PrefsKeys.tasbihDailyProgress, int.parse(_progressController.text));
   }

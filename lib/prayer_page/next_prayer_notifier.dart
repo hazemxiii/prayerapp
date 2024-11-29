@@ -11,6 +11,9 @@ class NextPrayerNot extends ChangeNotifier {
   void updateNextPrayer() async {
     final r = await Db().getNextPrayer();
     _name = r['name'];
+    if (_name == "Dhuhr" && DateTime.now().weekday == DateTime.friday) {
+      _name = "Jumu'a";
+    }
     _date = r['date'];
     _percentageLeft = r['percentageLeft'];
     _time = r['time'];

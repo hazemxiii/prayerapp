@@ -14,7 +14,6 @@ class SettingsPage extends StatefulWidget {
   State<SettingsPage> createState() => _SettingsPageState();
 }
 
-// TODO: move widget to their correct files
 class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
@@ -133,8 +132,6 @@ class _HijriCalibrationSectionState extends State<HijriCalibrationSection> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 0),
               decoration: const BoxDecoration(
-                  // border: Border.fromBorderSide(
-                  //     BorderSide(color: Palette.of(context).backColor)),
                   borderRadius: BorderRadius.all(Radius.circular(5))),
               child: DropdownButton(
                   style: TextStyle(
