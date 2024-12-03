@@ -168,8 +168,11 @@ class _PrayerWidgetState extends State<PrayerWidget> {
     return InkWell(
       onLongPress: () {
         Navigator.of(context).push(MaterialPageRoute(
-            builder: (context) =>
-                PrayerNotificationSettingsPage(prayer: widget.name)));
+            builder: (context) => ChangeNotifierProvider(
+                  create: (context) =>
+                      PrayerNotificationSettingsModel(widget.name),
+                  child: PrayerNotificationSettingsPage(prayer: widget.name),
+                )));
       },
       child: Consumer<NextPrayerNot>(builder: (context, nextPrayerNot, _) {
         bool isNext = nextPrayerNot.name == widget.name &&
