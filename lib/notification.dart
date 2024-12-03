@@ -1,7 +1,26 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:prayerapp/global.dart';
 import 'package:prayerapp/main.dart';
-// import 'package:flutter/cupertino.dart';
+import 'package:provider/provider.dart';
+
+class PrayerNotificationSettingsModel extends ChangeNotifier {
+  final String prayer;
+  final List data;
+
+  PrayerNotificationSettingsModel(this.prayer)
+      : data = Prefs().getPrayerNotification(prayer);
+
+  void updateData(int index, bool isBefore) {
+    data[isBefore ? 0 : 1] = index;
+    notifyListeners();
+  }
+
+  void saveData(BuildContext context) {
+    Prefs().setPrayerNotification(prayer, data);
+    Navigator.of(context).pop();
+  }
+}
 
 class PrayerNotificationSettingsPage extends StatefulWidget {
   final String prayer;
@@ -19,7 +38,7 @@ class _PrayerNotificationSettingsPageState
   @override
   void initState() {
     beforeChoices = _getChoices();
-    afterChoices = beforeChoices;
+    afterChoices = [...beforeChoices];
     afterChoices.remove(0);
     super.initState();
   }
@@ -34,6 +53,13 @@ class _PrayerNotificationSettingsPageState
         backgroundColor: palette.mainColor,
         foregroundColor: palette.secColor,
         title: Text("${widget.prayer} Notification"),
+        actions: [
+          IconButton(
+              onPressed: () => context
+                  .read<PrayerNotificationSettingsModel>()
+                  .saveData(context),
+              icon: const Icon(Icons.save))
+        ],
       ),
       body: Container(
         padding: const EdgeInsets.all(30),
@@ -47,11 +73,25 @@ class _PrayerNotificationSettingsPageState
             const SizedBox(
               height: 20,
             ),
-            NumberPicker(title: "Before", choices: beforeChoices),
+            Consumer<PrayerNotificationSettingsModel>(
+              builder: (context, state, _) {
+                return NumberPicker(
+                    isBefore: true,
+                    choices: beforeChoices,
+                    active: state.data[0]);
+              },
+            ),
             const SizedBox(
               height: 15,
             ),
-            NumberPicker(title: "After", choices: afterChoices),
+            Consumer<PrayerNotificationSettingsModel>(
+              builder: (context, state, _) {
+                return NumberPicker(
+                    isBefore: false,
+                    choices: afterChoices,
+                    active: state.data[1]);
+              },
+            ),
           ],
         ),
       ),
@@ -65,40 +105,39 @@ class _PrayerNotificationSettingsPageState
   }
 }
 
-// TODO: save this in the database
 class NumberPicker extends StatefulWidget {
   final List choices;
-  final String title;
-  const NumberPicker({super.key, required this.choices, required this.title});
+  final bool isBefore;
+  final int active;
+  const NumberPicker(
+      {super.key,
+      required this.choices,
+      required this.active,
+      required this.isBefore});
 
   @override
   State<NumberPicker> createState() => _NumberPickerState();
 }
 
 class _NumberPickerState extends State<NumberPicker> {
-  int active = 0;
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
   @override
   Widget build(BuildContext context) {
+    String title = widget.isBefore ? "Before" : "After";
     final palette = Palette.of(context);
+    int choice = widget.choices[widget.active];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Notify ${widget.title}",
+          "Notify $title",
           style:
               TextStyle(color: palette.mainColor, fontWeight: FontWeight.bold),
         ),
         _numberInput(),
         Text(
-          active == 0
-              ? "You Won't Receive Notifications ${widget.title} The Adhan"
-              : "You Will Receive Notification ${widget.title} The Adhan By ${widget.choices[active]} Minute(s)",
+          widget.active == 0
+              ? "You Won't Receive Notifications $title The Adhan"
+              : "You Will Receive Notification $title The Adhan By $choice Minute(s)",
           style: TextStyle(
               color: Color.lerp(palette.mainColor, palette.secColor, 0.3)),
         )
@@ -107,12 +146,12 @@ class _NumberPickerState extends State<NumberPicker> {
   }
 
   Widget _numberInput() {
-    int choice = widget.choices[active];
+    int choice = widget.choices[widget.active];
     return Row(
       children: [
         IconButton(
             color: Palette.of(context).mainColor,
-            onPressed: active != 0
+            onPressed: widget.active != 0
                 ? () {
                     changeActive(false);
                   }
@@ -134,7 +173,7 @@ class _NumberPickerState extends State<NumberPicker> {
         ),
         IconButton(
             color: Palette.of(context).mainColor,
-            onPressed: active < widget.choices.length - 1
+            onPressed: widget.active < widget.choices.length - 1
                 ? () {
                     changeActive(true);
                   }
@@ -145,9 +184,9 @@ class _NumberPickerState extends State<NumberPicker> {
   }
 
   void changeActive(bool increase) {
-    setState(() {
-      active += (increase ? 1 : -1);
-    });
+    final model = context.read<PrayerNotificationSettingsModel>();
+    model.updateData(model.data[widget.isBefore ? 0 : 1] + (increase ? 1 : -1),
+        widget.isBefore);
   }
 
   void _showPicker() {
@@ -174,10 +213,7 @@ class _NumberPickerState extends State<NumberPicker> {
   }
 
   void _setActive(int v) {
-    setState(() {
-      active = v;
-    });
+    final model = context.read<PrayerNotificationSettingsModel>();
+    model.updateData(v, widget.isBefore);
   }
 }
-
-class NotificationSettingsModel {}

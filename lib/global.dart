@@ -4,7 +4,7 @@ import "package:flutter/material.dart";
 import "package:shared_preferences/shared_preferences.dart";
 
 class Constants {
-  static Map prayerNames = {
+  static const Map prayerNames = {
     0: "Fajr",
     1: "Sunrise",
     2: "Dhuhr",
@@ -12,7 +12,7 @@ class Constants {
     4: "Maghrib",
     5: "Isha'a"
   };
-  static Map prayerIcons = {
+  static const Map prayerIcons = {
     0: Icons.wb_sunny_outlined,
     1: Icons.wb_sunny_outlined,
     2: Icons.wb_sunny_outlined,
@@ -73,6 +73,7 @@ class PrefsKeys {
   static const String isVibrationModeAt = "isVibrationModeAt";
   static const String adjustment = "adjustment";
   static const String tasbihDailyProgress = "tasbihDailyProgress";
+  static const String prayerNotification = "prayerNotification";
 }
 
 class Prefs {
@@ -135,6 +136,21 @@ class Prefs {
     if (!Prefs.prefs.containsKey(PrefsKeys.tasbihDailyProgress)) {
       Prefs.prefs.setInt(PrefsKeys.tasbihDailyProgress, 100);
     }
+  }
+
+  List<int> getPrayerNotification(String prayer) {
+    Map allData =
+        jsonDecode(prefs.getString(PrefsKeys.prayerNotification) ?? "{}");
+    return List<int>.from((allData[prayer] ?? [0, 0]));
+  }
+
+  void setPrayerNotification(String prayer, List time) {
+    Map allData =
+        jsonDecode(prefs.getString(PrefsKeys.prayerNotification) ?? "{}");
+
+    allData[prayer] = time;
+
+    prefs.setString(PrefsKeys.prayerNotification, jsonEncode(allData));
   }
 
   void printPrefs() {
