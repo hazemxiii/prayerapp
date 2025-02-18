@@ -62,7 +62,7 @@ void onStart(ServiceInstance service) async {
 
   service.on("start").listen((event) {});
 
-  Timer.periodic(const Duration(seconds: 1), (timer) {
-    debugPrint("service is successfully running ${DateTime.now().second}");
-  });
+  // Timer.periodic(const Duration(seconds: 1), (timer) {
+  //   debugPrint("service is successfully running ${DateTime.now().second}");
+  // });
 }

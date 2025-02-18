@@ -20,8 +20,8 @@ class _LocationSettingsPageState extends State<LocationSettingsPage> {
     loController = TextEditingController();
     laController = TextEditingController();
 
-    laController.text = LocationHandler.location.la.toString();
-    loController.text = LocationHandler.location.lo.toString();
+    laController.text = (LocationHandler.location.la ?? "").toString();
+    loController.text = (LocationHandler.location.lo ?? "").toString();
     super.initState();
   }
 

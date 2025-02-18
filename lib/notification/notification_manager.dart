@@ -35,6 +35,7 @@ class NotificationManager {
       String title, String text, Duration delay, bool isBefore) async {
     try {
       int id = _getPrayerID(title, isBefore);
+      flutterLocalNotificationsPlugin.cancel(id);
       String prayerKey = "${title}_${isBefore ? "b" : "a"}";
       AndroidNotificationDetails androidNotificationDetails =
           AndroidNotificationDetails(prayerKey, title,
@@ -52,6 +53,7 @@ class NotificationManager {
           tz.TZDateTime.now(tz.local).add(delay),
           NotificationDetails(android: androidNotificationDetails),
           androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          matchDateTimeComponents: DateTimeComponents.time,
           uiLocalNotificationDateInterpretation:
               UILocalNotificationDateInterpretation.absoluteTime);
     } catch (e) {

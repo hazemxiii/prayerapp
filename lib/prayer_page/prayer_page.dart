@@ -36,9 +36,8 @@ class PrayerTimePageState extends State<PrayerTimePage> {
         future: loadPrayerTime(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.done &&
-              snapshot.hasData) {
+              snapshot.data.isNotEmpty) {
             List prayerTimes = snapshot.data!['times'];
-
             if (prayerTimes.isNotEmpty) {
               return Column(
                 children: [

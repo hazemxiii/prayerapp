@@ -140,6 +140,6 @@ class Location {
 
   String get city => _city;
   String get country => _country;
-  double get la => _la!;
-  double get lo => _lo!;
+  double? get la => _la;
+  double? get lo => _lo;
 }
