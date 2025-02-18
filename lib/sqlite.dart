@@ -99,9 +99,11 @@ class Db {
         "SELECT * FROM prayers WHERE displayDate == '${CustomDateFormat.getShortDate(date, true)}'");
   }
 
-  Future<Map> _getNextPrayerData(String date, String time) async {
+  Future<Map> getNextPrayerData(String date, String time,
+      {String? prayer}) async {
     List data = await database.rawQuery(
-        "SELECT * FROM prayers WHERE (date == '$date' and time > '$time' or date>'$date') order by date limit 1");
+        "SELECT * FROM prayers WHERE ${prayer == null ? '' : "prayerName=? AND"} (date == '$date' and time > '$time' or date>'$date') order by date limit 1",
+        prayer == null ? null : [prayer]);
     if (data.isEmpty) {
       return {};
     }
@@ -124,7 +126,7 @@ class Db {
   Future<Map> getNextPrayer() async {
     String date = CustomDateFormat.getShortDate(DateTime.now(), true);
     String time = CustomDateFormat.timeToString(TimeOfDay.now());
-    Map nextPrayer = await _getNextPrayerData(date, time);
+    Map nextPrayer = await getNextPrayerData(date, time);
     Map lastPrayer = await _getLastPrayerData(date, time);
 
     if (nextPrayer.isEmpty || lastPrayer.isEmpty) {

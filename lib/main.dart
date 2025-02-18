@@ -3,10 +3,13 @@ import "dart:io";
 import "package:flutter/material.dart";
 import "package:prayerapp/color_notifier.dart";
 import "package:prayerapp/location_class/location_class.dart";
+import "package:prayerapp/notification/notification_manager.dart";
 import "package:prayerapp/prayer_page/next_prayer_notifier.dart";
 import "package:prayerapp/prayer_page/prayer_page.dart";
+import "package:prayerapp/qiblah.dart";
 import "package:prayerapp/sqlite.dart";
 import "package:prayerapp/tasbih_page/tasbih_notifier.dart";
+import "package:workmanager/workmanager.dart";
 // import "qiblah.dart";
 import "tasbih_page/tasbih_page.dart";
 import "settings_page/settings.dart";
@@ -14,8 +17,70 @@ import 'package:provider/provider.dart';
 import "global.dart";
 import "service.dart";
 
+@pragma('vm:entry-point')
+void callbackDispatcher() {
+  Workmanager().executeTask((task, inputData) async {
+    await Prefs.initPrefs();
+    await Db().init();
+    List prayers = Constants.prayerNames.values.toList();
+    DateTime now = DateTime.now();
+    for (int i = 0; i < prayers.length; i++) {
+      String prayer = prayers[i];
+      List<int> notificationTimes = Prefs().getPrayerNotification(prayer);
+      int notificationBeforeIndex = notificationTimes[0];
+      int notificationAfterIndex = notificationTimes[1];
+
+      final prayerData = await Db().getNextPrayerData(
+          CustomDateFormat.getShortDate(now, true),
+          CustomDateFormat.timeToString(TimeOfDay.fromDateTime(now)),
+          prayer: prayer);
+
+      final prayerDate =
+          DateTime.tryParse("${prayerData['date']} ${prayerData['time']}");
+      if (prayerDate == null) {
+        return Future.value(false);
+      }
+      if (notificationBeforeIndex != 0) {
+        setNotification(
+            prayer, true, now, notificationBeforeIndex - 1, prayerDate);
+      }
+      if (notificationAfterIndex != 0) {
+        setNotification(prayer, false, now, notificationAfterIndex, prayerDate);
+      }
+    }
+
+    return Future.value(true);
+  });
+}
+
+void setNotification(String prayer, bool isBefore, DateTime now,
+    int notificationTime, DateTime prayerDate) {
+  DateTime notificationDate = prayerDate.copyWith();
+  if (isBefore) {
+    notificationDate =
+        notificationDate.subtract(Duration(minutes: notificationTime));
+  } else {
+    notificationDate =
+        notificationDate.add(Duration(minutes: notificationTime));
+  }
+  Duration timeLeft = notificationDate.difference(now);
+
+  NotificationManager().notifyAfter(
+      prayer,
+      "$prayer ${isBefore ? "Adhan" : "Iqamah"} In $notificationTime Minutes",
+      timeLeft,
+      isBefore);
+  debugPrint(
+      "$prayer ${isBefore ? "before" : "After"} ${notificationDate.toString()}");
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  Workmanager().initialize(
+      callbackDispatcher, // The top level function, aka callbackDispatcher
+      isInDebugMode:
+          false // If enabled it will post a notification whenever the task is running. Handy for debugging tasks
+      );
   await Prefs.initPrefs();
 
   LocationHandler.location.initFromPrefs();
@@ -74,8 +139,8 @@ class _MainPage extends State<MainPage> {
     pages = [
       const PrayerTimePage(),
       const TasbihPage(),
-      // const QiblahPage(),
-      const Placeholder(),
+      const QiblahPage(),
+      // const Placeholder(),
       const SettingsPage(),
     ];
 

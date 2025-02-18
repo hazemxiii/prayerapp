@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:prayerapp/global.dart';
 import 'package:prayerapp/main.dart';
-import 'package:prayerapp/notification.dart';
+import 'package:prayerapp/notification/notification.dart';
 import 'package:prayerapp/prayer_page/next_prayer_notifier.dart';
 import 'package:provider/provider.dart';
 

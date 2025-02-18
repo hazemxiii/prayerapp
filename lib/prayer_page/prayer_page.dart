@@ -8,8 +8,6 @@ import 'package:prayerapp/main.dart';
 import 'package:prayerapp/prayer_page/custom_widgets.dart';
 import 'package:prayerapp/sqlite.dart';
 
-// TODO: new icons
-
 class PrayerTimePage extends StatefulWidget {
   const PrayerTimePage({super.key});
 
@@ -111,11 +109,16 @@ class PrayerTimePageState extends State<PrayerTimePage> {
 
   Uri _getApiUri(String normalDateAsString) {
     return Uri.https(
-        "api.aladhan.com", "/v1/timingsByCity/$normalDateAsString", {
-      "city": Prefs.prefs.getString(PrefsKeys.city),
-      "country": Prefs.prefs.getString(PrefsKeys.country),
-      "adjustment": Prefs.prefs.getInt(PrefsKeys.adjustment).toString()
-    });
+        // "api.aladhan.com", "/v1/timingsByCity/$normalDateAsString", {
+        "api.aladhan.com",
+        "/v1/timings/$normalDateAsString",
+        {
+          // "city": Prefs.prefs.getString(PrefsKeys.city),
+          // "country": Prefs.prefs.getString(PrefsKeys.country),
+          "latitude": Prefs.prefs.getDouble(PrefsKeys.la).toString(),
+          "longitude": Prefs.prefs.getDouble(PrefsKeys.lo).toString(),
+          "adjustment": Prefs.prefs.getInt(PrefsKeys.adjustment).toString()
+        });
   }
 
   Future<void> _fetchPrayerTimesFromApi(DateTime date) async {
