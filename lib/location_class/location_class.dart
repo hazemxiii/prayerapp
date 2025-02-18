@@ -16,26 +16,24 @@ class Location {
   String _country = "";
 
   void saveToPrefs() {
-    if (_la != null && _lo != null) {
-      Prefs.prefs.setDouble(PrefsKeys.la, _la!);
-      Prefs.prefs.setDouble(PrefsKeys.lo, _lo!);
-    }
+    Prefs.prefs.setDouble(PrefsKeys.la, _la!);
+    Prefs.prefs.setDouble(PrefsKeys.lo, _lo!);
     Prefs.prefs.setString(PrefsKeys.city, _city);
     Prefs.prefs.setString(PrefsKeys.country, _country);
   }
 
-  void userEnteredAddress(String country, String city) {
-    _country = country;
-    _city = city;
+  void userEnteredAddress(double la, double lo) {
+    _la = la;
+    _lo = lo;
     Prefs.prefs.setString(PrefsKeys.prayers, jsonEncode({}));
     saveToPrefs();
   }
 
   bool isLocationEmpty() {
-    return _city == "" || _country == "";
+    return _la == null || _lo == null;
   }
 
-  Future<void> getFromGps(BuildContext context) async {
+  Future<void> getFromGps(BuildContext context, {Duration? limit}) async {
     bool serviceEnabled;
 
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -44,16 +42,18 @@ class Location {
       return;
     }
 
-    // ignore: use_build_context_synchronously
     if (!await askPermission()) {
       return;
     }
-
-    Position position = await Geolocator.getCurrentPosition();
-    _la = position.latitude;
-    _lo = position.longitude;
-    // ignore: use_build_context_synchronously
-    getAddressFromCoordinates();
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+          locationSettings: LocationSettings(timeLimit: limit));
+      _la = position.latitude;
+      _lo = position.longitude;
+      getAddressFromCoordinates();
+    } catch (e) {
+      debugPrint("Error getting location ${e.toString()}");
+    }
   }
 
   void getAddressFromCoordinates() async {
@@ -62,7 +62,8 @@ class Location {
       _country = address[0].country ?? "";
       _city = address[0].administrativeArea ?? "";
     } catch (e) {
-      // ignore: use_build_context_synchronously
+      _country = "";
+      _city = "";
       debugPrint("Error getting address: ${e.toString()}");
     }
   }

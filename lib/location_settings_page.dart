@@ -12,16 +12,16 @@ class LocationSettingsPage extends StatefulWidget {
 }
 
 class _LocationSettingsPageState extends State<LocationSettingsPage> {
-  late TextEditingController cityController;
-  late TextEditingController countryController;
+  late TextEditingController loController;
+  late TextEditingController laController;
 
   @override
   void initState() {
-    cityController = TextEditingController();
-    countryController = TextEditingController();
+    loController = TextEditingController();
+    laController = TextEditingController();
 
-    countryController.text = LocationHandler.location.country;
-    cityController.text = LocationHandler.location.city;
+    laController.text = LocationHandler.location.la.toString();
+    loController.text = LocationHandler.location.lo.toString();
     super.initState();
   }
 
@@ -63,13 +63,13 @@ class _LocationSettingsPageState extends State<LocationSettingsPage> {
               height: 20,
             ),
             LocationInputWidget(
-                text: "City",
+                text: "Latitude",
                 color: palette.mainColor,
-                controller: cityController),
+                controller: loController),
             LocationInputWidget(
-                text: "Country",
+                text: "Longitude",
                 color: palette.mainColor,
-                controller: countryController),
+                controller: laController),
             Column(
               children: [
                 MaterialButton(
@@ -117,16 +117,20 @@ class _LocationSettingsPageState extends State<LocationSettingsPage> {
   void _getLocationFromGPS() async {
     await LocationHandler.location.getFromGps(context);
     setState(() {
-      countryController.text = LocationHandler.location.country;
-      cityController.text = LocationHandler.location.city;
+      laController.text = LocationHandler.location.la.toString();
+      loController.text = LocationHandler.location.lo.toString();
     });
   }
 
   void onSave() {
-    LocationHandler.location
-        .userEnteredAddress(countryController.text, cityController.text);
-    Db().deletePrayers();
-    Navigator.of(context).pop();
+    double? la = double.tryParse(laController.text);
+    double? lo = double.tryParse(loController.text);
+    if (la != null && lo != null) {
+      LocationHandler.location.userEnteredAddress(
+          double.parse(laController.text), double.parse(loController.text));
+      Db().deletePrayers();
+      Navigator.of(context).pop();
+    }
   }
 }
 

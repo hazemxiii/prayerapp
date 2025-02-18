@@ -6,6 +6,7 @@ import "package:prayerapp/location_class/location_class.dart";
 import "package:prayerapp/notification/notification_manager.dart";
 import "package:prayerapp/prayer_page/next_prayer_notifier.dart";
 import "package:prayerapp/prayer_page/prayer_page.dart";
+import "package:prayerapp/qiblah.dart";
 import "package:prayerapp/sqlite.dart";
 import "package:prayerapp/tasbih_page/tasbih_notifier.dart";
 import "package:workmanager/workmanager.dart";
@@ -40,14 +41,6 @@ void callbackDispatcher() {
         return Future.value(false);
       }
       if (notificationBeforeIndex != 0) {
-        // int notificationBefore = notificationBeforeIndex - 1;
-        // DateTime notificationDate = prayerDate.copyWith();
-        // notificationDate =
-        //     notificationDate.subtract(Duration(minutes: notificationBefore));
-        // Duration timeLeft = notificationDate.difference(now);
-
-        // NotificationManager().notifyAfter(prayer,
-        //     "$prayer Adhan In $notificationBefore Minutes", timeLeft, true);
         setNotification(
             prayer, true, now, notificationBeforeIndex - 1, prayerDate);
       }
@@ -77,6 +70,8 @@ void setNotification(String prayer, bool isBefore, DateTime now,
       "$prayer ${isBefore ? "Adhan" : "Iqamah"} In $notificationTime Minutes",
       timeLeft,
       isBefore);
+  debugPrint(
+      "$prayer ${isBefore ? "before" : "After"} ${notificationDate.toString()}");
 }
 
 void main() async {
@@ -84,16 +79,8 @@ void main() async {
   Workmanager().initialize(
       callbackDispatcher, // The top level function, aka callbackDispatcher
       isInDebugMode:
-          true // If enabled it will post a notification whenever the task is running. Handy for debugging tasks
+          false // If enabled it will post a notification whenever the task is running. Handy for debugging tasks
       );
-  // Workmanager().registerPeriodicTask(
-  //   "fetchPrayerNotification",
-  //   "fetchPrayerNotification",
-  //   existingWorkPolicy: ExistingWorkPolicy.replace,
-  //   frequency: const Duration(hours: 1),
-  // );
-
-  // Workmanager().registerOneOffTask("uniqueName", "taskName");
   await Prefs.initPrefs();
 
   LocationHandler.location.initFromPrefs();
@@ -152,8 +139,8 @@ class _MainPage extends State<MainPage> {
     pages = [
       const PrayerTimePage(),
       const TasbihPage(),
-      // const QiblahPage(),
-      const Placeholder(),
+      const QiblahPage(),
+      // const Placeholder(),
       const SettingsPage(),
     ];
 

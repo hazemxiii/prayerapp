@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:prayerapp/global.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -24,6 +23,7 @@ class NotificationManager {
             channelDescription: 'Notifies user when prayer comes',
             importance: Importance.max,
             priority: Priority.high,
+            icon: "notification_icon",
             ticker: 'ticker');
     const NotificationDetails notificationDetails =
         NotificationDetails(android: androidNotificationDetails);
@@ -33,21 +33,30 @@ class NotificationManager {
 
   void notifyAfter(
       String title, String text, Duration delay, bool isBefore) async {
-    String prayerKey = "${title}_${isBefore ? "b" : "a"}";
-    int id = _getPrayerID(prayerKey, isBefore);
-    tz.initializeTimeZones();
-    tz.setLocalLocation(tz.getLocation(DateTime.now().timeZoneName));
-    await flutterLocalNotificationsPlugin.zonedSchedule(
-        id,
-        title,
-        text,
-        tz.TZDateTime.now(tz.local).add(delay),
-        NotificationDetails(
-            android: AndroidNotificationDetails(prayerKey, title,
-                channelDescription: 'Prayer Notification')),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime);
+    try {
+      int id = _getPrayerID(title, isBefore);
+      String prayerKey = "${title}_${isBefore ? "b" : "a"}";
+      AndroidNotificationDetails androidNotificationDetails =
+          AndroidNotificationDetails(prayerKey, title,
+              channelDescription: 'Notifies user when prayer comes',
+              importance: Importance.max,
+              priority: Priority.high,
+              icon: "notification_icon",
+              ticker: 'ticker');
+      tz.initializeTimeZones();
+      tz.setLocalLocation(tz.getLocation(DateTime.now().timeZoneName));
+      await flutterLocalNotificationsPlugin.zonedSchedule(
+          id,
+          title,
+          text,
+          tz.TZDateTime.now(tz.local).add(delay),
+          NotificationDetails(android: androidNotificationDetails),
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime);
+    } catch (e) {
+      print(e.toString());
+    }
   }
 
   int _getPrayerID(String prayer, bool isBefore) {
@@ -59,12 +68,15 @@ class NotificationManager {
     return isBefore ? index : index + 100;
   }
 
-  void show() async {
-    final List<PendingNotificationRequest> pendingNotificationRequests =
-        await flutterLocalNotificationsPlugin.pendingNotificationRequests();
-
-    for (int i = 0; i < pendingNotificationRequests.length; i++) {
-      debugPrint(pendingNotificationRequests[i].id.toString());
-    }
-  }
+  // Future<bool> _isNotificationPending(int id) async {
+  //   final List<PendingNotificationRequest> pendingNotificationRequests =
+  //       await flutterLocalNotificationsPlugin.pendingNotificationRequests();
+  //   for (int i = 0; i < pendingNotificationRequests.length; i++) {
+  //     if (pendingNotificationRequests[i].id == id) {
+  //       pendingNotificationRequests[i];
+  //       return true;
+  //     }
+  //   }
+  //   return false;
+  // }
 }
