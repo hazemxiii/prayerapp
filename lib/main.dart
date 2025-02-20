@@ -24,30 +24,39 @@ void callbackDispatcher() {
     await Db().init();
     List prayers = Constants.prayerNames.values.toList();
     DateTime now = DateTime.now();
-    for (int i = 0; i < prayers.length; i++) {
-      String prayer = prayers[i];
-      List<int> notificationTimes = Prefs().getPrayerNotification(prayer);
-      int notificationBeforeIndex = notificationTimes[0];
-      int notificationAfterIndex = notificationTimes[1];
+    try {
+      for (int i = 0; i < prayers.length; i++) {
+        String prayer = prayers[i];
+        List<int> notificationTimes = Prefs().getPrayerNotification(prayer);
+        int notificationBeforeIndex = notificationTimes[0];
+        int notificationAfterIndex = notificationTimes[1];
 
-      final prayerData = await Db().getNextPrayerData(
-          CustomDateFormat.getShortDate(now, true),
-          CustomDateFormat.timeToString(TimeOfDay.fromDateTime(now)),
-          prayer: prayer);
+        final prayerData = await Db().getNextPrayerData(
+            CustomDateFormat.getShortDate(now, true),
+            CustomDateFormat.timeToString(TimeOfDay.fromDateTime(now)),
+            prayer: prayer);
 
-      final prayerDate =
-          DateTime.tryParse("${prayerData['date']} ${prayerData['time']}");
-      if (prayerDate == null) {
-        return Future.value(false);
+        final prayerDate =
+            DateTime.tryParse("${prayerData['date']} ${prayerData['time']}");
+        if (prayerDate == null) {
+          return Future.value(false);
+        }
+        if (notificationBeforeIndex != 0) {
+          setNotification(
+              prayer, true, now, notificationBeforeIndex - 1, prayerDate);
+        }
+        if (notificationAfterIndex != 0) {
+          setNotification(
+              prayer, false, now, notificationAfterIndex, prayerDate);
+        }
       }
-      if (notificationBeforeIndex != 0) {
-        setNotification(
-            prayer, true, now, notificationBeforeIndex - 1, prayerDate);
-      }
-      if (notificationAfterIndex != 0) {
-        setNotification(prayer, false, now, notificationAfterIndex, prayerDate);
-      }
+    } catch (e) {
+      NotificationManager().notifyAfter(
+          "Notification", "Fail: ${e.toString()}", const Duration(seconds: 1));
     }
+
+    NotificationManager()
+        .notifyAfter("Notification", "Saved", const Duration(seconds: 1));
 
     return Future.value(true);
   });
@@ -69,18 +78,20 @@ void setNotification(String prayer, bool isBefore, DateTime now,
       prayer,
       "$prayer ${isBefore ? "Adhan" : "Iqamah"} In $notificationTime Minutes",
       timeLeft,
-      isBefore);
+      isBefore: isBefore);
   debugPrint(
       "$prayer ${isBefore ? "before" : "After"} ${notificationDate.toString()}");
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  Workmanager().initialize(
-      callbackDispatcher, // The top level function, aka callbackDispatcher
-      isInDebugMode:
-          false // If enabled it will post a notification whenever the task is running. Handy for debugging tasks
-      );
+  if (Platform.isAndroid) {
+    Workmanager().initialize(
+        callbackDispatcher, // The top level function, aka callbackDispatcher
+        isInDebugMode:
+            false // If enabled it will post a notification whenever the task is running. Handy for debugging tasks
+        );
+  }
   await Prefs.initPrefs();
 
   LocationHandler.location.initFromPrefs();
