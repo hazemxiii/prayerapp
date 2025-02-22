@@ -45,6 +45,7 @@ class NotificationManager {
       AndroidNotificationDetails androidNotificationDetails =
           AndroidNotificationDetails(prayerKey, title,
               channelDescription: 'Notifies user when prayer comes',
+              sound: const RawResourceAndroidNotificationSound("notification"),
               importance: Importance.max,
               priority: Priority.high,
               icon: "notification_icon",

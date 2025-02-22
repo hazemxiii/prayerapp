@@ -82,7 +82,7 @@ class _QiblahPageState extends State<QiblahPage> with TickerProviderStateMixin {
                               Text(
                                 "${north.floor()}°",
                                 style: TextStyle(
-                                    color: palette.getMainC, fontSize: 20),
+                                    color: palette.getSecC, fontSize: 20),
                               )
                             ],
                           )

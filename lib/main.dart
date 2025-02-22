@@ -51,12 +51,12 @@ void callbackDispatcher() {
         }
       }
     } catch (e) {
-      NotificationManager().notifyAfter(
-          "Notification", "Fail: ${e.toString()}", const Duration(seconds: 1));
+      NotificationManager()
+          .notify("Error", "Failed to save notificaiton: ${e.toString()}");
     }
 
-    NotificationManager()
-        .notifyAfter("Notification", "Saved", const Duration(seconds: 1));
+    // NotificationManager()
+    //     .notifyAfter("Notification", "Saved", const Duration(seconds: 1));
 
     return Future.value(true);
   });
@@ -76,7 +76,7 @@ void setNotification(String prayer, bool isBefore, DateTime now,
 
   NotificationManager().notifyAfter(
       prayer,
-      "$prayer ${isBefore ? "Adhan" : "Iqamah"} In $notificationTime Minutes",
+      "$prayer Adhan ${isBefore ? "In $notificationTime Minutes" : "Was $notificationTime Minutes ago"}",
       timeLeft,
       isBefore: isBefore);
   debugPrint(
@@ -175,7 +175,7 @@ class _MainPage extends State<MainPage> {
           appBar: pagesAppBars[activePage] != null
               ? AppBar(
                   backgroundColor: palette.getBackC,
-                  foregroundColor: palette.getMainC,
+                  foregroundColor: palette.getSecC,
                   title: Text(pagesAppBars[activePage]["title"]),
                   centerTitle: true,
                 )
@@ -184,9 +184,10 @@ class _MainPage extends State<MainPage> {
             height: 40,
             child: BottomNavigationBar(
               currentIndex: activePage,
-              backgroundColor: palette.getSecC,
-              selectedItemColor: palette.getMainC,
-              unselectedItemColor: palette.getBackC,
+              // backgroundColor: palette.getBackC,
+              selectedItemColor: palette.getSecC,
+              unselectedItemColor:
+                  Color.lerp(palette.getSecC, palette.getBackC, 0.5),
               iconSize: 14,
               selectedFontSize: 10,
               unselectedFontSize: 10,
@@ -199,19 +200,19 @@ class _MainPage extends State<MainPage> {
                 BottomNavigationBarItem(
                     icon: const Icon(Icons.alarm_outlined),
                     label: "Prayer Times",
-                    backgroundColor: palette.getSecC),
+                    backgroundColor: palette.getBackC),
                 BottomNavigationBarItem(
                     icon: const Icon(Icons.circle_outlined),
                     label: "Tasbih",
-                    backgroundColor: palette.getSecC),
+                    backgroundColor: palette.getBackC),
                 BottomNavigationBarItem(
                     icon: const Icon(Icons.mosque_outlined),
                     label: "Qiblah",
-                    backgroundColor: palette.getSecC),
+                    backgroundColor: palette.getBackC),
                 BottomNavigationBarItem(
                     icon: const Icon(Icons.settings_outlined),
                     label: "Settings",
-                    backgroundColor: palette.getSecC)
+                    backgroundColor: palette.getBackC)
               ],
             ),
           ),

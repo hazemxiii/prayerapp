@@ -17,6 +17,7 @@ class PrayerTimePage extends StatefulWidget {
 
 class PrayerTimePageState extends State<PrayerTimePage> {
   late PageController pageViewCont;
+  final _loadedDaysNotifier = ValueNotifier<int>(0);
 
   @override
   void initState() {
@@ -27,6 +28,7 @@ class PrayerTimePageState extends State<PrayerTimePage> {
   @override
   void dispose() {
     super.dispose();
+    _loadedDaysNotifier.dispose();
     pageViewCont.dispose();
   }
 
@@ -54,8 +56,30 @@ class PrayerTimePageState extends State<PrayerTimePage> {
             }
           } else {
             return Center(
-              child: CircularProgressIndicator(
-                color: Palette.of(context).secColor,
+              child: SizedBox(
+                width: 300,
+                child: ValueListenableBuilder(
+                    valueListenable: _loadedDaysNotifier,
+                    builder: (context, v, _) {
+                      return Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            "Loaded: $v of 30 days",
+                            style: TextStyle(
+                                color: Palette.of(context).secColor,
+                                fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(
+                            height: 10,
+                          ),
+                          LinearProgressIndicator(
+                            value: v / 30,
+                            color: Palette.of(context).secColor,
+                          ),
+                        ],
+                      );
+                    }),
               ),
             );
           }
@@ -77,6 +101,7 @@ class PrayerTimePageState extends State<PrayerTimePage> {
     }
     for (int daysToAdd = 0; daysToAdd < 30; daysToAdd++) {
       DateTime date = DateTime.now().add(Duration(days: daysToAdd - 1));
+      _loadedDaysNotifier.value = daysToAdd;
       List<Map> prayersOfDay = await Db().getPrayersOfDay(date);
       if (prayersOfDay.isEmpty) {
         await _fetchPrayerTimesFromApi(date);
