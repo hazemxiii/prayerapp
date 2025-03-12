@@ -10,16 +10,20 @@ class NextPrayerNot extends ChangeNotifier {
 
   void updateNextPrayer() async {
     final r = await Db().getNextPrayer();
-    _name = r['name'];
-    if (_name == "Dhuhr" && DateTime.now().weekday == DateTime.friday) {
-      _name = "Jumu'a";
-    }
-    _date = r['date'];
-    _percentageLeft = r['percentageLeft'];
-    _time = r['time'];
-    _timeLeft = r['timeLeft'];
+    try {
+      _name = r['name'];
+      if (_name == "Dhuhr" && DateTime.now().weekday == DateTime.friday) {
+        _name = "Jumu'a";
+      }
+      _date = r['date'];
+      _percentageLeft = r['percentageLeft'];
+      _time = r['time'];
+      _timeLeft = r['timeLeft'];
 
-    notifyListeners();
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Error getting next prayer: ${e.toString()}");
+    }
   }
 
   String get name => _name;

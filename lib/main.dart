@@ -44,19 +44,20 @@ void callbackDispatcher() {
         if (notificationBeforeIndex != 0) {
           setNotification(
               prayer, true, now, notificationBeforeIndex - 1, prayerDate);
+        } else {
+          NotificationManager().cancel(prayer, true);
         }
         if (notificationAfterIndex != 0) {
           setNotification(
               prayer, false, now, notificationAfterIndex, prayerDate);
+        } else {
+          NotificationManager().cancel(prayer, false);
         }
       }
     } catch (e) {
       NotificationManager()
           .notify("Error", "Failed to save notificaiton: ${e.toString()}");
     }
-
-    // NotificationManager()
-    //     .notifyAfter("Notification", "Saved", const Duration(seconds: 1));
 
     return Future.value(true);
   });
@@ -86,11 +87,7 @@ void setNotification(String prayer, bool isBefore, DateTime now,
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (Platform.isAndroid) {
-    Workmanager().initialize(
-        callbackDispatcher, // The top level function, aka callbackDispatcher
-        isInDebugMode:
-            false // If enabled it will post a notification whenever the task is running. Handy for debugging tasks
-        );
+    Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
   }
   await Prefs.initPrefs();
 

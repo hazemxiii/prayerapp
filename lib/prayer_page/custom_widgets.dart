@@ -30,17 +30,21 @@ class PrayersScrollWidget extends StatelessWidget {
   final List displayDates;
   final List hijriDates;
   final List realDates;
+  final PageController pageViewCont;
+  final Function changeDate;
   const PrayersScrollWidget({
     super.key,
     required this.prayerTimes,
     required this.displayDates,
     required this.hijriDates,
     required this.realDates,
+    required this.changeDate,
+    required this.pageViewCont,
   });
 
   @override
   Widget build(BuildContext context) {
-    PageController pageViewCont = PageController(initialPage: 1);
+    // PageController pageViewCont = PageController(initialPage: 1);
     return Expanded(
       child: Container(
         color: Palette.of(context).backColor,
@@ -50,6 +54,7 @@ class PrayersScrollWidget extends StatelessWidget {
             itemCount: prayerTimes.length,
             itemBuilder: (context, i) {
               return PrayerDayWidget(
+                  changeDate: changeDate,
                   realDates: realDates[i],
                   hijriDate: hijriDates[i],
                   displayDateString: displayDates[i],

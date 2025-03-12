@@ -11,12 +11,14 @@ class PrayerDayWidget extends StatefulWidget {
   final List times;
   final List realDates;
   final String hijriDate;
+  final Function changeDate;
   const PrayerDayWidget({
     super.key,
     required this.displayDateString,
     required this.times,
     required this.realDates,
     required this.hijriDate,
+    required this.changeDate,
   });
 
   @override
@@ -30,6 +32,21 @@ class _PrayerDayWidgetState extends State<PrayerDayWidget> {
       child: Container(
         padding: const EdgeInsets.fromLTRB(0, 10, 0, 0),
         child: Column(children: [
+          _dateWidget(),
+          const SizedBox(
+            height: 20,
+          ),
+          ...prayerDayWidgetBuilder()
+        ]),
+      ),
+    );
+  }
+
+  Widget _dateWidget() {
+    return InkWell(
+      onTap: () => widget.changeDate(),
+      child: Column(
+        children: [
           Text(getEnglishLanguageDate(widget.displayDateString),
               style: TextStyle(
                   color: Palette.of(context).secColor,
@@ -44,11 +61,7 @@ class _PrayerDayWidgetState extends State<PrayerDayWidget> {
                 color: Color.lerp(Palette.of(context).secColor,
                     Palette.of(context).backColor, 0.5)),
           ),
-          const SizedBox(
-            height: 20,
-          ),
-          ...prayerDayWidgetBuilder()
-        ]),
+        ],
       ),
     );
   }
@@ -166,7 +179,7 @@ class _PrayerWidgetState extends State<PrayerWidget> {
   Widget build(BuildContext context) {
     final palette = Palette.of(context);
     return InkWell(
-      onLongPress: () {
+      onTap: () {
         Navigator.of(context).push(MaterialPageRoute(
             builder: (context) => ChangeNotifierProvider(
                   create: (context) =>

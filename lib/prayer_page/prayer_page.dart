@@ -18,11 +18,14 @@ class PrayerTimePage extends StatefulWidget {
 class PrayerTimePageState extends State<PrayerTimePage> {
   late PageController pageViewCont;
   final _loadedDaysNotifier = ValueNotifier<int>(0);
+  DateTime startDate = DateTime.now();
+  late DateTime oldStartDate;
 
   @override
   void initState() {
     super.initState();
     pageViewCont = PageController(initialPage: 1);
+    oldStartDate = startDate;
   }
 
   @override
@@ -35,7 +38,7 @@ class PrayerTimePageState extends State<PrayerTimePage> {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-        future: loadPrayerTime(),
+        future: loadPrayerTime(startDate),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.done &&
               snapshot.data.isNotEmpty) {
@@ -44,10 +47,12 @@ class PrayerTimePageState extends State<PrayerTimePage> {
               return Column(
                 children: [
                   PrayersScrollWidget(
+                    changeDate: _changeDate,
                     displayDates: snapshot.data!['dateStrings'],
                     hijriDates: snapshot.data!['hijriDates'],
                     realDates: snapshot.data!['realDates'],
                     prayerTimes: prayerTimes,
+                    pageViewCont: pageViewCont,
                   ),
                 ],
               );
@@ -65,7 +70,7 @@ class PrayerTimePageState extends State<PrayerTimePage> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            "Loaded: $v of 30 days",
+                            "Loaded: $v of 31 days",
                             style: TextStyle(
                                 color: Palette.of(context).secColor,
                                 fontWeight: FontWeight.bold),
@@ -74,7 +79,7 @@ class PrayerTimePageState extends State<PrayerTimePage> {
                             height: 10,
                           ),
                           LinearProgressIndicator(
-                            value: v / 30,
+                            value: v / 31,
                             color: Palette.of(context).secColor,
                           ),
                         ],
@@ -86,7 +91,7 @@ class PrayerTimePageState extends State<PrayerTimePage> {
         });
   }
 
-  Future<dynamic> loadPrayerTime() async {
+  Future<dynamic> loadPrayerTime(DateTime startDate) async {
     List timesForAllDays = [];
     List realDates = [];
     List displayDates = [];
@@ -99,13 +104,23 @@ class PrayerTimePageState extends State<PrayerTimePage> {
       LocationHandler.location.askForManualInput(context);
       return [];
     }
-    for (int daysToAdd = 0; daysToAdd < 30; daysToAdd++) {
-      DateTime date = DateTime.now().add(Duration(days: daysToAdd - 1));
+    for (int daysToAdd = 0; daysToAdd <= 31; daysToAdd++) {
+      DateTime date = startDate.add(Duration(days: daysToAdd - 1));
       _loadedDaysNotifier.value = daysToAdd;
-      List<Map> prayersOfDay = await Db().getPrayersOfDay(date);
+      Map data = await Db().getPrayersOfDay(date);
+      List<Map> prayersOfDay = data['data'];
+      String hijri = data['hijri'];
       if (prayersOfDay.isEmpty) {
-        await _fetchPrayerTimesFromApi(date);
-        prayersOfDay = await Db().getPrayersOfDay(date);
+        Map data = await _fetchPrayerTimesFromApi(date);
+        prayersOfDay = data['data'] ?? [];
+        hijri = data['hijri'] ?? "";
+        DateTime now = DateTime.now();
+        DateTime today =
+            startDate.copyWith(year: now.year, month: now.month, day: now.day);
+        if (prayersOfDay.isNotEmpty && today.isAtSameMomentAs(startDate)) {
+          await Db().insertPrayerDay(prayersOfDay, data['lastDate']);
+          await Db().insertHijriDate(date, hijri);
+        }
         if (prayersOfDay.isEmpty) {
           continue;
         }
@@ -117,7 +132,7 @@ class PrayerTimePageState extends State<PrayerTimePage> {
         oneDayRealDates.add(prayersOfDay[i]['date']);
       }
       realDates.add(oneDayRealDates);
-      hijriDates.add(await Db().getHijriDate(date));
+      hijriDates.add(hijri);
       displayDates.add(prayersOfDay[0]["displayDate"]);
       timesForAllDays.add(dayTime);
     }
@@ -132,29 +147,30 @@ class PrayerTimePageState extends State<PrayerTimePage> {
   }
 
   Uri _getApiUri(String normalDateAsString) {
-    return Uri.https(
-        // "api.aladhan.com", "/v1/timingsByCity/$normalDateAsString", {
-        "api.aladhan.com",
-        "/v1/timings/$normalDateAsString",
-        {
-          // "city": Prefs.prefs.getString(PrefsKeys.city),
-          // "country": Prefs.prefs.getString(PrefsKeys.country),
-          "latitude": Prefs.prefs.getDouble(PrefsKeys.la).toString(),
-          "longitude": Prefs.prefs.getDouble(PrefsKeys.lo).toString(),
-          "adjustment": Prefs.prefs.getInt(PrefsKeys.adjustment).toString()
-        });
+    return Uri.https("api.aladhan.com", "/v1/timings/$normalDateAsString", {
+      "latitude": Prefs.prefs.getDouble(PrefsKeys.la).toString(),
+      "longitude": Prefs.prefs.getDouble(PrefsKeys.lo).toString(),
+      "adjustment": Prefs.prefs.getInt(PrefsKeys.adjustment).toString()
+    });
   }
 
-  Future<void> _fetchPrayerTimesFromApi(DateTime date) async {
+  Future<Map> _fetchPrayerTimesFromApi(DateTime date) async {
     String americanDateAsString = CustomDateFormat.getShortDate(date, true);
     String normalDateAsString = CustomDateFormat.getShortDate(date, false);
     Uri url = _getApiUri(normalDateAsString);
 
     try {
       List dayWrap = await _sendApiRequest(url, americanDateAsString);
-      Db().insertPrayerDay(dayWrap);
+      return _preparePrayerDayRows(dayWrap);
+      // if (date.difference(DateTime.now()).inDays <= 30) {
+      //   Db().insertPrayerDay(dayWrap);
+      //   return null;
+      // } else {
+      //   // return null;
+      // }
     } catch (e) {
       debugPrint("Error: ${e.toString()}");
+      return {};
     }
   }
 
@@ -186,5 +202,59 @@ class PrayerTimePageState extends State<PrayerTimePage> {
     String month = hijriDate['month']['en'];
     String year = hijriDate['year'];
     return "$day - $month - $year";
+  }
+
+  Map _preparePrayerDayRows(List prayerDay) {
+    int americanDateIndex = 7;
+    List<Map> rows = [];
+    DateTime lastPrayerOfDayDate =
+        DateTime.parse("${prayerDay[americanDateIndex]} ${prayerDay[0]}");
+    for (int i = 0; i < Constants.prayerNames.length; i++) {
+      String prayerName = Constants.prayerNames[i];
+      DateTime prayerDate =
+          DateTime.parse("${prayerDay[americanDateIndex]} ${prayerDay[i]}");
+
+      DateTime displayDate = prayerDate;
+
+      if (prayerDate.isBefore(lastPrayerOfDayDate)) {
+        prayerDate = prayerDate.add(const Duration(days: 1));
+      }
+      lastPrayerOfDayDate = prayerDate;
+      rows.add({
+        "prayerName": prayerName,
+        "date": CustomDateFormat.getShortDate(prayerDate, true),
+        "time":
+            CustomDateFormat.timeToString(TimeOfDay.fromDateTime(prayerDate)),
+        "displayDate": CustomDateFormat.getShortDate(displayDate, true),
+      });
+    }
+    return {
+      "data": rows,
+      "hijri": prayerDay[6],
+      "lastDate": lastPrayerOfDayDate
+    };
+  }
+
+  void _changeDate() async {
+    DateTime now = DateTime.now();
+    DateTime date =
+        DateTime.utc(oldStartDate.year, oldStartDate.month, oldStartDate.day);
+    DateTime? d = (await showDatePicker(
+        context: context,
+        firstDate: now.subtract(const Duration(days: 365)),
+        lastDate: now.add(const Duration(days: 365))));
+    if (d != null && context.mounted) {
+      d = DateTime.utc(d.year, d.month, d.day);
+      int diff = d.difference(date).inDays;
+      if (diff > 30 || diff < -1) {
+        setState(() {
+          startDate = d!;
+          oldStartDate = startDate.copyWith();
+        });
+      } else {
+        pageViewCont.animateToPage(diff >= 0 ? diff + 1 : 0,
+            duration: const Duration(milliseconds: 300), curve: Curves.linear);
+      }
+    }
   }
 }

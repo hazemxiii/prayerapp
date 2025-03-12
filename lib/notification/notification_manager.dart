@@ -33,19 +33,14 @@ class NotificationManager {
   }
 
   void notifyAfter(String title, String text, Duration delay,
-      {bool? isBefore}) async {
+      {required bool isBefore}) async {
     try {
-      int id = 0;
-      String prayerKey = "test";
-      if (isBefore != null) {
-        id = _getPrayerID(title, isBefore);
-        flutterLocalNotificationsPlugin.cancel(id);
-        prayerKey = "${title}_${isBefore ? "b" : "a"}";
-      }
+      int id = _getPrayerID(title, isBefore);
+      flutterLocalNotificationsPlugin.cancel(id);
       AndroidNotificationDetails androidNotificationDetails =
-          AndroidNotificationDetails(prayerKey, title,
+          const AndroidNotificationDetails("prayers", "Prayers Notifications",
               channelDescription: 'Notifies user when prayer comes',
-              sound: const RawResourceAndroidNotificationSound("notification"),
+              sound: RawResourceAndroidNotificationSound("notification"),
               importance: Importance.max,
               priority: Priority.high,
               icon: "notification_icon",
@@ -65,6 +60,11 @@ class NotificationManager {
     } catch (e) {
       debugPrint(e.toString());
     }
+  }
+
+  void cancel(String prayer, bool isBefore) {
+    int id = _getPrayerID(prayer, isBefore);
+    flutterLocalNotificationsPlugin.cancel(id);
   }
 
   int _getPrayerID(String prayer, bool isBefore) {
