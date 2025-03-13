@@ -114,29 +114,28 @@ class PrayerTimePageState extends State<PrayerTimePage> {
   }
 
   Widget _todayBtn() {
-    return Positioned(
-      bottom: 10,
-      right: 10,
-      child: ValueListenableBuilder(
-          valueListenable: _todayBtnNotifier,
-          builder: (context, v, _) {
-            return AnimatedOpacity(
-              duration: const Duration(milliseconds: 200),
-              opacity: v ? 1 : 0,
-              child: MaterialButton(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                  textColor: context.watch<ColorNotifier>().getMainC,
-                  color: context.watch<ColorNotifier>().getSecC,
-                  shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(50))),
-                  child: const Text("Today"),
-                  onPressed: () {
-                    _onDateChanged(DateTime.now());
-                  }),
-            );
-          }),
-    );
+    return ValueListenableBuilder(
+        valueListenable: _todayBtnNotifier,
+        builder: (context, v, _) {
+          return Positioned(
+              bottom: v ? 10 : -100,
+              right: v ? 10 : -100,
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 200),
+                opacity: v ? 1 : 0,
+                child: MaterialButton(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 15),
+                    textColor: context.watch<ColorNotifier>().getMainC,
+                    color: context.watch<ColorNotifier>().getSecC,
+                    shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(50))),
+                    child: const Text("Today"),
+                    onPressed: () {
+                      _onDateChanged(DateTime.now());
+                    }),
+              ));
+        });
   }
 
   Future<dynamic> loadPrayerTime(DateTime startDate) async {
