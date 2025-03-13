@@ -32,7 +32,6 @@ class Db {
   }
 
   Future<void> insertHijriDate(DateTime date, String hijriDate) async {
-    // TODO: check why is it not working
     String dateString = CustomDateFormat.getShortDate(date, true);
     await database
         .rawDelete("DELETE FROM hijriDate WHERE `date` = '$dateString'");
@@ -72,43 +71,9 @@ class Db {
         await _insertPrayer(tr, rows[i]);
       }
     });
-    // _insertHijriDate(date, prayerDay[6]);
     await _deletePrayerDaysBefore(
-        lastPrayerOfDayDate.subtract(const Duration(days: 29)));
+        lastPrayerOfDayDate.subtract(const Duration(days: 32)));
   }
-  // void insertPrayerDay(List prayerDay) async {
-  //   int americanDateIndex = 7;
-  //   List rows = [];
-  //   DateTime date = DateTime.parse(prayerDay[americanDateIndex]);
-  //   DateTime lastPrayerOfDayDate =
-  //       DateTime.parse("${prayerDay[americanDateIndex]} ${prayerDay[0]}");
-  //   for (int i = 0; i < Constants.prayerNames.length; i++) {
-  //     String prayerName = Constants.prayerNames[i];
-  //     DateTime prayerDate =
-  //         DateTime.parse("${prayerDay[americanDateIndex]} ${prayerDay[i]}");
-
-  //     DateTime displayDate = prayerDate;
-
-  //     if (prayerDate.isBefore(lastPrayerOfDayDate)) {
-  //       prayerDate = prayerDate.add(const Duration(days: 1));
-  //     }
-  //     lastPrayerOfDayDate = prayerDate;
-  //     rows.add([
-  //       prayerName,
-  //       CustomDateFormat.getShortDate(prayerDate, true),
-  //       CustomDateFormat.timeToString(TimeOfDay.fromDateTime(prayerDate)),
-  //       CustomDateFormat.getShortDate(displayDate, true),
-  //     ]);
-  //   }
-  //   database.transaction((tr) async {
-  //     for (int i = 0; i < rows.length; i++) {
-  //       _insertPrayer(tr, rows[i]);
-  //     }
-  //   });
-  //   _insertHijriDate(date, prayerDay[6]);
-  //   _deletePrayerDaysBefore(
-  //       lastPrayerOfDayDate.subtract(const Duration(days: 29)));
-  // }
 
   Future<Map> getPrayersOfDay(DateTime date) async {
     return {

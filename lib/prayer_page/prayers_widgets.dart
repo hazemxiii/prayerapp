@@ -265,14 +265,6 @@ class _PrayerWidgetState extends State<PrayerWidget> {
 
   void startTimer() {
     Provider.of<NextPrayerNot>(context, listen: false).updateNextPrayer();
-    // firstUpdate =
-    //     Future.delayed(Duration(seconds: 60 - DateTime.now().second), () {
-    //   if (mounted) {
-    //     Provider.of<NextPrayerNot>(context, listen: false).updateNextPrayer();
-    //   }
-    //   setState(() {});
-
-    // }).catchError((e) {});
     timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       Provider.of<NextPrayerNot>(context, listen: false).updateNextPrayer();
       setState(() {});

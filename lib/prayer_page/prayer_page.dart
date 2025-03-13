@@ -2,11 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:prayerapp/color_notifier.dart';
 import 'package:prayerapp/global.dart';
 import 'package:prayerapp/location_class/location_class.dart';
 import 'package:prayerapp/main.dart';
 import 'package:prayerapp/prayer_page/custom_widgets.dart';
 import 'package:prayerapp/sqlite.dart';
+import 'package:provider/provider.dart';
 
 class PrayerTimePage extends StatefulWidget {
   const PrayerTimePage({super.key});
@@ -18,6 +20,7 @@ class PrayerTimePage extends StatefulWidget {
 class PrayerTimePageState extends State<PrayerTimePage> {
   late PageController pageViewCont;
   final _loadedDaysNotifier = ValueNotifier<int>(0);
+  final _todayBtnNotifier = ValueNotifier<bool>(false);
   DateTime startDate = DateTime.now();
   late DateTime oldStartDate;
 
@@ -25,6 +28,20 @@ class PrayerTimePageState extends State<PrayerTimePage> {
   void initState() {
     super.initState();
     pageViewCont = PageController(initialPage: 1);
+    pageViewCont.addListener(() {
+      double page = pageViewCont.page ?? 0;
+      // print(page);
+      // print(page.round());
+      DateTime now = DateTime.now();
+      DateTime today =
+          startDate.copyWith(year: now.year, month: now.month, day: now.day);
+      if ((page >= 2.5 && !_todayBtnNotifier.value) ||
+          (!today.isAtSameMomentAs(startDate))) {
+        _todayBtnNotifier.value = true;
+      } else if (page < 2.5 && _todayBtnNotifier.value) {
+        _todayBtnNotifier.value = false;
+      }
+    });
     oldStartDate = startDate;
   }
 
@@ -37,58 +54,89 @@ class PrayerTimePageState extends State<PrayerTimePage> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-        future: loadPrayerTime(startDate),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done &&
-              snapshot.data.isNotEmpty) {
-            List prayerTimes = snapshot.data!['times'];
-            if (prayerTimes.isNotEmpty) {
-              return Column(
-                children: [
-                  PrayersScrollWidget(
-                    changeDate: _changeDate,
-                    displayDates: snapshot.data!['dateStrings'],
-                    hijriDates: snapshot.data!['hijriDates'],
-                    realDates: snapshot.data!['realDates'],
-                    prayerTimes: prayerTimes,
-                    pageViewCont: pageViewCont,
-                  ),
-                ],
-              );
-            } else {
-              return const NoInternetWidget();
-            }
-          } else {
-            return Center(
-              child: SizedBox(
-                width: 300,
-                child: ValueListenableBuilder(
-                    valueListenable: _loadedDaysNotifier,
-                    builder: (context, v, _) {
-                      return Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            "Loaded: $v of 31 days",
-                            style: TextStyle(
+    return Stack(
+      children: [
+        FutureBuilder(
+            future: loadPrayerTime(startDate),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.done &&
+                  snapshot.data.isNotEmpty) {
+                List prayerTimes = snapshot.data!['times'];
+                if (prayerTimes.isNotEmpty) {
+                  return Column(
+                    children: [
+                      PrayersScrollWidget(
+                        changeDate: _pickDate,
+                        displayDates: snapshot.data!['dateStrings'],
+                        hijriDates: snapshot.data!['hijriDates'],
+                        realDates: snapshot.data!['realDates'],
+                        prayerTimes: prayerTimes,
+                        pageViewCont: pageViewCont,
+                      ),
+                    ],
+                  );
+                } else {
+                  return const NoInternetWidget();
+                }
+              } else {
+                return Center(
+                  child: SizedBox(
+                    width: 300,
+                    child: ValueListenableBuilder(
+                        valueListenable: _loadedDaysNotifier,
+                        builder: (context, v, _) {
+                          return Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                "Loaded: $v of 31 days",
+                                style: TextStyle(
+                                    color: Palette.of(context).secColor,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(
+                                height: 10,
+                              ),
+                              LinearProgressIndicator(
+                                value: v / 31,
                                 color: Palette.of(context).secColor,
-                                fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(
-                            height: 10,
-                          ),
-                          LinearProgressIndicator(
-                            value: v / 31,
-                            color: Palette.of(context).secColor,
-                          ),
-                        ],
-                      );
-                    }),
-              ),
+                              ),
+                            ],
+                          );
+                        }),
+                  ),
+                );
+              }
+            }),
+        _todayBtn()
+      ],
+    );
+  }
+
+  Widget _todayBtn() {
+    return Positioned(
+      bottom: 10,
+      right: 10,
+      child: ValueListenableBuilder(
+          valueListenable: _todayBtnNotifier,
+          builder: (context, v, _) {
+            return AnimatedOpacity(
+              duration: const Duration(milliseconds: 200),
+              opacity: v ? 1 : 0,
+              child: MaterialButton(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                  textColor: context.watch<ColorNotifier>().getMainC,
+                  color: context.watch<ColorNotifier>().getSecC,
+                  shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(50))),
+                  child: const Text("Today"),
+                  onPressed: () {
+                    _onDateChanged(DateTime.now());
+                  }),
             );
-          }
-        });
+          }),
+    );
   }
 
   Future<dynamic> loadPrayerTime(DateTime startDate) async {
@@ -235,26 +283,32 @@ class PrayerTimePageState extends State<PrayerTimePage> {
     };
   }
 
-  void _changeDate() async {
+  void _pickDate() async {
     DateTime now = DateTime.now();
-    DateTime date =
-        DateTime.utc(oldStartDate.year, oldStartDate.month, oldStartDate.day);
     DateTime? d = (await showDatePicker(
         context: context,
         firstDate: now.subtract(const Duration(days: 365)),
         lastDate: now.add(const Duration(days: 365))));
     if (d != null && context.mounted) {
       d = DateTime.utc(d.year, d.month, d.day);
-      int diff = d.difference(date).inDays;
-      if (diff > 30 || diff < -1) {
-        setState(() {
-          startDate = d!;
-          oldStartDate = startDate.copyWith();
-        });
-      } else {
-        pageViewCont.animateToPage(diff >= 0 ? diff + 1 : 0,
-            duration: const Duration(milliseconds: 300), curve: Curves.linear);
-      }
+      _onDateChanged(d);
+    }
+  }
+
+  void _onDateChanged(DateTime newDate) {
+    DateTime date =
+        DateTime.utc(oldStartDate.year, oldStartDate.month, oldStartDate.day);
+    newDate = DateTime.utc(newDate.year, newDate.month, newDate.day);
+    int diffInDays = newDate.difference(date).inDays;
+    if (diffInDays > 30 || diffInDays < -1) {
+      setState(() {
+        startDate = newDate;
+        oldStartDate = startDate.copyWith();
+        _todayBtnNotifier.value = true;
+      });
+    } else {
+      pageViewCont.animateToPage(diffInDays >= 0 ? diffInDays + 1 : 0,
+          duration: const Duration(milliseconds: 300), curve: Curves.linear);
     }
   }
 }
