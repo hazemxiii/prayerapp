@@ -4,8 +4,8 @@ import 'package:prayerapp/main.dart';
 import 'package:prayerapp/settings_page/settings_rows.dart';
 import 'package:prayerapp/sqlite.dart';
 import 'package:prayerapp/widgets/section.dart';
-import '../location_settings_page.dart';
-import '../tasbih_settings/tasbih_settings.dart';
+import 'package:prayerapp/location_settings_page.dart';
+import 'package:prayerapp/tasbih_settings/tasbih_settings.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});

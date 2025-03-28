@@ -1,4 +1,4 @@
-package com.example.prayerapp
+package com.hazemXIII.moazin
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -4,7 +4,7 @@ import 'package:prayerapp/tasbih_settings/settings_model.dart';
 import 'package:prayerapp/tasbih_settings/tasbih_inputs.dart';
 import 'package:prayerapp/tasbih_settings/vibration_section.dart';
 import 'package:prayerapp/widgets/section.dart';
-import '../global.dart';
+import 'package:prayerapp/global.dart';
 
 class TasbihSettingsPage extends StatefulWidget {
   const TasbihSettingsPage({super.key});
