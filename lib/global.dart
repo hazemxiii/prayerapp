@@ -10,7 +10,7 @@ class Constants {
     2: "Dhuhr",
     3: "Asr",
     4: "Maghrib",
-    5: "Isha'a"
+    5: "Isha'a",
   };
   static const Map prayerIcons = {
     0: Icons.wb_sunny_outlined,
@@ -18,7 +18,7 @@ class Constants {
     2: Icons.wb_sunny_outlined,
     3: Icons.wb_sunny_outlined,
     4: Icons.nights_stay_outlined,
-    5: Icons.nights_stay_outlined
+    5: Icons.nights_stay_outlined,
   };
 }
 
@@ -139,14 +139,16 @@ class Prefs {
   }
 
   List<int> getPrayerNotification(String prayer) {
-    Map allData =
-        jsonDecode(prefs.getString(PrefsKeys.prayerNotification) ?? "{}");
+    Map allData = jsonDecode(
+      prefs.getString(PrefsKeys.prayerNotification) ?? "{}",
+    );
     return List<int>.from((allData[prayer] ?? [0, 0]));
   }
 
   void setPrayerNotification(String prayer, List time) {
-    Map allData =
-        jsonDecode(prefs.getString(PrefsKeys.prayerNotification) ?? "{}");
+    Map allData = jsonDecode(
+      prefs.getString(PrefsKeys.prayerNotification) ?? "{}",
+    );
 
     allData[prayer] = time;
 

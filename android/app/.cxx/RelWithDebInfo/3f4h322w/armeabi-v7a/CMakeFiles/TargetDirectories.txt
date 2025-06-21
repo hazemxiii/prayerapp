@@ -1,0 +1,2 @@
+D:/Temp/prayerapp/android/app/.cxx/RelWithDebInfo/3f4h322w/armeabi-v7a/CMakeFiles/edit_cache.dir
+D:/Temp/prayerapp/android/app/.cxx/RelWithDebInfo/3f4h322w/armeabi-v7a/CMakeFiles/rebuild_cache.dir

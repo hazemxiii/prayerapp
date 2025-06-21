@@ -9,7 +9,7 @@ import "package:prayerapp/prayer_page/prayer_page.dart";
 import "package:prayerapp/qiblah.dart";
 import "package:prayerapp/sqlite.dart";
 import "package:prayerapp/tasbih_page/tasbih_notifier.dart";
-import "package:workmanager/workmanager.dart";
+// import "package:workmanager/workmanager.dart";
 // import "qiblah.dart";
 import "tasbih_page/tasbih_page.dart";
 import "settings_page/settings.dart";
@@ -17,50 +17,91 @@ import 'package:provider/provider.dart';
 import "global.dart";
 import "service.dart";
 
-@pragma('vm:entry-point')
-void callbackDispatcher() {
-  Workmanager().executeTask((task, inputData) async {
-    await Prefs.initPrefs();
-    await Db().init();
-    List prayers = Constants.prayerNames.values.toList();
-    DateTime now = DateTime.now();
-    try {
-      for (int i = 0; i < prayers.length; i++) {
-        String prayer = prayers[i];
-        List<int> notificationTimes = Prefs().getPrayerNotification(prayer);
-        int notificationBeforeIndex = notificationTimes[0];
-        int notificationAfterIndex = notificationTimes[1];
+// @pragma('vm:entry-point')
+// void callbackDispatcher() {
+//   Workmanager().executeTask((task, inputData) async {
+//     await Prefs.initPrefs();
+//     await Db().init();
+//     List prayers = Constants.prayerNames.values.toList();
+//     DateTime now = DateTime.now();
+//     try {
+//       for (int i = 0; i < prayers.length; i++) {
+//         String prayer = prayers[i];
+//         List<int> notificationTimes = Prefs().getPrayerNotification(prayer);
+//         int notificationBeforeIndex = notificationTimes[0];
+//         int notificationAfterIndex = notificationTimes[1];
 
-        final prayerData = await Db().getNextPrayerData(
-            CustomDateFormat.getShortDate(now, true),
-            CustomDateFormat.timeToString(TimeOfDay.fromDateTime(now)),
-            prayer: prayer);
+//         final prayerData = await Db().getNextPrayerData(
+//             CustomDateFormat.getShortDate(now, true),
+//             CustomDateFormat.timeToString(TimeOfDay.fromDateTime(now)),
+//             prayer: prayer);
 
-        final prayerDate =
-            DateTime.tryParse("${prayerData['date']} ${prayerData['time']}");
-        if (prayerDate == null) {
-          return Future.value(false);
-        }
-        if (notificationBeforeIndex != 0) {
-          setNotification(
-              prayer, true, now, notificationBeforeIndex - 1, prayerDate);
-        } else {
-          NotificationManager().cancel(prayer, true);
-        }
-        if (notificationAfterIndex != 0) {
-          setNotification(
-              prayer, false, now, notificationAfterIndex, prayerDate);
-        } else {
-          NotificationManager().cancel(prayer, false);
-        }
+//         final prayerDate =
+//             DateTime.tryParse("${prayerData['date']} ${prayerData['time']}");
+//         if (prayerDate == null) {
+//           return Future.value(false);
+//         }
+//         if (notificationBeforeIndex != 0) {
+//           setNotification(
+//               prayer, true, now, notificationBeforeIndex - 1, prayerDate);
+//         } else {
+//           NotificationManager().cancel(prayer, true);
+//         }
+//         if (notificationAfterIndex != 0) {
+//           setNotification(
+//               prayer, false, now, notificationAfterIndex, prayerDate);
+//         } else {
+//           NotificationManager().cancel(prayer, false);
+//         }
+//       }
+//     } catch (e) {
+//       NotificationManager()
+//           .notify("Error", "Failed to save notificaiton: ${e.toString()}");
+//     }
+
+//     return Future.value(true);
+//   });
+// }
+
+void initNotification() async {
+  await Prefs.initPrefs();
+  await Db().init();
+  List prayers = Constants.prayerNames.values.toList();
+  DateTime now = DateTime.now();
+  try {
+    for (int i = 0; i < prayers.length; i++) {
+      String prayer = prayers[i];
+      List<int> notificationTimes = Prefs().getPrayerNotification(prayer);
+      int notificationBeforeIndex = notificationTimes[0];
+      int notificationAfterIndex = notificationTimes[1];
+
+      final prayerData = await Db().getNextPrayerData(
+          CustomDateFormat.getShortDate(now, true),
+          CustomDateFormat.timeToString(TimeOfDay.fromDateTime(now)),
+          prayer: prayer);
+
+      final prayerDate =
+          DateTime.tryParse("${prayerData['date']} ${prayerData['time']}");
+      if (prayerDate == null) {
+        return;
       }
-    } catch (e) {
-      NotificationManager()
-          .notify("Error", "Failed to save notificaiton: ${e.toString()}");
+      if (notificationBeforeIndex != 0) {
+        setNotification(
+            prayer, true, now, notificationBeforeIndex - 1, prayerDate);
+      } else {
+        NotificationManager().cancel(prayer, true);
+      }
+      if (notificationAfterIndex != 0) {
+        setNotification(prayer, false, now, notificationAfterIndex, prayerDate);
+      } else {
+        NotificationManager().cancel(prayer, false);
+      }
     }
-
-    return Future.value(true);
-  });
+  } catch (e) {
+    debugPrint("Failed to save notificaiton: ${e.toString()}");
+    NotificationManager()
+        .notify("Error", "Failed to save notificaiton: ${e.toString()}");
+  }
 }
 
 void setNotification(String prayer, bool isBefore, DateTime now,
@@ -86,9 +127,9 @@ void setNotification(String prayer, bool isBefore, DateTime now,
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  if (Platform.isAndroid) {
-    Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
-  }
+  // if (Platform.isAndroid) {
+  //   Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
+  // }
   await Prefs.initPrefs();
 
   LocationHandler.location.initFromPrefs();

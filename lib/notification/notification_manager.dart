@@ -46,7 +46,8 @@ class NotificationManager {
               icon: "notification_icon",
               ticker: 'ticker');
       tz.initializeTimeZones();
-      tz.setLocalLocation(tz.getLocation(DateTime.now().timeZoneName));
+      tz.setLocalLocation(
+          tz.getLocation(tz.TZDateTime.now(tz.local).timeZoneName));
       await flutterLocalNotificationsPlugin.zonedSchedule(
           id,
           title,
