@@ -96,13 +96,13 @@ class Prefs {
       prefs.setString(PrefsKeys.country, "");
     }
     if (!prefs.containsKey(PrefsKeys.primaryColor)) {
-      prefs.setInt(PrefsKeys.primaryColor, Colors.lightBlue.value);
+      prefs.setInt(PrefsKeys.primaryColor, Colors.lightBlue.toARGB32());
     }
     if (!prefs.containsKey(PrefsKeys.secondaryColor)) {
-      prefs.setInt(PrefsKeys.secondaryColor, Colors.white.value);
+      prefs.setInt(PrefsKeys.secondaryColor, Colors.white.toARGB32());
     }
     if (!prefs.containsKey(PrefsKeys.backColor)) {
-      prefs.setInt(PrefsKeys.backColor, Colors.lightBlue[200]!.value);
+      prefs.setInt(PrefsKeys.backColor, Colors.lightBlue[200]!.toARGB32());
     }
     if (!prefs.containsKey(PrefsKeys.prayers)) {
       prefs.setString(PrefsKeys.prayers, jsonEncode({}));

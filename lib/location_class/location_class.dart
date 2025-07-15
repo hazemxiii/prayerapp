@@ -38,7 +38,7 @@ class Location {
 
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled && context.mounted) {
-      showLocationDialogs(context, "Please Enable Location Services");
+      // showLocationDialogs(context, "Please Enable Location Services");
       return;
     }
 

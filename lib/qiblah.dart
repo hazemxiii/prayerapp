@@ -20,7 +20,6 @@ class _QiblahPageState extends State<QiblahPage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: fix proguard issue with notification
     double dimension = min(
         MediaQuery.of(context).size.height, MediaQuery.of(context).size.width);
     return Center(

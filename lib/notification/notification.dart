@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:prayerapp/global.dart';
 import 'package:prayerapp/main.dart';
 import 'package:provider/provider.dart';
+import 'package:prayerapp/notification/notification_manager.dart';
 // import 'package:workmanager/workmanager.dart';
 
 class PrayerNotificationSettingsModel extends ChangeNotifier {
@@ -19,10 +20,9 @@ class PrayerNotificationSettingsModel extends ChangeNotifier {
 
   void saveData(BuildContext context) {
     Prefs().setPrayerNotification(prayer, data);
-    // Workmanager().registerPeriodicTask("fetchprayers", "fetchprayers",
-    //     frequency: const Duration(hours: 6),
-    //     existingWorkPolicy: ExistingWorkPolicy.replace);
-    initNotification();
+    NotificationManager().cancelAll();
+    callbackDispatcher();
+    // initNotification();
     Navigator.of(context).pop();
   }
 }

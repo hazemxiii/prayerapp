@@ -21,7 +21,7 @@ class ColorNotifier extends ChangeNotifier {
   // setters
   void setMainC(Color c) {
     _main = c;
-    Prefs.prefs.setInt(PrefsKeys.primaryColor, c.value);
+    Prefs.prefs.setInt(PrefsKeys.primaryColor, c.toARGB32());
     notifyListeners();
   }
 
@@ -36,19 +36,19 @@ class ColorNotifier extends ChangeNotifier {
     } else {
       _back = c;
     }
-    Prefs.prefs.setInt(colorKey, c.value);
+    Prefs.prefs.setInt(colorKey, c.toARGB32());
     notifyListeners();
   }
 
   void setSecC(Color c) {
     _second = c;
-    Prefs.prefs.setInt(PrefsKeys.secondaryColor, c.value);
+    Prefs.prefs.setInt(PrefsKeys.secondaryColor, c.toARGB32());
     notifyListeners();
   }
 
   void setBackC(Color c) {
     _back = c;
-    Prefs.prefs.setInt(PrefsKeys.backColor, c.value);
+    Prefs.prefs.setInt(PrefsKeys.backColor, c.toARGB32());
     notifyListeners();
   }
 }

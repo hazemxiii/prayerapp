@@ -63,9 +63,25 @@ class NotificationManager {
     }
   }
 
+  Future<bool> isNotificationEnabled(String prayer, bool isBefore) async {
+    int id = _getPrayerID(prayer, isBefore);
+    final pendingNotifications =
+        await flutterLocalNotificationsPlugin.pendingNotificationRequests();
+    for (var not in pendingNotifications) {
+      if (not.id == id) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   void cancel(String prayer, bool isBefore) {
     int id = _getPrayerID(prayer, isBefore);
     flutterLocalNotificationsPlugin.cancel(id);
+  }
+
+  void cancelAll() {
+    flutterLocalNotificationsPlugin.cancelAll();
   }
 
   int _getPrayerID(String prayer, bool isBefore) {
