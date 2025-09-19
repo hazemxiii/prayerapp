@@ -59,7 +59,7 @@ class PrefsKeys {
   static const String city = "city";
   static const String country = "country";
   static const String primaryColor = "primaryColor";
-  static const String secondaryColor = "secondaryColor";
+  // static const String secondaryColor = "secondaryColor";
   static const String backColor = "backColor";
   static const String prayers = "prayers";
   static const String la = "la";
@@ -98,9 +98,9 @@ class Prefs {
     if (!prefs.containsKey(PrefsKeys.primaryColor)) {
       prefs.setInt(PrefsKeys.primaryColor, Colors.lightBlue.toARGB32());
     }
-    if (!prefs.containsKey(PrefsKeys.secondaryColor)) {
-      prefs.setInt(PrefsKeys.secondaryColor, Colors.white.toARGB32());
-    }
+    // if (!prefs.containsKey(PrefsKeys.secondaryColor)) {
+    //   prefs.setInt(PrefsKeys.secondaryColor, Colors.white.toARGB32());
+    // }
     if (!prefs.containsKey(PrefsKeys.backColor)) {
       prefs.setInt(PrefsKeys.backColor, Colors.lightBlue[200]!.toARGB32());
     }

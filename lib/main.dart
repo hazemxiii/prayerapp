@@ -211,7 +211,7 @@ class _MainPage extends State<MainPage> {
           appBar: pagesAppBars[activePage] != null
               ? AppBar(
                   backgroundColor: palette.getBackC,
-                  foregroundColor: palette.getSecC,
+                  foregroundColor: palette.getMainC,
                   title: Text(pagesAppBars[activePage]["title"]),
                   centerTitle: true,
                 )
@@ -221,9 +221,8 @@ class _MainPage extends State<MainPage> {
             child: BottomNavigationBar(
               currentIndex: activePage,
               // backgroundColor: palette.getBackC,
-              selectedItemColor: palette.getSecC,
-              unselectedItemColor:
-                  Color.lerp(palette.getSecC, palette.getBackC, 0.5),
+              selectedItemColor: palette.getMainC,
+              unselectedItemColor: palette.getSecC,
               iconSize: 14,
               selectedFontSize: 10,
               unselectedFontSize: 10,

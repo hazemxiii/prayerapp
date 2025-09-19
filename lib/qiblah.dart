@@ -56,7 +56,7 @@ class _QiblahPageState extends State<QiblahPage> with TickerProviderStateMixin {
                           Text(
                             "${LocationHandler.location.country}, ${LocationHandler.location.city}",
                             textAlign: TextAlign.center,
-                            style: TextStyle(color: palette.getSecC),
+                            style: TextStyle(color: palette.getMainC),
                           ),
                           const SizedBox(
                             height: 10,
@@ -81,7 +81,7 @@ class _QiblahPageState extends State<QiblahPage> with TickerProviderStateMixin {
                               Text(
                                 "${north.floor()}°",
                                 style: TextStyle(
-                                    color: palette.getSecC, fontSize: 20),
+                                    color: palette.getMainC, fontSize: 20),
                               )
                             ],
                           )

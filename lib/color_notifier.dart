@@ -4,17 +4,17 @@ import 'package:prayerapp/global.dart';
 class ColorNotifier extends ChangeNotifier {
   /// The class is used to rebuild the pages when the color is changed
   Color _main = Colors.lightBlue;
-  Color _second = Colors.white;
+  // Color _second = Colors.white;
   Color _back = Colors.lightBlue[50]!;
 
   // getters
   Color get getMainC => _main;
-  Color get getSecC => _second;
+  Color get getSecC => Color.lerp(_main, _back, 0.9)!;
   Color get getBackC => _back;
 
   void initPalette() {
     _main = Color(Prefs.prefs.getInt(PrefsKeys.primaryColor)!);
-    _second = Color(Prefs.prefs.getInt(PrefsKeys.secondaryColor)!);
+    // _second = Color(Prefs.prefs.getInt(PrefsKeys.secondaryColor)!);
     _back = Color(Prefs.prefs.getInt(PrefsKeys.backColor)!);
   }
 
@@ -31,8 +31,6 @@ class ColorNotifier extends ChangeNotifier {
     }
     if (colorKey == PrefsKeys.primaryColor) {
       _main = c;
-    } else if (colorKey == PrefsKeys.secondaryColor) {
-      _second = c;
     } else {
       _back = c;
     }
@@ -40,11 +38,11 @@ class ColorNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setSecC(Color c) {
-    _second = c;
-    Prefs.prefs.setInt(PrefsKeys.secondaryColor, c.toARGB32());
-    notifyListeners();
-  }
+  // void setSecC(Color c) {
+  //   _second = c;
+  //   Prefs.prefs.setInt(PrefsKeys.secondaryColor, c.toARGB32());
+  //   notifyListeners();
+  // }
 
   void setBackC(Color c) {
     _back = c;

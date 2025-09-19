@@ -82,10 +82,10 @@ class ColorsSettingsSection extends StatelessWidget {
             name: "Main Color",
             pickerColor: palette.mainColor,
             colorKey: PrefsKeys.primaryColor),
-        ColorPickerRowWidget(
-            name: "Secondary Color",
-            pickerColor: palette.secColor,
-            colorKey: PrefsKeys.secondaryColor),
+        // ColorPickerRowWidget(
+        //     name: "Secondary Color",
+        //     pickerColor: palette.secColor,
+        //     colorKey: PrefsKeys.secondaryColor),
         ColorPickerRowWidget(
             name: "Background Color",
             pickerColor: palette.backColor,

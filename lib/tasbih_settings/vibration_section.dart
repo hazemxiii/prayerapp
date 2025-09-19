@@ -44,7 +44,7 @@ class _VibrationSectionState extends State<VibrationSection> {
             Transform.scale(
               scale: 0.8,
               child: Switch(
-                  activeColor: palette.mainColor,
+                  activeThumbColor: palette.mainColor,
                   inactiveThumbColor: palette.mainColor,
                   inactiveTrackColor: palette.secColor,
                   value: TasbihSettingsModel.isEnabled!,
@@ -52,42 +52,44 @@ class _VibrationSectionState extends State<VibrationSection> {
             ),
           ],
         ),
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Row(
-              children: [
-                Radio(
+        RadioGroup(
+          groupValue: vibrateRadio,
+          onChanged: _changeTasbihMode,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Row(
+                children: [
+                  Radio(
                     fillColor: WidgetStatePropertyAll(palette.mainColor),
                     value: "on",
-                    groupValue: vibrateRadio,
-                    onChanged: _changeTasbihMode),
-                Text("Vibrate On Specific Numbers",
-                    style: TextStyle(color: palette.mainColor))
-              ],
-            ),
-            const SizedBox(
-              height: 10,
-            ),
-            Row(
-              children: [
-                Radio(
+                  ),
+                  Text("Vibrate On Specific Numbers",
+                      style: TextStyle(color: palette.mainColor))
+                ],
+              ),
+              const SizedBox(
+                height: 10,
+              ),
+              Row(
+                children: [
+                  Radio(
                     fillColor: WidgetStatePropertyAll(palette.mainColor),
                     value: "every",
-                    groupValue: vibrateRadio,
-                    onChanged: _changeTasbihMode),
-                Text(
-                  "Vibrate Every x tasbihas",
-                  style: TextStyle(color: palette.mainColor),
-                )
-              ],
-            ),
-            vibrateRadio == "on"
-                ? TasbihTextInput(
-                    controller: widget.controller, formKey: widget.formKey)
-                : NumberInput(
-                    controller: widget.controller, formKey: widget.formKey),
-          ],
+                  ),
+                  Text(
+                    "Vibrate Every x tasbihas",
+                    style: TextStyle(color: palette.mainColor),
+                  )
+                ],
+              ),
+              vibrateRadio == "on"
+                  ? TasbihTextInput(
+                      controller: widget.controller, formKey: widget.formKey)
+                  : NumberInput(
+                      controller: widget.controller, formKey: widget.formKey),
+            ],
+          ),
         )
       ],
       icon: Icon(

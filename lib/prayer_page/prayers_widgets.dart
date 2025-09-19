@@ -49,7 +49,7 @@ class _PrayerDayWidgetState extends State<PrayerDayWidget> {
         children: [
           Text(getEnglishLanguageDate(widget.displayDateString),
               style: TextStyle(
-                  color: Palette.of(context).secColor,
+                  color: Palette.of(context).mainColor,
                   fontSize: 20,
                   fontWeight: FontWeight.bold)),
           const SizedBox(
@@ -58,7 +58,7 @@ class _PrayerDayWidgetState extends State<PrayerDayWidget> {
           Text(
             widget.hijriDate,
             style: TextStyle(
-                color: Color.lerp(Palette.of(context).secColor,
+                color: Color.lerp(Palette.of(context).mainColor,
                     Palette.of(context).backColor, 0.5)),
           ),
         ],
